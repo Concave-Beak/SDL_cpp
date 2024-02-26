@@ -2,6 +2,7 @@
 #define __ENGINE_HEADER__
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_stdinc.h>
 
 #include "../Entities/Player.hh"
 
@@ -13,17 +14,21 @@ class Engine {
     bool quit = false;
 
    public:
+    SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
+    static bool EnableDisableFPS(bool);
     void Init();
 
    private:
     static Player* player_instance;
     static Engine* instance;
+    const Uint32 fps = 60;
 
    private:
-    void HandleKeyboardEvents(SDL_Event* event);
+    static SDL_Renderer* renderer;
+    void ShowFPS();
 
-    SDL_Window* GetWindow();
+    void HandleKeyboardEvents(SDL_Event* event);
 };
 
 #endif

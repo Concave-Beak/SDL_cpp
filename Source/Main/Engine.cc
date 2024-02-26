@@ -13,6 +13,7 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
     SDL_RenderPresent(renderer);
     SDL_RenderClear(renderer);
 }
+SDL_Renderer *Engine::renderer = NULL;
 
 Engine *Engine::instance = new Engine;
 Engine *Engine::GetEngineInstance() {
@@ -80,7 +81,8 @@ void Engine::Init() {
     SDL_UpdateWindowSurface(window);
 #endif
 
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_Renderer *renderer_ = SDL_CreateRenderer(window, -1, 0);
+    renderer = renderer_;
     if (renderer == NULL) {
         fprintf(stderr,
                 "SDL could not create renderer! SDL_Error: %s\n",
@@ -89,6 +91,7 @@ void Engine::Init() {
     }
     SDL_Event event;
 
+    printf("Starting the game loop...\n");
     while (!quit) {
         ClearBackground(renderer, 0, 0, 0, 255);
         player_instance->Draw(renderer);
