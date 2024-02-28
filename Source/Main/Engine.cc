@@ -7,51 +7,91 @@
 
 #include "Engine.hh"
 
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 768
+
+#define GRAVITY 200.0f;
+
+//------------------------------------------------------------------------------
+
 void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
-    SDL_RenderFillRect(renderer, NULL);
-    SDL_RenderPresent(renderer);
     SDL_RenderClear(renderer);
 }
-SDL_Renderer *Engine::renderer = NULL;
 
-Engine *Engine::instance = new Engine;
-Engine *Engine::GetEngineInstance() {
-    return instance;
+//------------------------------------------------------------------------------
+
+void Engine::Render() {
+    ClearBackground(renderer, 0, 0, 0, 255);
+    playerInstance->Draw(renderer);
+    SDL_RenderPresent(renderer);
+    SDL_RenderClear(renderer);  // in case the renderer doesn't get cleaned
 }
 
-Player *Engine::player_instance = Player::GetPlayerInstace();
+void Engine::HandlePhysics() {
+    // TODO: make it smoother
+    Uint32 time = SDL_GetTicks();
+    Vec2f *playerPos = &playerInstance->pos;
+    Vec2f *playerVel = &playerInstance->velocity;
+    float dT = (time - playerInstance->lastUpdate) / 300.0f;
+
+    playerVel->y += dT * GRAVITY;
+    playerPos->x += playerVel->x * dT;
+    playerPos->y += playerVel->y * dT;
+
+    playerInstance->lastUpdate = time;
+}
+
+void Engine::Loop() {
+    // Uint64 totalFrameTicks = 0; // not implemented yet
+    // Uint64 totalFrames = 0;
+    while (!quit) {
+        // ++totalFrames;
+        Uint64 startTicks = SDL_GetTicks();
+        Uint64 startPerformance = SDL_GetPerformanceCounter();
+
+        HandlePhysics();
+        HandleKeyboardEvents(&event);
+
+        Render();
+    }
+}
 
 void Engine::HandleKeyboardEvents(SDL_Event *event) {
     SDL_PollEvent(event);
     switch (event->type) {
+        case SDL_QUIT: {
+            quit = true;
+            break;
+        }
         case SDL_KEYDOWN: {
             switch (event->key.keysym.sym) {
                 case SDLK_LEFT: {
-                    player_instance->Move(MoveOpts::LEFT);
+                    playerInstance->Move(MoveOpts::LEFT);
                     break;
                 }
                 case SDLK_RIGHT: {
-                    player_instance->Move(MoveOpts::RIGHT);
+                    playerInstance->Move(MoveOpts::RIGHT);
                     break;
                 }
                 case SDLK_UP: {
-                    player_instance->Move(MoveOpts::UP);
+                    playerInstance->Move(MoveOpts::UP);
                     break;
                 }
                 case SDLK_DOWN: {
-                    player_instance->Move(MoveOpts::DOWN);
+                    playerInstance->Move(MoveOpts::DOWN);
+                    break;
+                }
+                case SDLK_q: {
+                    quit = true;
                     break;
                 }
             }
         }
     }
-    if (event->type == SDL_QUIT) {
-        quit = true;
-    }
 }
 
-void Engine::Init() {
+void Engine::Run() {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr,
                 "SDL could not initialize! SDL_Error: %s\n",
@@ -59,7 +99,7 @@ void Engine::Init() {
         exit(EXIT_FAILURE);
     }
 
-    SDL_Window *window = SDL_CreateWindow("My window",
+    SDL_Window *window = SDL_CreateWindow("Game",
                                           0, 0,
                                           SCREEN_WIDTH, SCREEN_HEIGHT,
                                           SDL_WINDOW_SHOWN);
@@ -70,35 +110,26 @@ void Engine::Init() {
         exit(EXIT_FAILURE);
     }
 
-#if 0
-    SDL_Surface *surface = SDL_GetWindowSurface(window);
-    if (surface == NULL) {
-        fprintf(stderr,
-                "SDL could not create surface! SDL_Error: %s\n",
-                SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    SDL_UpdateWindowSurface(window);
-#endif
-
-    SDL_Renderer *renderer_ = SDL_CreateRenderer(window, -1, 0);
-    renderer = renderer_;
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
         fprintf(stderr,
                 "SDL could not create renderer! SDL_Error: %s\n",
                 SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    SDL_Event event;
 
-    printf("Starting the game loop...\n");
-    while (!quit) {
-        ClearBackground(renderer, 0, 0, 0, 255);
-        player_instance->Draw(renderer);
-        HandleKeyboardEvents(&event);
-
-        SDL_Delay(10);
+    {
+        Loop();
+        printf("Starting the game loop...\n");
     }
+
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
+
+Player *Engine::playerInstance = Player::GetPlayerInstace();
+
+Engine *Engine::instance = new Engine;
+Engine *Engine::GetEngineInstance() { return instance; }
+
+//------------------------------------------------------------------------------

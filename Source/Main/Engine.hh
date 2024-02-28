@@ -6,8 +6,7 @@
 
 #include "../Entities/Player.hh"
 
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
+//------------------------------------------------------------------------------
 
 class Engine {
    public:
@@ -16,19 +15,25 @@ class Engine {
    public:
     SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
-    static bool EnableDisableFPS(bool);
-    void Init();
+    void Run();
 
    private:
-    static Player* player_instance;
+    static Player* playerInstance;
     static Engine* instance;
-    const Uint32 fps = 60;
+    SDL_Renderer* renderer = NULL;
+
+    const Uint16 fpsCap = 60;
+    SDL_Event event = SDL_Event{};
 
    private:
-    static SDL_Renderer* renderer;
-    void ShowFPS();
+    void Loop();
+    void Render();
 
+    void HandleFPS(Uint64 firstTick);
     void HandleKeyboardEvents(SDL_Event* event);
+    void HandlePhysics();
 };
+
+//------------------------------------------------------------------------------
 
 #endif

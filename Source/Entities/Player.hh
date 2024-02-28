@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 #include "./EntityUtils.hh"
 
+//------------------------------------------------------------------------------
+
 enum MoveOpts {
     LEFT = 1,
     RIGHT,
@@ -13,27 +15,30 @@ enum MoveOpts {
 
 class Player {
    public:
-    static Vec2f speed;
+    Vec2f velocity = {10.0f, 10.0f};
+    Vec2f pos = {0, 0};
+    Uint32 lastUpdate;
 
    public:
     static Player* GetPlayerInstace();
-    static Vec2i GetPlayerPos();
 
-    void DefinePlayerSpeed(float, float);
+    Vec2f* GetPlayerPos();
     void Move(const MoveOpts);
     void Draw(SDL_Renderer* renderer);
 
    private:
     static Player* player;
 
-    static Vec2i pos;
-    static Vec2i direction;
+    Vec2i direction;
 
-    static Vec2i hitbox;
-    static SDL_Rect player_model;
+    Vec2i hitbox = {75, 75};
+    SDL_Rect player_model = SDL_Rect{pos.x, pos.y, hitbox.x, hitbox.y};
 
    private:
     void CalcPlayerSpeed();
     void CalcPlayerAccel();
 };
+
+//------------------------------------------------------------------------------
+
 #endif
