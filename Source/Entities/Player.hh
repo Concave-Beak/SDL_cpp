@@ -24,7 +24,7 @@ class Player {
 
     Vec2f* GetPlayerPos();
     void Move(const MoveOpts);
-    void Draw(SDL_Renderer* renderer);
+    void Draw(SDL_Renderer* renderer = NULL);
 
    private:
     static Player* player;
@@ -32,7 +32,7 @@ class Player {
     Vec2i direction;
 
     Vec2i hitbox = {75, 75};
-    SDL_Rect player_model = SDL_Rect{pos.x, pos.y, hitbox.x, hitbox.y};
+    SDL_Rect player_model = SDL_Rect{(int)pos.x, (int)pos.y, hitbox.x, hitbox.y};
 
    private:
     void CalcPlayerSpeed();

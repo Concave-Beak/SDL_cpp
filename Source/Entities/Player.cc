@@ -13,19 +13,21 @@ Vec2f* Player::GetPlayerPos() { return &pos; }  // not used need fixing
 void Player::Move(const MoveOpts move_options) {
     switch (move_options) {
         case LEFT: {
-            pos.x -= velocity.x;
+            pos.x -= 10;
             break;
         }
         case RIGHT: {
-            pos.x += velocity.x;
+            pos.x += 10;
             break;
         }
         case UP: {
-            pos.y -= 10;  // its subtracted because SDL renders from top left to bottom right
+            pos.y -= 30;  // its subtracted because SDL renders from top
+                          // left to bottom right
+            velocity.y = 10;
             break;
         }
         case DOWN: {
-            pos.y += velocity.y;
+            pos.y += 10;
             break;
         }
         default: {
