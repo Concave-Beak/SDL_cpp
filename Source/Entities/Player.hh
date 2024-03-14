@@ -2,7 +2,7 @@
 #define __PLAYER_HEADER__
 
 #include <SDL2/SDL.h>
-#include "./EntityUtils.hh"
+#include "../../Include/Headers/Utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ enum MoveOpts {
 
 class Player {
    public:
-    Vec2f velocity = {10.0f, 10.0f};
+    Vec2f velocity = {0, 0};
     Vec2f pos = {0, 0};
     Uint32 lastUpdate;
 
@@ -25,6 +25,8 @@ class Player {
     Vec2f* GetPlayerPos();
     void Move(const MoveOpts);
     void Draw(SDL_Renderer* renderer = NULL);
+
+    Vec2i GetHitboxInfo();
 
    private:
     static Player* player;

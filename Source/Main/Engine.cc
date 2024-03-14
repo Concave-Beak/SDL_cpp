@@ -1,19 +1,19 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_video.h>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
-#include <thread>
-#include <chrono>
 
 #include "Engine.hh"
 
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
-
-#define GRAVITY 200.0f;
+#define GRAVITY 200.0f
+#define MAX_X_SPEED 20
+#define MIN_X_SPEED -20
+#define MAX_Y_SPEED 400
+#define MIN_Y_SPEED -200
 
 //------------------------------------------------------------------------------
 
@@ -26,15 +26,15 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
 //------------------------------------------------------------------------------
 
 void Engine::Loop() {
-    float startTick = 0;
+    float beginTick = 0;
     while (!quit) {
-        startTick = SDL_GetTicks();
+        beginTick = SDL_GetTicks();
         HandlePhysics();
 
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
             playerInstance->Draw(renderer);
-            HandleFPS(startTick);
+            HandleFPS(beginTick);
             SDL_RenderPresent(renderer);
             SDL_RenderClear(renderer);
         }
@@ -47,20 +47,41 @@ void Engine::HandlePhysics() {
     Uint32 time = SDL_GetTicks();
     Vec2f *playerPos = &playerInstance->pos;
     Vec2f *playerVel = &playerInstance->velocity;
+    Vec2i playerHitboxInfo = playerInstance->GetHitboxInfo();
     float dT = (time - playerInstance->lastUpdate) / 300.0f;
 
-    playerVel->y += dT * GRAVITY;
-    playerPos->y += playerVel->y * dT;
+    if (playerPos->y < SCREEN_HEIGHT - playerHitboxInfo.y) {
+        playerVel->y += dT * GRAVITY;
+        playerPos->y += playerVel->y * dT;
+    }
+
+    if (playerVel->y > MAX_Y_SPEED) {
+        playerVel->y = MAX_Y_SPEED;
+    }
+
+    if (playerVel->x > MAX_X_SPEED) {
+        playerVel->x = MAX_X_SPEED;
+    }
+    if (playerVel->x < MIN_X_SPEED) {
+        playerVel->x = MIN_X_SPEED;
+    }
+    playerPos->x += playerVel->x;
+    playerVel->x *= 0.9;
 
     playerInstance->lastUpdate = time;
 }
 
-void Engine::HandleFPS(float startTick) {
+void Engine::HandleFPS(float loopBegin) {
     float timeStepInMS = 1000.0f / fpsCap;
-    float lastLoopTick = SDL_GetTicks();
-    if (timeStepInMS > (lastLoopTick - startTick)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(  // I saw that this is more precise
-            int(timeStepInMS - (lastLoopTick - startTick))));   // than SDL_Delay()
+    float loopStop = SDL_GetTicks();
+    float timeDifference = timeStepInMS - (loopStop - loopBegin);
+    if (config->ShowFPSState()) {
+        std::string fpsStr = "FPS: " +
+                             std::to_string(int(fpsCap - (timeDifference / 1000.0f)));  // fps is in secods, timeDifference is in ms.
+        DrawText(fpsStr);                                                               // The 1000.0f is to transform the timeDiff to seconds
+    }
+    if (timeDifference >= 0) {
+        SDL_Delay(timeStepInMS - (loopStop - loopBegin));
         return;
     }
 }
@@ -92,6 +113,10 @@ void Engine::HandleKeyboardEvents(SDL_Event *event) {
                 }
                 case SDLK_q: {
                     quit = true;
+                    break;
+                }
+                case SDLK_r: {
+                    playerInstance->pos = {0, 0};
                     break;
                 }
             }
@@ -176,16 +201,12 @@ void Engine::Run() {
     SDL_Quit();
 }
 
-Player *Engine::playerInstance = Player::GetPlayerInstace();
-
 Engine *Engine::instance = new Engine;
 Engine *Engine::GetEngineInstance() { return instance; }
 
 //------------------------------------------------------------------------------
 /*
  *  TODO::
- *      * Display fps case used wants to
- *      - Make fps calc faster and easier to understand
  *      - Improve fps handeling and physics
  *      - Create a pause tech
  */

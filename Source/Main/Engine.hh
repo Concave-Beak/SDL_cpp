@@ -6,6 +6,7 @@
 #include <string>
 
 #include "../Entities/Player.hh"
+#include "./Config.hh"
 
 //------------------------------------------------------------------------------
 
@@ -18,8 +19,10 @@ class Engine {
     void Run();
 
    private:
-    static Player* playerInstance;
     static Engine* instance;
+
+    Player* playerInstance = Player::GetPlayerInstace();
+    Config* config = Config::GetConfig();
 
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;
@@ -30,6 +33,9 @@ class Engine {
 
     bool quit = false;
     bool paused = false;
+
+    int SCREEN_WIDTH = 1024;
+    int SCREEN_HEIGHT = 768;
 
    private:
     void Loop();

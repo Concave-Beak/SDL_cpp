@@ -10,20 +10,23 @@ Player* Player::GetPlayerInstace() { return Player::player; }
 
 Vec2f* Player::GetPlayerPos() { return &pos; }  // not used need fixing
 
+Vec2i Player::GetHitboxInfo() {
+    return hitbox;
+}
+
 void Player::Move(const MoveOpts move_options) {
     switch (move_options) {
         case LEFT: {
-            pos.x -= 10;
+            velocity.x -= 5;
             break;
         }
         case RIGHT: {
-            pos.x += 10;
+            velocity.x += 5;
             break;
         }
         case UP: {
-            pos.y -= 30;  // its subtracted because SDL renders from top
-                          // left to bottom right
-            velocity.y = 10;
+            pos.y -= 10;
+            velocity.y -= 400;
             break;
         }
         case DOWN: {
