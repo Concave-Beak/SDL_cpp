@@ -2,5 +2,5 @@
 int main() {
     Engine* instance = Engine::GetEngineInstance();
     instance->Init();
-    instance->Run();
+    return instance->Run();
 }

@@ -17,20 +17,20 @@ Vec2i Player::GetHitboxInfo() {
 void Player::Move(const MoveOpts move_options) {
     switch (move_options) {
         case LEFT: {
-            velocity.x -= 5;
+            velocity.x -= accelSpeed.x;
             break;
         }
         case RIGHT: {
-            velocity.x += 5;
+            velocity.x += accelSpeed.x;
             break;
         }
         case UP: {
-            pos.y -= 10;
-            velocity.y -= 400;
+            // I need to -1 so it doesn't conflict with the physics engine
+            pos.y -= 1;  // TODO: fix this
+            velocity.y -= accelSpeed.y;
             break;
         }
         case DOWN: {
-            pos.y += 10;
             break;
         }
         default: {
@@ -38,8 +38,6 @@ void Player::Move(const MoveOpts move_options) {
         };
     }
 }
-
-void Player::CalcPlayerSpeed() {}  // TODO
 
 void Player::Draw(SDL_Renderer* renderer) {
     Player::player_model = {(int)pos.x, (int)pos.y, hitbox.x, hitbox.y};

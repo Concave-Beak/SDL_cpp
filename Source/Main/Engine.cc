@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
@@ -7,13 +8,8 @@
 #include <cstdlib>
 #include <string>
 
+#include "../../Include/Headers/Utils.hh"
 #include "Engine.hh"
-
-#define GRAVITY 200.0f
-#define MAX_X_SPEED 20
-#define MIN_X_SPEED -20
-#define MAX_Y_SPEED 400
-#define MIN_Y_SPEED -200
 
 //------------------------------------------------------------------------------
 
@@ -53,6 +49,9 @@ void Engine::HandlePhysics() {
     if (playerPos->y < SCREEN_HEIGHT - playerHitboxInfo.y) {
         playerVel->y += dT * GRAVITY;
         playerPos->y += playerVel->y * dT;
+    } else {
+        playerPos->y = SCREEN_HEIGHT - playerHitboxInfo.y;
+        playerVel->y = 0;
     }
 
     if (playerVel->y > MAX_Y_SPEED) {
@@ -66,7 +65,7 @@ void Engine::HandlePhysics() {
         playerVel->x = MIN_X_SPEED;
     }
     playerPos->x += playerVel->x;
-    playerVel->x *= 0.9;
+    playerVel->x *= 1.0f - dT;
 
     playerInstance->lastUpdate = time;
 }
@@ -94,33 +93,34 @@ void Engine::HandleKeyboardEvents(SDL_Event *event) {
             break;
         }
         case SDL_KEYDOWN: {
-            switch (event->key.keysym.sym) {
-                case SDLK_LEFT: {
-                    playerInstance->Move(MoveOpts::LEFT);
-                    break;
-                }
-                case SDLK_RIGHT: {
-                    playerInstance->Move(MoveOpts::RIGHT);
-                    break;
-                }
-                case SDLK_UP: {
-                    playerInstance->Move(MoveOpts::UP);
-                    break;
-                }
-                case SDLK_DOWN: {
-                    playerInstance->Move(MoveOpts::DOWN);
-                    break;
-                }
-                case SDLK_q: {
-                    quit = true;
-                    break;
-                }
-                case SDLK_r: {
-                    playerInstance->pos = {0, 0};
-                    break;
-                }
-            }
+            keyStates[event->key.keysym.sym] = true;
+            break;
         }
+        case SDL_KEYUP: {
+            keyStates[event->key.keysym.sym] = false;
+            break;
+        }
+    }
+    if (keyStates[SDLK_LEFT] || keyStates[SDLK_a]) {
+        playerInstance->Move(MoveOpts::LEFT);
+    }
+    if (keyStates[SDLK_RIGHT] || keyStates[SDLK_d]) {
+        playerInstance->Move(MoveOpts::RIGHT);
+    }
+    if (keyStates[SDLK_UP] || keyStates[SDLK_w]) {
+        keyStates[SDLK_UP] = false;
+        keyStates[SDLK_w] = false;
+        playerInstance->Move(MoveOpts::UP);
+    }
+    if (keyStates[SDLK_DOWN] || keyStates[SDLK_s]) {
+        playerInstance->Move(MoveOpts::DOWN);
+    }
+    if (keyStates[SDLK_r]) {
+        playerInstance->pos = {0, 0};
+    }
+    if (keyStates[SDLK_q]) {
+        quit = true;
+        return;
     }
 }
 
@@ -157,48 +157,39 @@ void Engine::DrawText(const std::string &text) {
     SDL_FreeSurface(textSurface);
     TTF_CloseFont(font);
 }
+
 void Engine::Init() {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        fprintf(stderr,
-                "SDL could not initialize! SDL_Error: %s\n",
-                SDL_GetError());
+        fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
     if (TTF_Init() != 0) {
-        fprintf(stderr,
-                "SDL TTF could not initialize! SDL_Error: %s\n",
-                SDL_GetError());
+        fprintf(stderr, "SDL TTF could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
-    window = SDL_CreateWindow("Game",
-                              0, 0,
-                              SCREEN_WIDTH, SCREEN_HEIGHT,
-                              SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("Game", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == NULL) {
-        fprintf(stderr,
-                "SDL could not create window! SDL_Error: %s\n",
-                SDL_GetError());
+        fprintf(stderr, "SDL could not create window! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
-        fprintf(stderr,
-                "SDL could not create renderer! SDL_Error: %s\n",
-                SDL_GetError());
+        fprintf(stderr, "SDL could not create renderer! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 }
 
-void Engine::Run() {
+int Engine::Run() {
     printf("Starting the game loop...\n");
     Loop();
 
     SDL_DestroyWindow(window);
     TTF_Quit();
     SDL_Quit();
+    return 0;
 }
 
 Engine *Engine::instance = new Engine;
@@ -206,7 +197,7 @@ Engine *Engine::GetEngineInstance() { return instance; }
 
 //------------------------------------------------------------------------------
 /*
- *  TODO::
- *      - Improve fps handeling and physics
+ *  TODO:
+ *      - Create colisions and platforms
  *      - Create a pause tech
  */

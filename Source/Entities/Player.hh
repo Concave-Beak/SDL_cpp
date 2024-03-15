@@ -31,14 +31,12 @@ class Player {
    private:
     static Player* player;
 
-    Vec2i direction;
+    const Vec2f accelSpeed = {1, 250};  // may change during gameplay,
+                                        // I'll just use it as a const it for
+                                        // now
 
     Vec2i hitbox = {75, 75};
     SDL_Rect player_model = SDL_Rect{(int)pos.x, (int)pos.y, hitbox.x, hitbox.y};
-
-   private:
-    void CalcPlayerSpeed();
-    void CalcPlayerAccel();
 };
 
 //------------------------------------------------------------------------------

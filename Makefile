@@ -1,33 +1,41 @@
-CC = g++
-CFLAGS = -Wall -Wextra -O2
-LDFLAGS = -lSDL2 -lSDL2_ttf
-SRC_DIR = Source
-BUILD_DIR = Build
-BIN_DIR = Bin
+# Compiler and flags
+CC := g++
+CFLAGS := -Wall -Wextra -O2
+LDFLAGS := -lSDL2 -lSDL2_ttf
 
-SRCS = $(wildcard $(SRC_DIR)/*/*.cc)
-OBJS = $(patsubst $(SRC_DIR)/*/%.cc, $(BUILD_DIR)/%.o, $(SRCS))
-TARGET = $(BIN_DIR)/project
+# Directories
+SRC_DIR := Source
+BUILD_DIR := Build
+BIN_DIR := Bin
 
+# Find source files
+SRCS := $(wildcard $(SRC_DIR)/**/*.cc)
+OBJS := $(patsubst $(SRC_DIR)/%.cc, $(BUILD_DIR)/%.o, $(SRCS))
+
+# Target
+TARGET := $(BIN_DIR)/project
+
+# Make all by default
+all: $(TARGET)
+
+# Rule to generate executable
 $(TARGET): $(OBJS) 
 	@mkdir -p $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(BUILD_DIR)
+# Rule to compile source files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Phony targets
+.PHONY: all clean rebuild
+
+# Clean
 clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
-.PHONY: all clean
-
-all: $(TARGET)
-
-force-rebuild:
-	@rm -f $(OBJS)
-
+# Rebuild
 rebuild: clean all
 
-touch:
-	@touch $(SRCS)
+

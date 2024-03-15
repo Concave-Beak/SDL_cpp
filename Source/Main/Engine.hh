@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
 #include <string>
+#include <unordered_map>
 
 #include "../Entities/Player.hh"
 #include "./Config.hh"
@@ -16,7 +17,7 @@ class Engine {
     SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
     void Init();
-    void Run();
+    int Run();
 
    private:
     static Engine* instance;
@@ -27,6 +28,8 @@ class Engine {
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;
     SDL_Event event = SDL_Event{};
+
+    std::unordered_map<SDL_Keycode, bool> keyStates;
 
     Uint8 fpsCap = 60;
     const Uint8 minFPS = 10;
