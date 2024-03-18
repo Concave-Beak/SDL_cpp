@@ -7,8 +7,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <vector>
 
 #include "../../Include/Headers/Utils.hh"
+#include "Level.hh"
 #include "Engine.hh"
 
 //------------------------------------------------------------------------------
@@ -16,19 +18,20 @@
 void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
     SDL_RenderFillRect(renderer, NULL);
-    SDL_RenderClear(renderer);
 }
 
 //------------------------------------------------------------------------------
 
 void Engine::Loop() {
     float beginTick = 0;
+    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75}, FULL_COLISION, SDL_Color{0, 0, 0, 255});  // Placeolder
     while (!quit) {
         beginTick = SDL_GetTicks();
         HandlePhysics();
 
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
+            Level::GenerateLevel(0, renderer);
             playerInstance->Draw(renderer);
             HandleFPS(beginTick);
             SDL_RenderPresent(renderer);
@@ -45,6 +48,19 @@ void Engine::HandlePhysics() {
     Vec2f *playerVel = &playerInstance->velocity;
     Vec2i playerHitboxInfo = playerInstance->GetHitboxInfo();
     float dT = (time - playerInstance->lastUpdate) / 300.0f;
+    std::vector<LevelItem> colisions = Level::colisions;
+
+    playerInstance->hitWallRight = false;
+    playerInstance->canJump = false;
+    for (LevelItem colisionItem : colisions) {
+        if (playerPos->x + playerHitboxInfo.x > colisionItem.pos.x &&
+            playerPos->x < colisionItem.pos.x + colisionItem.wireframe.w &&
+            playerPos->y + playerHitboxInfo.y > colisionItem.pos.y &&
+            playerPos->y < colisionItem.pos.y + colisionItem.wireframe.h) {
+            playerVel->x = 0;
+            playerInstance->hitWallRight = true;
+        }
+    }
 
     if (playerPos->y < SCREEN_HEIGHT - playerHitboxInfo.y) {
         playerVel->y += dT * GRAVITY;
@@ -52,6 +68,7 @@ void Engine::HandlePhysics() {
     } else {
         playerPos->y = SCREEN_HEIGHT - playerHitboxInfo.y;
         playerVel->y = 0;
+        playerInstance->canJump = true;
     }
 
     if (playerVel->y > MAX_Y_SPEED) {
@@ -108,8 +125,8 @@ void Engine::HandleKeyboardEvents(SDL_Event *event) {
         playerInstance->Move(MoveOpts::RIGHT);
     }
     if (keyStates[SDLK_UP] || keyStates[SDLK_w]) {
-        keyStates[SDLK_UP] = false;
-        keyStates[SDLK_w] = false;
+        keyStates[SDLK_UP] = false;  // This is just for now, after i've done
+        keyStates[SDLK_w] = false;   // the proper colision physics this wont be necessary
         playerInstance->Move(MoveOpts::UP);
     }
     if (keyStates[SDLK_DOWN] || keyStates[SDLK_s]) {
@@ -163,29 +180,34 @@ void Engine::Init() {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    printf("INFO: SDl_Init initialized succesfully\n");
 
     if (TTF_Init() != 0) {
         fprintf(stderr, "SDL TTF could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    printf("INFO: SDl_TTF initialized succesfully\n");
 
     window = SDL_CreateWindow("Game", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == NULL) {
         fprintf(stderr, "SDL could not create window! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    printf("INFO: Window initialized succesfully\n");
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
         fprintf(stderr, "SDL could not create renderer! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    printf("INFO: Renderer initialized succesfully\n");
 }
 
 int Engine::Run() {
     printf("Starting the game loop...\n");
     Loop();
 
+    printf("Game closed");
     SDL_DestroyWindow(window);
     TTF_Quit();
     SDL_Quit();
@@ -200,4 +222,5 @@ Engine *Engine::GetEngineInstance() { return instance; }
  *  TODO:
  *      - Create colisions and platforms
  *      - Create a pause tech
+ *      - Fix issue: More fps = player moves faster
  */

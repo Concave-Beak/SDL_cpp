@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
+#include <vector>
 #include "Player.hh"
 
 //------------------------------------------------------------------------------
@@ -17,17 +18,25 @@ Vec2i Player::GetHitboxInfo() {
 void Player::Move(const MoveOpts move_options) {
     switch (move_options) {
         case LEFT: {
-            velocity.x -= accelSpeed.x;
+            if (!hitWallLeft) {
+                pos.x -= 0.1f;
+                velocity.x -= accelSpeed.x;
+            }
             break;
         }
         case RIGHT: {
-            velocity.x += accelSpeed.x;
+            if (!hitWallRight) {
+                pos.x += 0.1f;
+                velocity.x += accelSpeed.x;
+            }
             break;
         }
         case UP: {
             // I need to -1 so it doesn't conflict with the physics engine
-            pos.y -= 1;  // TODO: fix this
-            velocity.y -= accelSpeed.y;
+            if (canJump) {
+                pos.y -= 0.1f;  // TODO: fix this
+                velocity.y -= accelSpeed.y;
+            }
             break;
         }
         case DOWN: {
@@ -40,6 +49,9 @@ void Player::Move(const MoveOpts move_options) {
 }
 
 void Player::Draw(SDL_Renderer* renderer) {
+    std::vector<int> a;
+
+    a.resize(100);
     Player::player_model = {(int)pos.x, (int)pos.y, hitbox.x, hitbox.y};
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_RenderFillRect(renderer, &player_model);

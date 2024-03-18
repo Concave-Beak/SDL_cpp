@@ -16,6 +16,7 @@ class Engine {
    public:
     SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
+    Vec2i GetScreenInfo();
     void Init();
     int Run();
 
@@ -31,7 +32,7 @@ class Engine {
 
     std::unordered_map<SDL_Keycode, bool> keyStates;
 
-    Uint8 fpsCap = 60;
+    Uint16 fpsCap = 60;
     const Uint8 minFPS = 10;
 
     bool quit = false;
