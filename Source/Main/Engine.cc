@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
-#include <vector>
 
 #include "../../Include/Headers/Utils.hh"
 #include "Level.hh"
@@ -24,10 +23,17 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
 
 void Engine::Loop() {
     float beginTick = 0;
-    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75}, FULL_COLISION, SDL_Color{0, 0, 0, 255});  // Placeolder
+    Vec2f *playerPos = &playerInstance->pos;
+    Vec2f *playerVel = &playerInstance->velocity;
+    Vec2i playerColisionboxInfo = playerInstance->GetHitboxInfo();
+
+    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 100}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff});                                 // Placeolder
+    new LevelItem(Vec2i{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 10 - 100}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff});  // Placeolder
+    new LevelItem(Vec2i{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 10}, FLOOR, SDL_Color{0, 0, 0xff, 0xff});                                                  // Placeolder
+
     while (!quit) {
         beginTick = SDL_GetTicks();
-        HandlePhysics();
+        HandlePlayerAccel(playerPos, playerVel, playerColisionboxInfo);
 
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
@@ -42,49 +48,96 @@ void Engine::Loop() {
     }
 }
 
-void Engine::HandlePhysics() {
-    Uint32 time = SDL_GetTicks();
-    Vec2f *playerPos = &playerInstance->pos;
-    Vec2f *playerVel = &playerInstance->velocity;
-    Vec2i playerHitboxInfo = playerInstance->GetHitboxInfo();
-    float dT = (time - playerInstance->lastUpdate) / 300.0f;
-    std::vector<LevelItem> colisions = Level::colisions;
+void Engine::HandlePlayerAccel(Vec2f *playerPos, Vec2f *playerVel, Vec2i playerColisionboxInfo) {
+    Uint32 timeNow = SDL_GetTicks();
+    float delta = (timeNow - playerInstance->lastUpdate) / 300.0f;  // 300 is just to make delta easier to handle
 
-    playerInstance->hitWallRight = false;
-    playerInstance->canJump = false;
-    for (LevelItem colisionItem : colisions) {
-        if (playerPos->x + playerHitboxInfo.x > colisionItem.pos.x &&
-            playerPos->x < colisionItem.pos.x + colisionItem.wireframe.w &&
-            playerPos->y + playerHitboxInfo.y > colisionItem.pos.y &&
-            playerPos->y < colisionItem.pos.y + colisionItem.wireframe.h) {
-            playerVel->x = 0;
-            playerInstance->hitWallRight = true;
+    CheckColisions(playerPos, playerVel, playerColisionboxInfo);
+
+    playerVel->x *= 1.0f - delta;
+    playerPos->x += playerVel->x;
+
+    if (playerInstance->colidedDown == false) {
+        playerVel->y += delta * GRAVITY;
+        playerPos->y += playerVel->y * delta;
+    }
+
+    {
+        if (playerVel->y > MAX_Y_SPEED) {
+            playerVel->y = MAX_Y_SPEED;
+        }
+        if (playerVel->y < MIN_Y_SPEED) {
+            playerVel->y = MIN_Y_SPEED;
+        }
+
+        if (playerVel->x > MAX_X_SPEED) {
+            playerVel->x = MAX_X_SPEED;
+        }
+        if (playerVel->x < MIN_X_SPEED) {
+            playerVel->x = MIN_X_SPEED;
         }
     }
+    playerInstance->lastUpdate = timeNow;
+}
 
-    if (playerPos->y < SCREEN_HEIGHT - playerHitboxInfo.y) {
-        playerVel->y += dT * GRAVITY;
-        playerPos->y += playerVel->y * dT;
-    } else {
-        playerPos->y = SCREEN_HEIGHT - playerHitboxInfo.y;
-        playerVel->y = 0;
-        playerInstance->canJump = true;
-    }
+void Engine::CheckColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionBoxPlayer) {
+    playerInstance->colidedLeft = false;
+    playerInstance->colidedRight = false;
+    playerInstance->colidedDown = false;
+    playerInstance->colidedUp = false;
 
-    if (playerVel->y > MAX_Y_SPEED) {
-        playerVel->y = MAX_Y_SPEED;
-    }
+    float feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;  // int because small deviations in floats
+    float headOfPlayer = posPlayer->y;                        // can break the physics calcs
+    float leftOfPlayer = posPlayer->x;
+    float rightOfPlayer = posPlayer->x + colisionBoxPlayer.x;
 
-    if (playerVel->x > MAX_X_SPEED) {
-        playerVel->x = MAX_X_SPEED;
-    }
-    if (playerVel->x < MIN_X_SPEED) {
-        playerVel->x = MIN_X_SPEED;
-    }
-    playerPos->x += playerVel->x;
-    playerVel->x *= 1.0f - dT;
+    for (LevelItem colisionItem : Level::colisions) {
+        int colItemTop = colisionItem.pos.y;
+        int colItemBottom = colisionItem.pos.y + colisionItem.wireframe.h;
+        int colItemLeft = colisionItem.pos.x;
+        int colItemRight = colisionItem.pos.x + colisionItem.wireframe.w;
 
-    playerInstance->lastUpdate = time;
+        bool isHorizontallyOverlaped = (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) || (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
+
+        bool hitFeet = feetOfPLayer >= colItemTop &&
+                       feetOfPLayer <= colItemBottom &&
+                       isHorizontallyOverlaped;
+
+        bool hitHead = headOfPlayer <= colItemBottom &&
+                       headOfPlayer > colItemTop &&
+                       isHorizontallyOverlaped;
+        bool isVerticallyOverlaped = (headOfPlayer > colItemTop && headOfPlayer < colItemBottom - colisionItem.wireframe.h / 2.0) || (feetOfPLayer < colItemTop && feetOfPLayer > colItemBottom);
+
+        bool hitRight = rightOfPlayer >= colItemLeft &&
+                        rightOfPlayer < colItemRight &&
+                        isVerticallyOverlaped;
+
+        bool hitLeft = leftOfPlayer <= colItemRight &&
+                       leftOfPlayer > colItemLeft &&
+                       isVerticallyOverlaped;
+
+        if (hitFeet) {
+            playerInstance->colidedDown = true;
+            velPlayer->y = 0;
+            posPlayer->y = colItemTop - colisionBoxPlayer.y;
+        }
+        if (hitHead) {
+            playerInstance->colidedUp = true;
+            velPlayer->y = 0;
+            posPlayer->y = colItemBottom;
+        }
+
+        if (hitRight) {
+            playerInstance->colidedRight = true;
+            velPlayer->x = 0;
+            posPlayer->x = colItemLeft - colisionBoxPlayer.x;
+        }
+        if (hitLeft) {
+            playerInstance->colidedLeft = true;
+            velPlayer->x = 0;
+            posPlayer->x = colItemRight;
+        }
+    }
 }
 
 void Engine::HandleFPS(float loopBegin) {
@@ -180,7 +233,7 @@ void Engine::Init() {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    printf("INFO: SDl_Init initialized succesfully\n");
+    printf("INFO: SDL_Init initialized succesfully\n");
 
     if (TTF_Init() != 0) {
         fprintf(stderr, "SDL TTF could not initialize! SDL_Error: %s\n", SDL_GetError());

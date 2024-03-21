@@ -10,10 +10,10 @@ std::vector<LevelItem> Level::textures = {};
 
 LevelItem::~LevelItem(){};
 LevelItem::LevelItem(){};
-LevelItem::LevelItem(Vec2i ppos, ColisionType pcolType, SDL_Color pcolor) : pos(ppos), colisionType(pcolType), color(pcolor) {
-    this->wireframe = {ppos.x, ppos.y, 75, 75};
+LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor) : pos(ppos), colisionType(pcolType), color(pcolor) {
+    this->wireframe = {ppos.x, ppos.y, size.x, size.y};
 
-    if (pcolType == FULL_COLISION) {
+    if (pcolType != NO_COLISION) {
         Level::colisions.push_back(*this);  // This is used when checking
                                             // for colisions, because I dont
                                             // want to iterate through every LevelItem
@@ -27,7 +27,8 @@ LevelItem::LevelItem(Vec2i ppos, ColisionType pcolType, SDL_Color pcolor) : pos(
 bool Level::GenerateLevel(int level, SDL_Renderer *renderer) {
     (void)level;
     for (LevelItem levelItem : colisions) {
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 0);
+        SDL_Color color = levelItem.color;
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
         SDL_RenderFillRect(renderer, &levelItem.wireframe);
     }
 

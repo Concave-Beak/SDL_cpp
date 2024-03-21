@@ -8,5 +8,5 @@ git clone https://github.com/RyanQueirozS/SDL_cpp.git
 # git checkout develop 
 
 make
-./Bin/project (project name will change later)
+./Bin/project # project name will change later
 ```

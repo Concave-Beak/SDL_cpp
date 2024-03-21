@@ -18,14 +18,14 @@ Vec2i Player::GetHitboxInfo() {
 void Player::Move(const MoveOpts move_options) {
     switch (move_options) {
         case LEFT: {
-            if (!hitWallLeft) {
+            if (!colidedLeft) {
                 pos.x -= 0.1f;
                 velocity.x -= accelSpeed.x;
             }
             break;
         }
         case RIGHT: {
-            if (!hitWallRight) {
+            if (!colidedRight) {
                 pos.x += 0.1f;
                 velocity.x += accelSpeed.x;
             }
@@ -33,11 +33,11 @@ void Player::Move(const MoveOpts move_options) {
         }
         case UP: {
             // I need to -1 so it doesn't conflict with the physics engine
-            if (canJump) {
+            if (colidedDown) {
                 pos.y -= 0.1f;  // TODO: fix this
                 velocity.y -= accelSpeed.y;
+                break;
             }
-            break;
         }
         case DOWN: {
             break;

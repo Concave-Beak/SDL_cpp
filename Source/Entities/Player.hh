@@ -19,9 +19,10 @@ class Player {
     Vec2f pos = {0, 0};
     Uint32 lastUpdate;
 
-    bool canJump = true;
-    bool hitWallLeft = false;
-    bool hitWallRight = false;
+    bool colidedDown = false;
+    bool colidedLeft = false;
+    bool colidedRight = false;
+    bool colidedUp = false;
 
    public:
     static Player* GetPlayerInstace();

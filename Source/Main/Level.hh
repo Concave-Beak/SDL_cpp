@@ -10,7 +10,8 @@
 enum ColisionType {
     NO_COLISION = 0,
     FULL_COLISION,
-    FULL_COLISION_AND_TEXTURE,
+    FLOOR,
+    PLATFORM,
 };
 
 struct LevelItem {
@@ -20,7 +21,7 @@ struct LevelItem {
     SDL_Rect wireframe;
     // SDL_Texture *texture; // not used
 
-    LevelItem(Vec2i ppos, ColisionType pcolType, SDL_Color pcolor);
+    LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor);
     LevelItem();
     ~LevelItem();
 

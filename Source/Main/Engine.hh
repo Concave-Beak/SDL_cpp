@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
+#include <sys/wait.h>
 #include <string>
 #include <unordered_map>
 
@@ -12,7 +13,6 @@
 //------------------------------------------------------------------------------
 
 class Engine {
-   public:
    public:
     SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
@@ -46,7 +46,9 @@ class Engine {
 
     void HandleFPS(float startTick);
     void HandleKeyboardEvents(SDL_Event* event);
-    void HandlePhysics();
+    void HandlePlayerAccel(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
+
+    void CheckColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo);
 
     void DrawText(const std::string& text);
 };
