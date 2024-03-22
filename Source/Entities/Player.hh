@@ -2,6 +2,7 @@
 #define __PLAYER_HEADER__
 
 #include <SDL2/SDL.h>
+
 #include "../../Include/Headers/Utils.hh"
 
 //------------------------------------------------------------------------------
@@ -23,6 +24,8 @@ class Player {
     bool colidedLeft = false;
     bool colidedRight = false;
     bool colidedUp = false;
+
+    bool isAbovePlatform = false;
 
    public:
     static Player* GetPlayerInstace();

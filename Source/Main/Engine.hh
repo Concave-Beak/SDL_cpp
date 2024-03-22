@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
 #include <sys/wait.h>
+
 #include <string>
 #include <unordered_map>
 
@@ -45,10 +46,10 @@ class Engine {
     void Loop();
 
     void HandleFPS(float startTick);
-    void HandleKeyboardEvents(SDL_Event* event);
-    void HandlePlayerAccel(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
+    void HandleEvent(SDL_Event* event);
+    void HandlePlayerVel(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
 
-    void CheckColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo);
+    void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta);
 
     void DrawText(const std::string& text);
 };

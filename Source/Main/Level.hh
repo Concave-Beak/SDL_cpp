@@ -2,7 +2,9 @@
 #define __MAP_HEADER__
 
 #include <SDL2/SDL.h>
+
 #include <vector>
+
 #include "../../Include/Headers/Utils.hh"
 
 //------------------------------------------------------------------------------
@@ -10,11 +12,16 @@
 enum ColisionType {
     NO_COLISION = 0,
     FULL_COLISION,
-    FLOOR,
     PLATFORM,
 };
 
 struct LevelItem {
+    // std::unordered_map<std::string, float> TerrainType{
+    //     {"dirt", 1.0},
+    //     {"mud", 0.8},
+    // };
+    // Not implemented
+
     Vec2i pos;
     ColisionType colisionType;
     SDL_Color color;

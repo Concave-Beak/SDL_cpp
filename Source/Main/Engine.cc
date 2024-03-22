@@ -1,8 +1,11 @@
+#include "Engine.hh"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
+
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -10,7 +13,6 @@
 
 #include "../../Include/Headers/Utils.hh"
 #include "Level.hh"
-#include "Engine.hh"
 
 //------------------------------------------------------------------------------
 
@@ -27,13 +29,14 @@ void Engine::Loop() {
     Vec2f *playerVel = &playerInstance->velocity;
     Vec2i playerColisionboxInfo = playerInstance->GetHitboxInfo();
 
-    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 100}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff});                                 // Placeolder
-    new LevelItem(Vec2i{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 10 - 100}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff});  // Placeolder
-    new LevelItem(Vec2i{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 10}, FLOOR, SDL_Color{0, 0, 0xff, 0xff});                                                  // Placeolder
+    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff});                                  // Placeolder
+    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff});                            // Placeolder
+    new LevelItem(Vec2i{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff});  // Placeolder
+    new LevelItem(Vec2i{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff});                                     // Placeolder
 
     while (!quit) {
         beginTick = SDL_GetTicks();
-        HandlePlayerAccel(playerPos, playerVel, playerColisionboxInfo);
+        HandlePlayerVel(playerPos, playerVel, playerColisionboxInfo);
 
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
@@ -44,98 +47,121 @@ void Engine::Loop() {
             SDL_RenderClear(renderer);
         }
 
-        HandleKeyboardEvents(&event);
+        HandleEvent(&event);
     }
 }
 
-void Engine::HandlePlayerAccel(Vec2f *playerPos, Vec2f *playerVel, Vec2i playerColisionboxInfo) {
+void Engine::HandlePlayerVel(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColisionboxInfo) {
     Uint32 timeNow = SDL_GetTicks();
     float delta = (timeNow - playerInstance->lastUpdate) / 300.0f;  // 300 is just to make delta easier to handle
 
-    CheckColisions(playerPos, playerVel, playerColisionboxInfo);
+    HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta);
 
-    playerVel->x *= 1.0f - delta;
-    playerPos->x += playerVel->x;
+    velPlayer->x *= 1.0f - delta;
+    posPlayer->x += velPlayer->x;
 
     if (playerInstance->colidedDown == false) {
-        playerVel->y += delta * GRAVITY;
-        playerPos->y += playerVel->y * delta;
+        velPlayer->y += delta * GRAVITY;
+        posPlayer->y += velPlayer->y * delta;
     }
 
     {
-        if (playerVel->y > MAX_Y_SPEED) {
-            playerVel->y = MAX_Y_SPEED;
+        if (velPlayer->y > MAX_Y_SPEED) {
+            velPlayer->y = MAX_Y_SPEED;
         }
-        if (playerVel->y < MIN_Y_SPEED) {
-            playerVel->y = MIN_Y_SPEED;
+        if (velPlayer->y < MIN_Y_SPEED) {
+            velPlayer->y = MIN_Y_SPEED;
         }
 
-        if (playerVel->x > MAX_X_SPEED) {
-            playerVel->x = MAX_X_SPEED;
+        if (velPlayer->x > MAX_X_SPEED) {
+            velPlayer->x = MAX_X_SPEED;
         }
-        if (playerVel->x < MIN_X_SPEED) {
-            playerVel->x = MIN_X_SPEED;
+        if (velPlayer->x < MIN_X_SPEED) {
+            velPlayer->x = MIN_X_SPEED;
         }
     }
+
     playerInstance->lastUpdate = timeNow;
 }
 
-void Engine::CheckColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionBoxPlayer) {
+void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionBoxPlayer, float delta) {
+    playerInstance->colidedUp = false;
     playerInstance->colidedLeft = false;
     playerInstance->colidedRight = false;
     playerInstance->colidedDown = false;
-    playerInstance->colidedUp = false;
 
-    float feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;  // int because small deviations in floats
-    float headOfPlayer = posPlayer->y;                        // can break the physics calcs
-    float leftOfPlayer = posPlayer->x;
-    float rightOfPlayer = posPlayer->x + colisionBoxPlayer.x;
+    playerInstance->isAbovePlatform = false;
+
+    float headOfPlayer = posPlayer->y,
+          leftOfPlayer = posPlayer->x,
+          rightOfPlayer = posPlayer->x + colisionBoxPlayer.x,
+          feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;
+
+    bool isHorizontallyOverlaped, hitFeet, hitHead,
+        isVerticallyOverlaped, hitRight, hitLeft;
+
+    int colItemTop,
+        colItemLeft,
+        colItemRight,
+        colItemBottom;
 
     for (LevelItem colisionItem : Level::colisions) {
-        int colItemTop = colisionItem.pos.y;
-        int colItemBottom = colisionItem.pos.y + colisionItem.wireframe.h;
-        int colItemLeft = colisionItem.pos.x;
-        int colItemRight = colisionItem.pos.x + colisionItem.wireframe.w;
+        {
+            colItemTop = colisionItem.pos.y;
+            colItemBottom = colisionItem.pos.y + colisionItem.wireframe.h;
+            colItemLeft = colisionItem.pos.x;
+            colItemRight = colisionItem.pos.x + colisionItem.wireframe.w;
+        }
 
-        bool isHorizontallyOverlaped = (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) || (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
+        {
+            isHorizontallyOverlaped = (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) ||
+                                      (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
 
-        bool hitFeet = feetOfPLayer >= colItemTop &&
-                       feetOfPLayer <= colItemBottom &&
-                       isHorizontallyOverlaped;
+            hitFeet = feetOfPLayer + delta * velPlayer->y >= colItemTop &&
+                      feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.9 &&  // 0.9 is the maximum that i've found not to break colision
+                      isHorizontallyOverlaped;
 
-        bool hitHead = headOfPlayer <= colItemBottom &&
-                       headOfPlayer > colItemTop &&
-                       isHorizontallyOverlaped;
-        bool isVerticallyOverlaped = (headOfPlayer > colItemTop && headOfPlayer < colItemBottom - colisionItem.wireframe.h / 2.0) || (feetOfPLayer < colItemTop && feetOfPLayer > colItemBottom);
+            hitHead = headOfPlayer + delta * velPlayer->y <= colItemBottom &&
+                      headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
+                      isHorizontallyOverlaped &&
+                      colisionItem.colisionType != PLATFORM;
 
-        bool hitRight = rightOfPlayer >= colItemLeft &&
-                        rightOfPlayer < colItemRight &&
-                        isVerticallyOverlaped;
+            isVerticallyOverlaped = ((headOfPlayer > colItemTop && headOfPlayer < colItemBottom) ||
+                                     (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
 
-        bool hitLeft = leftOfPlayer <= colItemRight &&
-                       leftOfPlayer > colItemLeft &&
+            hitRight = rightOfPlayer + velPlayer->x * (1 - delta) >= colItemLeft &&
+                       rightOfPlayer <= colItemRight &&
                        isVerticallyOverlaped;
+
+            hitLeft = leftOfPlayer + velPlayer->x * (1 - delta) <= colItemRight &&
+                      leftOfPlayer >= colItemLeft &&
+                      isVerticallyOverlaped;
+        }
 
         if (hitFeet) {
             playerInstance->colidedDown = true;
-            velPlayer->y = 0;
             posPlayer->y = colItemTop - colisionBoxPlayer.y;
-        }
-        if (hitHead) {
-            playerInstance->colidedUp = true;
             velPlayer->y = 0;
-            posPlayer->y = colItemBottom;
+            if (colisionItem.colisionType == PLATFORM) playerInstance->isAbovePlatform = true;
         }
 
-        if (hitRight) {
-            playerInstance->colidedRight = true;
-            velPlayer->x = 0;
-            posPlayer->x = colItemLeft - colisionBoxPlayer.x;
-        }
-        if (hitLeft) {
-            playerInstance->colidedLeft = true;
-            velPlayer->x = 0;
-            posPlayer->x = colItemRight;
+        if (colisionItem.colisionType != PLATFORM) {
+            if (hitHead) {
+                playerInstance->colidedUp = true;
+                posPlayer->y = colItemBottom;
+                velPlayer->y = -velPlayer->y * 0.1;
+            }
+
+            if (hitRight) {
+                playerInstance->colidedRight = true;
+                velPlayer->x = -velPlayer->x * 0.2;
+                posPlayer->x = colItemLeft - colisionBoxPlayer.x;
+            }
+            if (hitLeft) {
+                playerInstance->colidedLeft = true;
+                velPlayer->x = -velPlayer->x * 0.2;
+                posPlayer->x = colItemRight;
+            }
         }
     }
 }
@@ -155,7 +181,7 @@ void Engine::HandleFPS(float loopBegin) {
     }
 }
 
-void Engine::HandleKeyboardEvents(SDL_Event *event) {
+void Engine::HandleEvent(SDL_Event *event) {
     SDL_PollEvent(event);
     switch (event->type) {
         case SDL_QUIT: {
@@ -178,15 +204,13 @@ void Engine::HandleKeyboardEvents(SDL_Event *event) {
         playerInstance->Move(MoveOpts::RIGHT);
     }
     if (keyStates[SDLK_UP] || keyStates[SDLK_w]) {
-        keyStates[SDLK_UP] = false;  // This is just for now, after i've done
-        keyStates[SDLK_w] = false;   // the proper colision physics this wont be necessary
         playerInstance->Move(MoveOpts::UP);
     }
     if (keyStates[SDLK_DOWN] || keyStates[SDLK_s]) {
         playerInstance->Move(MoveOpts::DOWN);
     }
     if (keyStates[SDLK_r]) {
-        playerInstance->pos = {0, 0};
+        playerInstance->pos = {playerInstance->pos.x, 0};
     }
     if (keyStates[SDLK_q]) {
         quit = true;
