@@ -54,9 +54,6 @@ void Player::Move(const MoveOpts move_options) {
 }
 
 void Player::Draw(SDL_Renderer* renderer) {
-    std::vector<int> a;
-
-    a.resize(100);
     Player::player_model = {(int)pos.x, (int)pos.y, hitbox.x, hitbox.y};
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_RenderFillRect(renderer, &player_model);
