@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
+#include <sys/wait.h>
+
 #include <string>
 #include <unordered_map>
 
@@ -13,9 +15,9 @@
 
 class Engine {
    public:
-   public:
     SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
+    Vec2i GetScreenInfo();
     void Init();
     int Run();
 
@@ -31,7 +33,7 @@ class Engine {
 
     std::unordered_map<SDL_Keycode, bool> keyStates;
 
-    Uint8 fpsCap = 60;
+    Uint16 fpsCap = 60;
     const Uint8 minFPS = 10;
 
     bool quit = false;
@@ -44,8 +46,10 @@ class Engine {
     void Loop();
 
     void HandleFPS(float startTick);
-    void HandleKeyboardEvents(SDL_Event* event);
-    void HandlePhysics();
+    void HandleEvent(SDL_Event* event);
+    void HandlePlayerVel(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
+
+    void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta);
 
     void DrawText(const std::string& text);
 };

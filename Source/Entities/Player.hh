@@ -2,6 +2,7 @@
 #define __PLAYER_HEADER__
 
 #include <SDL2/SDL.h>
+
 #include "../../Include/Headers/Utils.hh"
 
 //------------------------------------------------------------------------------
@@ -18,6 +19,13 @@ class Player {
     Vec2f velocity = {0, 0};
     Vec2f pos = {0, 0};
     Uint32 lastUpdate;
+
+    bool colidedDown = false;
+    bool colidedLeft = false;
+    bool colidedRight = false;
+    bool colidedUp = false;
+
+    bool isAbovePlatform = false;
 
    public:
     static Player* GetPlayerInstace();

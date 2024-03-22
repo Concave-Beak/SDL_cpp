@@ -1,6 +1,10 @@
+#include "Player.hh"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
-#include "Player.hh"
+
+#include <cstdio>
+#include <vector>
 
 //------------------------------------------------------------------------------
 
@@ -17,20 +21,30 @@ Vec2i Player::GetHitboxInfo() {
 void Player::Move(const MoveOpts move_options) {
     switch (move_options) {
         case LEFT: {
-            velocity.x -= accelSpeed.x;
+            if (!colidedLeft) {
+                velocity.x -= accelSpeed.x;
+            }
             break;
         }
         case RIGHT: {
-            velocity.x += accelSpeed.x;
+            if (!colidedRight) {
+                velocity.x += accelSpeed.x;
+            }
             break;
         }
         case UP: {
-            // I need to -1 so it doesn't conflict with the physics engine
-            pos.y -= 1;  // TODO: fix this
-            velocity.y -= accelSpeed.y;
-            break;
+            if (colidedDown && !colidedUp) {
+                velocity.y -= accelSpeed.y;
+                break;
+            }
         }
         case DOWN: {
+            if (isAbovePlatform) {
+                velocity.y += 10;
+                pos.y += 3.5;             // 3.5 is the safets i've found given the height
+                colidedDown = false;      // of the plaform in Engine.cc. This needs to be done
+                isAbovePlatform = false;  // to place the player bellow the platform's top
+            }
             break;
         }
         default: {
