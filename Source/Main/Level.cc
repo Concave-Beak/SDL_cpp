@@ -45,14 +45,3 @@ LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pc
 }
 
 //------------------------------------------------------------------------------
-
-bool Level::GenerateLevel(int levelId, SDL_Renderer *renderer) {
-    (void)levelId;
-    for (LevelItem levelItem : colisions) {
-        SDL_Color color = levelItem.color;
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_RenderFillRect(renderer, &levelItem.wireframe);
-    }
-
-    return true;
-}

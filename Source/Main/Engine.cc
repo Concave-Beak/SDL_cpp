@@ -2,6 +2,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
@@ -16,6 +18,54 @@
 
 //------------------------------------------------------------------------------
 
+Camera *Camera::instance = new Camera;
+
+Camera *Camera::GetCameraInstance() { return instance; }
+
+void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i hitboxPlayer) {
+    playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0 + hitboxPlayer.x / 2.0;
+    playerOffset.y = posPlayer.y - pos.y - cameraInfo.y / 1.5 + hitboxPlayer.y / 1.5;
+
+    if (!isBeingMoved) {
+        vel.y = playerOffset.y * 0.15 * (1 - delta);
+        vel.x = playerOffset.x * 0.15 * (1 - delta);
+    }
+
+    pos.y += vel.y;
+    pos.x += vel.x;
+}
+
+void Camera::Move(MoveOptions moveOpt) {
+    cameraMovementSpeed = {maxPlayerOffset.x / 10, maxPlayerOffset.y / 10};
+    isBeingMoved = true;
+    switch (moveOpt) {
+        case UP: {
+            if (playerOffset.y < maxPlayerOffset.y) {
+                vel.y -= cameraMovementSpeed.y;
+            }
+            break;
+        }
+        case DOWN: {
+            if (playerOffset.y < maxPlayerOffset.y) {
+                vel.y += cameraMovementSpeed.y;
+            }
+            break;
+        }
+        case LEFT: {
+            if (playerOffset.x > minPlayerOffset.x) {
+                vel.x -= cameraMovementSpeed.x;
+            }
+            break;
+        }
+        case RIGHT: {
+            if (playerOffset.x < maxPlayerOffset.x) {
+                vel.x += cameraMovementSpeed.x;
+            }
+            break;
+        }
+    }
+}
+//------------------------------------------------------------------------------
 void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
     SDL_RenderFillRect(renderer, NULL);
@@ -25,8 +75,8 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
 
 void Engine::Loop() {
     float beginTick = 0;
-    Vec2f *playerPos = &playerInstance->pos;
-    Vec2f *playerVel = &playerInstance->velocity;
+    Vec2f *posPlayer = &playerInstance->pos;
+    Vec2f *velPlayer = &playerInstance->velocity;
     Vec2i playerColisionboxInfo = playerInstance->GetHitboxInfo();
 
     new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff});                                  // Placeolder
@@ -36,12 +86,11 @@ void Engine::Loop() {
 
     while (!quit) {
         beginTick = SDL_GetTicks();
-        HandlePlayerVel(playerPos, playerVel, playerColisionboxInfo);
+        HandlePlayerVel(posPlayer, velPlayer, playerColisionboxInfo);
 
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
-            Level::GenerateLevel(0, renderer);
-            playerInstance->Draw(renderer);
+            Draw();
             HandleFPS(beginTick);
             SDL_RenderPresent(renderer);
             SDL_RenderClear(renderer);
@@ -56,6 +105,7 @@ void Engine::HandlePlayerVel(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerCol
     float delta = (timeNow - playerInstance->lastUpdate) / 300.0f;  // 300 is just to make delta easier to handle
 
     HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta);
+    camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT}, playerColisionboxInfo);
 
     velPlayer->x *= 1.0f - delta;
     posPlayer->x += velPlayer->x;
@@ -118,24 +168,13 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionB
                                       (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
 
             hitFeet = feetOfPLayer + delta * velPlayer->y >= colItemTop &&
-                      feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.9 &&  // 0.9 is the maximum that i've found not to break colision
-                      isHorizontallyOverlaped;
+                      feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.8 &&  // 0.8 is the maximum that i've found not to break colision,
+                      isHorizontallyOverlaped;                                           // this makes it so the player only goes up if above 20% o the colItem's height
 
             hitHead = headOfPlayer + delta * velPlayer->y <= colItemBottom &&
                       headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
                       isHorizontallyOverlaped &&
                       colisionItem.colisionType != PLATFORM;
-
-            isVerticallyOverlaped = ((headOfPlayer > colItemTop && headOfPlayer < colItemBottom) ||
-                                     (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
-
-            hitRight = rightOfPlayer + velPlayer->x * (1 - delta) >= colItemLeft &&
-                       rightOfPlayer <= colItemRight &&
-                       isVerticallyOverlaped;
-
-            hitLeft = leftOfPlayer + velPlayer->x * (1 - delta) <= colItemRight &&
-                      leftOfPlayer >= colItemLeft &&
-                      isVerticallyOverlaped;
         }
 
         if (hitFeet) {
@@ -149,7 +188,24 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionB
             if (hitHead) {
                 playerInstance->colidedUp = true;
                 posPlayer->y = colItemBottom;
-                velPlayer->y = -velPlayer->y * 0.1;
+                velPlayer->y = -velPlayer->y * 0.2f;
+            }
+            {  // this needs to be recalculated after changing the players pos in hitFeet and/or hitHead
+                headOfPlayer = posPlayer->y,
+                leftOfPlayer = posPlayer->x,
+                rightOfPlayer = posPlayer->x + colisionBoxPlayer.x,
+                feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;
+
+                isVerticallyOverlaped = ((headOfPlayer > colItemTop && headOfPlayer < colItemBottom) ||
+                                         (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
+
+                hitRight = rightOfPlayer + velPlayer->x * (1 - delta) >= colItemLeft &&
+                           rightOfPlayer <= colItemRight &&
+                           isVerticallyOverlaped;
+
+                hitLeft = leftOfPlayer + velPlayer->x * (1 - delta) <= colItemRight &&
+                          leftOfPlayer >= colItemLeft &&
+                          isVerticallyOverlaped;
             }
 
             if (hitRight) {
@@ -197,25 +253,63 @@ void Engine::HandleEvent(SDL_Event *event) {
             break;
         }
     }
-    if (keyStates[SDLK_LEFT] || keyStates[SDLK_a]) {
-        playerInstance->Move(MoveOpts::LEFT);
+    if (keyStates[SDLK_a]) {
+        playerInstance->Move(MoveOptions::LEFT);
     }
-    if (keyStates[SDLK_RIGHT] || keyStates[SDLK_d]) {
-        playerInstance->Move(MoveOpts::RIGHT);
+    if (keyStates[SDLK_d]) {
+        playerInstance->Move(MoveOptions::RIGHT);
     }
-    if (keyStates[SDLK_UP] || keyStates[SDLK_w]) {
-        playerInstance->Move(MoveOpts::UP);
+    if (keyStates[SDLK_w]) {
+        playerInstance->Move(MoveOptions::UP);
     }
-    if (keyStates[SDLK_DOWN] || keyStates[SDLK_s]) {
-        playerInstance->Move(MoveOpts::DOWN);
+    if (keyStates[SDLK_s]) {
+        playerInstance->Move(MoveOptions::DOWN);
     }
+    if (keyStates[SDLK_LEFT]) {
+        camera->Move(LEFT);
+    }
+    if (keyStates[SDLK_RIGHT]) {
+        camera->Move(RIGHT);
+    }
+    if (keyStates[SDLK_UP]) {
+        camera->Move(UP);
+    }
+    if (keyStates[SDLK_DOWN]) {
+        camera->Move(DOWN);
+    }
+
     if (keyStates[SDLK_r]) {
-        playerInstance->pos = {playerInstance->pos.x, 0};
+        playerInstance->pos = {0, 0};
     }
     if (keyStates[SDLK_q]) {
         quit = true;
         return;
     }
+}
+
+void Engine::Draw() {
+    Vec2f cameraPos = camera->pos;
+
+    for (LevelItem levelItem : Level::colisions) {
+        SDL_Color color = levelItem.color;
+        SDL_Rect levelItemWireframe = {
+            levelItem.wireframe.x - (int)cameraPos.x,
+            levelItem.wireframe.y - (int)cameraPos.y,
+            levelItem.wireframe.w,
+            levelItem.wireframe.h,
+        };
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+        SDL_RenderFillRect(renderer, &levelItemWireframe);
+    }
+
+    SDL_Rect playerModel = {
+        (int)playerInstance->pos.x - (int)cameraPos.x,
+        (int)playerInstance->pos.y - (int)cameraPos.y,
+        playerInstance->hitbox.x,
+        playerInstance->hitbox.y,
+    };
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
+    SDL_RenderFillRect(renderer, &playerModel);
 }
 
 void Engine::DrawText(const std::string &text) {
@@ -294,10 +388,11 @@ int Engine::Run() {
 Engine *Engine::instance = new Engine;
 Engine *Engine::GetEngineInstance() { return instance; }
 
+Vec2i Engine::GetScreenInfo() { return {SCREEN_WIDTH, SCREEN_HEIGHT}; }
+
 //------------------------------------------------------------------------------
 /*
  *  TODO:
- *      - Create colisions and platforms
  *      - Create a pause tech
  *      - Fix issue: More fps = player moves faster
  */

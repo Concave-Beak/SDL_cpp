@@ -9,6 +9,13 @@
 #define MAX_Y_SPEED 400
 #define MIN_Y_SPEED -400
 
+enum MoveOptions {
+    LEFT = 1,
+    RIGHT,
+    UP,
+    DOWN,
+};
+
 struct Vec2i {
     int x;
     int y;
