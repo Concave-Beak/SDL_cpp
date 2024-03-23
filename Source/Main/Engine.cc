@@ -26,6 +26,8 @@ void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i 
     playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0 + hitboxPlayer.x / 2.0;
     playerOffset.y = posPlayer.y - pos.y - cameraInfo.y / 1.5 + hitboxPlayer.y / 1.5;
 
+    vel.y *= (1 - delta);  // case beingMoved
+    vel.x *= (1 - delta);
     if (!isBeingMoved) {
         vel.y = playerOffset.y * 0.15 * (1 - delta);
         vel.x = playerOffset.x * 0.15 * (1 - delta);
@@ -33,10 +35,11 @@ void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i 
 
     pos.y += vel.y;
     pos.x += vel.x;
+    isBeingMoved = false;
 }
 
 void Camera::Move(MoveOptions moveOpt) {
-    cameraMovementSpeed = {maxPlayerOffset.x / 10, maxPlayerOffset.y / 10};
+    cameraMovementSpeed = {maxPlayerOffset.x / 2, maxPlayerOffset.y / 8};  // Values to make it smoother
     isBeingMoved = true;
     switch (moveOpt) {
         case UP: {

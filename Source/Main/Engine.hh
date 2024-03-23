@@ -31,8 +31,8 @@ class Camera {
     Vec2f vel = {0, 0};
     Vec2f playerOffset = {0, 0};
 
-    Vec2i maxPlayerOffset = {30, 200};
-    Vec2f minPlayerOffset = {-30, -200};  // both may change depending on player's items.
+    Vec2i maxPlayerOffset = {10, 100};
+    Vec2f minPlayerOffset = {-10, 100};  // both may change depending on player's items.
     Vec2i cameraMovementSpeed = {0, 0};
     // const int zoom = 1; // not used
 
