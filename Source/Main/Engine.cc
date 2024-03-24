@@ -2,6 +2,9 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
@@ -16,6 +19,57 @@
 
 //------------------------------------------------------------------------------
 
+Camera *Camera::instance = new Camera;
+
+Camera *Camera::GetCameraInstance() { return instance; }
+
+void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i hitboxPlayer) {
+    playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0f + hitboxPlayer.x / 2.0f;
+    playerOffset.y = posPlayer.y - pos.y - cameraInfo.y / 1.5f + hitboxPlayer.y / 1.5f;
+
+    vel.y *= (1 - delta);  // case beingMoved
+    vel.x *= (1 - delta);
+    if (!isBeingMoved) {
+        vel.y = playerOffset.y * 0.1f * (1.0f - delta);
+        vel.x = playerOffset.x * 0.1f * (1.0f - delta);
+    }
+
+    pos.y += vel.y;
+    pos.x += vel.x;
+    isBeingMoved = false;
+}
+
+void Camera::Move(MoveOptions moveOpt) {
+    cameraMovementSpeed = {maxPlayerOffset.x / 2, maxPlayerOffset.y / 8};  // Values to make it smoother
+    isBeingMoved = true;
+    switch (moveOpt) {
+        case UP: {
+            if (playerOffset.y < maxPlayerOffset.y) {
+                vel.y -= cameraMovementSpeed.y;
+            }
+            break;
+        }
+        case DOWN: {
+            if (playerOffset.y < maxPlayerOffset.y) {
+                vel.y += cameraMovementSpeed.y;
+            }
+            break;
+        }
+        case LEFT: {
+            if (playerOffset.x > minPlayerOffset.x) {
+                vel.x -= cameraMovementSpeed.x;
+            }
+            break;
+        }
+        case RIGHT: {
+            if (playerOffset.x < maxPlayerOffset.x) {
+                vel.x += cameraMovementSpeed.x;
+            }
+            break;
+        }
+    }
+}
+//------------------------------------------------------------------------------
 void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
     SDL_RenderFillRect(renderer, NULL);
@@ -25,8 +79,8 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
 
 void Engine::Loop() {
     float beginTick = 0;
-    Vec2f *playerPos = &playerInstance->pos;
-    Vec2f *playerVel = &playerInstance->velocity;
+    Vec2f *posPlayer = &playerInstance->pos;
+    Vec2f *velPlayer = &playerInstance->velocity;
     Vec2i playerColisionboxInfo = playerInstance->GetHitboxInfo();
 
     new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff});                                  // Placeolder
@@ -36,18 +90,19 @@ void Engine::Loop() {
 
     while (!quit) {
         beginTick = SDL_GetTicks();
-        HandlePlayerVel(playerPos, playerVel, playerColisionboxInfo);
-
+        HandlePlayerVel(posPlayer, velPlayer, playerColisionboxInfo);
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
-            Level::GenerateLevel(0, renderer);
-            playerInstance->Draw(renderer);
+            if (debugMode) {
+                ShowDebugInfo();
+            }
+
+            Render();
+            HandleEvent(&event);
             HandleFPS(beginTick);
             SDL_RenderPresent(renderer);
             SDL_RenderClear(renderer);
         }
-
-        HandleEvent(&event);
     }
 }
 
@@ -56,6 +111,7 @@ void Engine::HandlePlayerVel(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerCol
     float delta = (timeNow - playerInstance->lastUpdate) / 300.0f;  // 300 is just to make delta easier to handle
 
     HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta);
+    camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT}, playerColisionboxInfo);
 
     velPlayer->x *= 1.0f - delta;
     posPlayer->x += velPlayer->x;
@@ -118,24 +174,13 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionB
                                       (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
 
             hitFeet = feetOfPLayer + delta * velPlayer->y >= colItemTop &&
-                      feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.9 &&  // 0.9 is the maximum that i've found not to break colision
-                      isHorizontallyOverlaped;
+                      feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.8 &&  // 0.8 is the maximum that i've found not to break colision,
+                      isHorizontallyOverlaped;                                           // this makes it so the player only goes up if above 20% o the colItem's height
 
             hitHead = headOfPlayer + delta * velPlayer->y <= colItemBottom &&
                       headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
                       isHorizontallyOverlaped &&
                       colisionItem.colisionType != PLATFORM;
-
-            isVerticallyOverlaped = ((headOfPlayer > colItemTop && headOfPlayer < colItemBottom) ||
-                                     (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
-
-            hitRight = rightOfPlayer + velPlayer->x * (1 - delta) >= colItemLeft &&
-                       rightOfPlayer <= colItemRight &&
-                       isVerticallyOverlaped;
-
-            hitLeft = leftOfPlayer + velPlayer->x * (1 - delta) <= colItemRight &&
-                      leftOfPlayer >= colItemLeft &&
-                      isVerticallyOverlaped;
         }
 
         if (hitFeet) {
@@ -149,7 +194,24 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionB
             if (hitHead) {
                 playerInstance->colidedUp = true;
                 posPlayer->y = colItemBottom;
-                velPlayer->y = -velPlayer->y * 0.1;
+                velPlayer->y = -velPlayer->y * 0.2f;
+            }
+            {  // this needs to be recalculated after changing the players pos in hitFeet and/or hitHead
+                headOfPlayer = posPlayer->y,
+                leftOfPlayer = posPlayer->x,
+                rightOfPlayer = posPlayer->x + colisionBoxPlayer.x,
+                feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;
+
+                isVerticallyOverlaped = ((headOfPlayer > colItemTop && headOfPlayer < colItemBottom) ||
+                                         (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
+
+                hitRight = rightOfPlayer + velPlayer->x * (1 - delta) >= colItemLeft &&
+                           rightOfPlayer <= colItemRight &&
+                           isVerticallyOverlaped;
+
+                hitLeft = leftOfPlayer + velPlayer->x * (1 - delta) <= colItemRight &&
+                          leftOfPlayer >= colItemLeft &&
+                          isVerticallyOverlaped;
             }
 
             if (hitRight) {
@@ -170,15 +232,31 @@ void Engine::HandleFPS(float loopBegin) {
     float timeStepInMS = 1000.0f / fpsCap;
     float loopStop = SDL_GetTicks();
     float timeDifference = timeStepInMS - (loopStop - loopBegin);
-    if (config->ShowFPSState()) {
+    SDL_Color fontColor = {0x00, 0xff, 0x00, 0x00};
+    if (config->ShowFPSState() == true) {
         std::string fpsStr = "FPS: " +
                              std::to_string(int(fpsCap - (timeDifference / 1000.0f)));  // fps is in secods, timeDifference is in ms.
-        DrawText(fpsStr);                                                               // The 1000.0f is to transform the timeDiff to seconds
+        DrawText(fpsStr, SDL_Rect{SCREEN_WIDTH - 100, 0, 100, 25}, fontColor);          // The 1000.0f is to transform the timeDiff to seconds
     }
     if (timeDifference >= 0) {
         SDL_Delay(timeStepInMS - (loopStop - loopBegin));
         return;
     }
+}
+
+void Engine::ShowDebugInfo() {
+    SDL_Color fontColor = {0xff, 0xff, 0xff, 0xff};
+    std::string levelItemStr = "LI: " + std::to_string(Level::colisions.size() + Level::textures.size());
+    std::string colisionsAndTexturesStr = "C/T: " + std::to_string(Level::colisions.size()) + "/" + std::to_string(Level::textures.size());
+    DrawText(levelItemStr, SDL_Rect{0, 5, GetTextRectangleWidth(levelItemStr.size()), 25}, fontColor);
+    DrawText(colisionsAndTexturesStr, SDL_Rect{0, 30, GetTextRectangleWidth(colisionsAndTexturesStr.size()), 25}, fontColor);
+
+    std::string playerInfo = "XY: " + std::to_string(playerInstance->pos.x) + " " + std::to_string(playerInstance->pos.y);
+    DrawText(playerInfo, SDL_Rect{0, 55, GetTextRectangleWidth(playerInfo.size()), 25}, fontColor);
+}
+
+int Engine::GetTextRectangleWidth(size_t strSize) {
+    return strSize * 15;
 }
 
 void Engine::HandleEvent(SDL_Event *event) {
@@ -197,20 +275,33 @@ void Engine::HandleEvent(SDL_Event *event) {
             break;
         }
     }
-    if (keyStates[SDLK_LEFT] || keyStates[SDLK_a]) {
-        playerInstance->Move(MoveOpts::LEFT);
+    if (keyStates[SDLK_a]) {
+        playerInstance->Move(MoveOptions::LEFT);
     }
-    if (keyStates[SDLK_RIGHT] || keyStates[SDLK_d]) {
-        playerInstance->Move(MoveOpts::RIGHT);
+    if (keyStates[SDLK_d]) {
+        playerInstance->Move(MoveOptions::RIGHT);
     }
-    if (keyStates[SDLK_UP] || keyStates[SDLK_w]) {
-        playerInstance->Move(MoveOpts::UP);
+    if (keyStates[SDLK_w]) {
+        playerInstance->Move(MoveOptions::UP);
     }
-    if (keyStates[SDLK_DOWN] || keyStates[SDLK_s]) {
-        playerInstance->Move(MoveOpts::DOWN);
+    if (keyStates[SDLK_s]) {
+        playerInstance->Move(MoveOptions::DOWN);
     }
+    if (keyStates[SDLK_LEFT]) {
+        camera->Move(LEFT);
+    }
+    if (keyStates[SDLK_RIGHT]) {
+        camera->Move(RIGHT);
+    }
+    if (keyStates[SDLK_UP]) {
+        camera->Move(UP);
+    }
+    if (keyStates[SDLK_DOWN]) {
+        camera->Move(DOWN);
+    }
+
     if (keyStates[SDLK_r]) {
-        playerInstance->pos = {playerInstance->pos.x, 0};
+        playerInstance->pos = {0, 0};
     }
     if (keyStates[SDLK_q]) {
         quit = true;
@@ -218,38 +309,47 @@ void Engine::HandleEvent(SDL_Event *event) {
     }
 }
 
-void Engine::DrawText(const std::string &text) {
-    // TODO: make font an engine field
-    TTF_Font *font = TTF_OpenFont("./Include/Fonts/BigBlueTermMono.ttf", 30);
-    SDL_Color fontColor = {0xff, 0xff, 0xff, 0xff};
+void Engine::Render() {
+    Vec2f cameraPos = camera->pos;
 
-    if (!font) {
-        fprintf(stderr, "SDL TTF could not open font");
-        return;
+    for (LevelItem levelItem : Level::colisions) {
+        SDL_Color color = levelItem.color;
+        SDL_Rect levelItemWireframe = {
+            levelItem.wireframe.x - (int)cameraPos.x,
+            levelItem.wireframe.y - (int)cameraPos.y,
+            levelItem.wireframe.w,
+            levelItem.wireframe.h,
+        };
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+        SDL_RenderFillRect(renderer, &levelItemWireframe);
     }
 
-    SDL_Surface *textSurface = TTF_RenderText_Blended(font, text.c_str(), fontColor);
+    SDL_Rect playerModel = {
+        (int)playerInstance->pos.x - (int)cameraPos.x,
+        (int)playerInstance->pos.y - (int)cameraPos.y,
+        playerInstance->hitbox.x,
+        playerInstance->hitbox.y,
+    };
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
+    SDL_RenderFillRect(renderer, &playerModel);
+}
+
+void Engine::DrawText(const std::string &text, SDL_Rect textureRect, const SDL_Color fontColor) {
+    SDL_Surface *textSurface = TTF_RenderText_Blended(debugFont, text.c_str(), fontColor);
     if (!textSurface) {
-        fprintf(stderr, "SDL TTF could not render text");
+        fprintf(stderr, "SDL TTF could not render text\n");
         return;
     }
 
     SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
     if (!textTexture) {
-        fprintf(stderr, "SDL TTF could not create texture");
+        fprintf(stderr, "SDL TTF could not create texture\n");
         return;
     }
 
-    SDL_Rect textureRect = {
-        .x = 0,
-        .y = 0,
-        .w = 200,
-        .h = 50,
-    };
     SDL_RenderCopy(renderer, textTexture, NULL, &textureRect);
 
     SDL_FreeSurface(textSurface);
-    TTF_CloseFont(font);
 }
 
 void Engine::Init() {
@@ -263,7 +363,7 @@ void Engine::Init() {
         fprintf(stderr, "SDL TTF could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    printf("INFO: SDl_TTF initialized succesfully\n");
+    printf("INFO: SDL_TTF initialized succesfully\n");
 
     window = SDL_CreateWindow("Game", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == NULL) {
@@ -278,6 +378,17 @@ void Engine::Init() {
         exit(EXIT_FAILURE);
     }
     printf("INFO: Renderer initialized succesfully\n");
+
+    if (debugMode) {
+        printf("INFO: Starting in debug mode\n");
+    }
+
+    debugFont = TTF_OpenFont("./Include/Fonts/BigBlueTermMono.ttf", 15);
+    if (!debugFont) {
+        fprintf(stderr, "SDL TTF could not open font\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("INFO: Loaded Debug Font\n");
 }
 
 int Engine::Run() {
@@ -286,6 +397,7 @@ int Engine::Run() {
 
     printf("Game closed");
     SDL_DestroyWindow(window);
+    TTF_CloseFont(debugFont);
     TTF_Quit();
     SDL_Quit();
     return 0;
@@ -294,10 +406,11 @@ int Engine::Run() {
 Engine *Engine::instance = new Engine;
 Engine *Engine::GetEngineInstance() { return instance; }
 
+Vec2i Engine::GetScreenInfo() { return {SCREEN_WIDTH, SCREEN_HEIGHT}; }
+
 //------------------------------------------------------------------------------
 /*
  *  TODO:
- *      - Create colisions and platforms
  *      - Create a pause tech
  *      - Fix issue: More fps = player moves faster
  */

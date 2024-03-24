@@ -3,8 +3,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
 
-#include <cstdio>
-#include <vector>
+#include "../../Include/Headers/Utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -18,7 +17,7 @@ Vec2i Player::GetHitboxInfo() {
     return hitbox;
 }
 
-void Player::Move(const MoveOpts move_options) {
+void Player::Move(const MoveOptions move_options) {
     switch (move_options) {
         case LEFT: {
             if (!colidedLeft) {
@@ -41,22 +40,16 @@ void Player::Move(const MoveOpts move_options) {
         case DOWN: {
             if (isAbovePlatform) {
                 velocity.y += 10;
-                pos.y += 3.5;             // 3.5 is the safets i've found given the height
+                pos.y += 6;               // 6 is the safest i've found given the height
                 colidedDown = false;      // of the plaform in Engine.cc. This needs to be done
                 isAbovePlatform = false;  // to place the player bellow the platform's top
-            }
+            }                             // TODO: change how this works
             break;
         }
         default: {
             break;
         };
     }
-}
-
-void Player::Draw(SDL_Renderer* renderer) {
-    Player::player_model = {(int)pos.x, (int)pos.y, hitbox.x, hitbox.y};
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_RenderFillRect(renderer, &player_model);
 }
 
 //------------------------------------------------------------------------------

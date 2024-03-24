@@ -41,7 +41,6 @@ class Level {
    public:
     static std::vector<LevelItem> colisions;
     static std::vector<LevelItem> textures;
-    static bool GenerateLevel(int level, SDL_Renderer *renderer);
 };
 
 //------------------------------------------------------------------------------
