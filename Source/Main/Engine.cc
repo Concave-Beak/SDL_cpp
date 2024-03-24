@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
@@ -23,14 +24,14 @@ Camera *Camera::instance = new Camera;
 Camera *Camera::GetCameraInstance() { return instance; }
 
 void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i hitboxPlayer) {
-    playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0 + hitboxPlayer.x / 2.0;
-    playerOffset.y = posPlayer.y - pos.y - cameraInfo.y / 1.5 + hitboxPlayer.y / 1.5;
+    playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0f + hitboxPlayer.x / 2.0f;
+    playerOffset.y = posPlayer.y - pos.y - cameraInfo.y / 1.5f + hitboxPlayer.y / 1.5f;
 
     vel.y *= (1 - delta);  // case beingMoved
     vel.x *= (1 - delta);
     if (!isBeingMoved) {
-        vel.y = playerOffset.y * 0.15 * (1 - delta);
-        vel.x = playerOffset.x * 0.15 * (1 - delta);
+        vel.y = playerOffset.y * 0.1f * (1.0f - delta);
+        vel.x = playerOffset.x * 0.1f * (1.0f - delta);
     }
 
     pos.y += vel.y;
@@ -90,16 +91,18 @@ void Engine::Loop() {
     while (!quit) {
         beginTick = SDL_GetTicks();
         HandlePlayerVel(posPlayer, velPlayer, playerColisionboxInfo);
-
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
-            Draw();
+            if (debugMode) {
+                ShowDebugInfo();
+            }
+
+            Render();
+            HandleEvent(&event);
             HandleFPS(beginTick);
             SDL_RenderPresent(renderer);
             SDL_RenderClear(renderer);
         }
-
-        HandleEvent(&event);
     }
 }
 
@@ -229,15 +232,31 @@ void Engine::HandleFPS(float loopBegin) {
     float timeStepInMS = 1000.0f / fpsCap;
     float loopStop = SDL_GetTicks();
     float timeDifference = timeStepInMS - (loopStop - loopBegin);
-    if (config->ShowFPSState()) {
+    SDL_Color fontColor = {0x00, 0xff, 0x00, 0x00};
+    if (config->ShowFPSState() == true) {
         std::string fpsStr = "FPS: " +
                              std::to_string(int(fpsCap - (timeDifference / 1000.0f)));  // fps is in secods, timeDifference is in ms.
-        DrawText(fpsStr);                                                               // The 1000.0f is to transform the timeDiff to seconds
+        DrawText(fpsStr, SDL_Rect{SCREEN_WIDTH - 100, 0, 100, 25}, fontColor);          // The 1000.0f is to transform the timeDiff to seconds
     }
     if (timeDifference >= 0) {
         SDL_Delay(timeStepInMS - (loopStop - loopBegin));
         return;
     }
+}
+
+void Engine::ShowDebugInfo() {
+    SDL_Color fontColor = {0xff, 0xff, 0xff, 0xff};
+    std::string levelItemStr = "LI: " + std::to_string(Level::colisions.size() + Level::textures.size());
+    std::string colisionsAndTexturesStr = "C/T: " + std::to_string(Level::colisions.size()) + "/" + std::to_string(Level::textures.size());
+    DrawText(levelItemStr, SDL_Rect{0, 5, GetTextRectangleWidth(levelItemStr.size()), 25}, fontColor);
+    DrawText(colisionsAndTexturesStr, SDL_Rect{0, 30, GetTextRectangleWidth(colisionsAndTexturesStr.size()), 25}, fontColor);
+
+    std::string playerInfo = "XY: " + std::to_string(playerInstance->pos.x) + " " + std::to_string(playerInstance->pos.y);
+    DrawText(playerInfo, SDL_Rect{0, 55, GetTextRectangleWidth(playerInfo.size()), 25}, fontColor);
+}
+
+int Engine::GetTextRectangleWidth(size_t strSize) {
+    return strSize * 15;
 }
 
 void Engine::HandleEvent(SDL_Event *event) {
@@ -290,7 +309,7 @@ void Engine::HandleEvent(SDL_Event *event) {
     }
 }
 
-void Engine::Draw() {
+void Engine::Render() {
     Vec2f cameraPos = camera->pos;
 
     for (LevelItem levelItem : Level::colisions) {
@@ -315,38 +334,22 @@ void Engine::Draw() {
     SDL_RenderFillRect(renderer, &playerModel);
 }
 
-void Engine::DrawText(const std::string &text) {
-    // TODO: make font an engine field
-    TTF_Font *font = TTF_OpenFont("./Include/Fonts/BigBlueTermMono.ttf", 30);
-    SDL_Color fontColor = {0xff, 0xff, 0xff, 0xff};
-
-    if (!font) {
-        fprintf(stderr, "SDL TTF could not open font");
-        return;
-    }
-
-    SDL_Surface *textSurface = TTF_RenderText_Blended(font, text.c_str(), fontColor);
+void Engine::DrawText(const std::string &text, SDL_Rect textureRect, const SDL_Color fontColor) {
+    SDL_Surface *textSurface = TTF_RenderText_Blended(debugFont, text.c_str(), fontColor);
     if (!textSurface) {
-        fprintf(stderr, "SDL TTF could not render text");
+        fprintf(stderr, "SDL TTF could not render text\n");
         return;
     }
 
     SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
     if (!textTexture) {
-        fprintf(stderr, "SDL TTF could not create texture");
+        fprintf(stderr, "SDL TTF could not create texture\n");
         return;
     }
 
-    SDL_Rect textureRect = {
-        .x = 0,
-        .y = 0,
-        .w = 200,
-        .h = 50,
-    };
     SDL_RenderCopy(renderer, textTexture, NULL, &textureRect);
 
     SDL_FreeSurface(textSurface);
-    TTF_CloseFont(font);
 }
 
 void Engine::Init() {
@@ -360,7 +363,7 @@ void Engine::Init() {
         fprintf(stderr, "SDL TTF could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    printf("INFO: SDl_TTF initialized succesfully\n");
+    printf("INFO: SDL_TTF initialized succesfully\n");
 
     window = SDL_CreateWindow("Game", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == NULL) {
@@ -375,6 +378,17 @@ void Engine::Init() {
         exit(EXIT_FAILURE);
     }
     printf("INFO: Renderer initialized succesfully\n");
+
+    if (debugMode) {
+        printf("INFO: Starting in debug mode\n");
+    }
+
+    debugFont = TTF_OpenFont("./Include/Fonts/BigBlueTermMono.ttf", 15);
+    if (!debugFont) {
+        fprintf(stderr, "SDL TTF could not open font\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("INFO: Loaded Debug Font\n");
 }
 
 int Engine::Run() {
@@ -383,6 +397,7 @@ int Engine::Run() {
 
     printf("Game closed");
     SDL_DestroyWindow(window);
+    TTF_CloseFont(debugFont);
     TTF_Quit();
     SDL_Quit();
     return 0;

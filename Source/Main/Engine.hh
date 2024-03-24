@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
+#include <SDL2/SDL_ttf.h>
 #include <sys/wait.h>
 
 #include <string>
@@ -54,6 +55,7 @@ class Engine {
     void Init();
     int Run();
 
+    bool debugMode = false;  // will change
    private:
     static Engine* instance;
 
@@ -76,6 +78,8 @@ class Engine {
     int SCREEN_WIDTH = 1024;
     int SCREEN_HEIGHT = 768;
 
+    TTF_Font* debugFont;
+
    private:
     void Loop();
 
@@ -85,8 +89,11 @@ class Engine {
 
     void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta);
 
-    void DrawText(const std::string& text);
-    void Draw();
+    void DrawText(const std::string& text, SDL_Rect textureRect, const SDL_Color fontColor);
+    void ShowDebugInfo();
+    int GetTextRectangleWidth(size_t strSize);
+
+    void Render();
 };
 
 //------------------------------------------------------------------------------
