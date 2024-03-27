@@ -2,8 +2,13 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_timer.h>
+
+#include <cmath>
+#include <cstdio>
 
 #include "../../Include/Headers/Utils.hh"
+#include "../Main/Camera.hh"
 
 //------------------------------------------------------------------------------
 
@@ -11,24 +16,24 @@ Player* Player::player = new Player;
 
 Player* Player::GetPlayerInstace() { return Player::player; }
 
-Vec2f* Player::GetPlayerPos() { return &pos; }  // not used need fixing
-
 Vec2i Player::GetHitboxInfo() {
     return hitbox;
 }
 
-void Player::Move(const MoveOptions move_options) {
-    switch (move_options) {
+void Player::Move(const MoveOptions moveOpt) {
+    switch (moveOpt) {
         case LEFT: {
             if (!colidedLeft) {
                 velocity.x -= accelSpeed.x;
             }
+            facing = LEFT;
             break;
         }
         case RIGHT: {
             if (!colidedRight) {
                 velocity.x += accelSpeed.x;
             }
+            facing = RIGHT;
             break;
         }
         case UP: {
@@ -50,6 +55,61 @@ void Player::Move(const MoveOptions move_options) {
             break;
         };
     }
+}
+
+void Player::PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* renderer, float* timeMultiplier) {
+    float modOfAngleDash = fmod(angleDash, 360);
+    angleDash = modOfAngleDash;
+    // decrease timeMultiplier
+    if (*timeMultiplier > 0.25) {
+        *timeMultiplier += (0.25 - *timeMultiplier) / 100;
+    }
+    switch (moveOpt) {
+        // each angle position represents an angle
+        case LEFT: {
+            angleDash += (180 - angleDash) / 20.0;
+            break;
+        }
+        case RIGHT: {
+            float addDash = (0 - angleDash) / 20.0f;
+            if (angleDash > 180) {
+                addDash = (360 - angleDash) / 20.0f;
+            }
+            angleDash += addDash;
+            break;
+        }
+        case UP: {  // SDL flips "up" and "down"
+            float addDash = (270 - angleDash) / 20.0f;
+            if (angleDash > -90 && angleDash < 90) {
+                addDash = (-90 - angleDash) / 20.0f;
+            }
+            angleDash += addDash;
+            break;
+        }
+        case DOWN: {
+            float addDash = (90 - angleDash) / 20.0f;
+            if (angleDash > 270) {
+                addDash = (450 - angleDash) / 20.0f;
+            }
+            angleDash += addDash;
+            break;
+        }
+    }
+    float angleDashInRadians = angleDash * 3.14 / 180;
+
+    Vec2i pointStart = {(int)pos.x + hitbox.x / 2, (int)pos.y + hitbox.y / 2};
+    int lineDistance = 100;
+    Vec2i pointEnd = {int(pointStart.x + lineDistance * cos(angleDashInRadians)), int(pointStart.y + lineDistance * sin(angleDashInRadians))};
+
+    Vec2f cameraPos = Camera::pos;
+    SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0x00);
+    SDL_RenderDrawLine(renderer, pointStart.x - cameraPos.x, pointStart.y - cameraPos.y, pointEnd.x - cameraPos.x, pointEnd.y - cameraPos.y);
+    (void)startTick;
+}
+
+void Player::Dash() {
+    float dashVelX,
+        dashVelY;
 }
 
 //------------------------------------------------------------------------------

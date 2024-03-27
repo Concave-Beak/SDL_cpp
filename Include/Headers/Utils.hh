@@ -4,8 +4,8 @@
 #define ENTITY_MAX 1024
 
 #define GRAVITY 200.0f
-#define MAX_X_SPEED 20
-#define MIN_X_SPEED -20
+#define MAX_X_SPEED 10
+#define MIN_X_SPEED -10
 #define MAX_Y_SPEED 400
 #define MIN_Y_SPEED -400
 
@@ -14,6 +14,7 @@ enum MoveOptions {
     RIGHT,
     UP,
     DOWN,
+
 };
 
 struct Vec2i {

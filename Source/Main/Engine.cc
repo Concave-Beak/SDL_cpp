@@ -19,57 +19,6 @@
 
 //------------------------------------------------------------------------------
 
-Camera *Camera::instance = new Camera;
-
-Camera *Camera::GetCameraInstance() { return instance; }
-
-void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i hitboxPlayer) {
-    playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0f + hitboxPlayer.x / 2.0f;
-    playerOffset.y = posPlayer.y - pos.y - cameraInfo.y / 1.5f + hitboxPlayer.y / 1.5f;
-
-    vel.y *= (1 - delta);  // case beingMoved
-    vel.x *= (1 - delta);
-    if (!isBeingMoved) {
-        vel.y = playerOffset.y * 0.1f * (1.0f - delta);
-        vel.x = playerOffset.x * 0.1f * (1.0f - delta);
-    }
-
-    pos.y += vel.y;
-    pos.x += vel.x;
-    isBeingMoved = false;
-}
-
-void Camera::Move(MoveOptions moveOpt) {
-    cameraMovementSpeed = {maxPlayerOffset.x / 2, maxPlayerOffset.y / 8};  // Values to make it smoother
-    isBeingMoved = true;
-    switch (moveOpt) {
-        case UP: {
-            if (playerOffset.y < maxPlayerOffset.y) {
-                vel.y -= cameraMovementSpeed.y;
-            }
-            break;
-        }
-        case DOWN: {
-            if (playerOffset.y < maxPlayerOffset.y) {
-                vel.y += cameraMovementSpeed.y;
-            }
-            break;
-        }
-        case LEFT: {
-            if (playerOffset.x > minPlayerOffset.x) {
-                vel.x -= cameraMovementSpeed.x;
-            }
-            break;
-        }
-        case RIGHT: {
-            if (playerOffset.x < maxPlayerOffset.x) {
-                vel.x += cameraMovementSpeed.x;
-            }
-            break;
-        }
-    }
-}
-//------------------------------------------------------------------------------
 void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
     SDL_RenderFillRect(renderer, NULL);
@@ -90,7 +39,7 @@ void Engine::Loop() {
 
     while (!quit) {
         beginTick = SDL_GetTicks();
-        HandlePlayerVel(posPlayer, velPlayer, playerColisionboxInfo);
+        HandleVelocity(posPlayer, velPlayer, playerColisionboxInfo);
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
             if (debugMode) {
@@ -103,22 +52,26 @@ void Engine::Loop() {
             SDL_RenderPresent(renderer);
             SDL_RenderClear(renderer);
         }
+        // reset timeMultiplier
+        if (timeMultiplier < 1) {
+            timeMultiplier += (1 - timeMultiplier) / 100;
+        }
     }
 }
 
-void Engine::HandlePlayerVel(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColisionboxInfo) {
+void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColisionboxInfo) {
     Uint32 timeNow = SDL_GetTicks();
-    float delta = (timeNow - playerInstance->lastUpdate) / 300.0f;  // 300 is just to make delta easier to handle
+    float delta = (timeNow - lastUpdate) / 300.0f;  // 300 is just to make delta easier to work with
 
     HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta);
-    camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT}, playerColisionboxInfo);
+    camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT}, playerColisionboxInfo, timeMultiplier);
 
-    velPlayer->x *= 1.0f - delta;
-    posPlayer->x += velPlayer->x;
+    velPlayer->x *= 1.0f - delta * timeMultiplier;
+    posPlayer->x += velPlayer->x * timeMultiplier;
 
     if (playerInstance->colidedDown == false) {
-        velPlayer->y += delta * GRAVITY;
-        posPlayer->y += velPlayer->y * delta;
+        velPlayer->y += delta * GRAVITY * timeMultiplier;
+        posPlayer->y += velPlayer->y * delta * timeMultiplier;
     }
 
     {
@@ -137,7 +90,7 @@ void Engine::HandlePlayerVel(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerCol
         }
     }
 
-    playerInstance->lastUpdate = timeNow;
+    lastUpdate = SDL_GetTicks();
 }
 
 void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionBoxPlayer, float delta) {
@@ -276,16 +229,38 @@ void Engine::HandleEvent(SDL_Event *event) {
         }
     }
     if (keyStates[SDLK_a]) {
-        playerInstance->Move(MoveOptions::LEFT);
+        if (playerInstance->isPreparingToDash) {
+            playerInstance->PrepareToDash(LEFT, 0, renderer, &timeMultiplier);
+        } else {
+            playerInstance->Move(MoveOptions::LEFT);
+        }
     }
     if (keyStates[SDLK_d]) {
-        playerInstance->Move(MoveOptions::RIGHT);
+        if (playerInstance->isPreparingToDash) {
+            playerInstance->PrepareToDash(RIGHT, 0, renderer, &timeMultiplier);
+        } else {
+            playerInstance->Move(MoveOptions::RIGHT);
+        }
     }
     if (keyStates[SDLK_w]) {
-        playerInstance->Move(MoveOptions::UP);
+        if (playerInstance->isPreparingToDash) {
+            playerInstance->PrepareToDash(UP, 0, renderer, &timeMultiplier);
+        } else {
+            playerInstance->Move(MoveOptions::UP);
+        }
     }
     if (keyStates[SDLK_s]) {
-        playerInstance->Move(MoveOptions::DOWN);
+        if (playerInstance->isPreparingToDash) {
+            playerInstance->PrepareToDash(DOWN, 0, renderer, &timeMultiplier);
+        } else {
+            playerInstance->Move(MoveOptions::DOWN);
+        }
+    }
+    if (keyStates[SDLK_e]) {
+        playerInstance->isPreparingToDash = true;
+    }
+    if (keyStates[SDLK_e] == false) {
+        playerInstance->isPreparingToDash = false;
     }
     if (keyStates[SDLK_LEFT]) {
         camera->Move(LEFT);
@@ -408,9 +383,4 @@ Engine *Engine::GetEngineInstance() { return instance; }
 
 Vec2i Engine::GetScreenInfo() { return {SCREEN_WIDTH, SCREEN_HEIGHT}; }
 
-//------------------------------------------------------------------------------
-/*
- *  TODO:
- *      - Create a pause tech
- *      - Fix issue: More fps = player moves faster
- */
+Vec2f Engine::GetCameraPos() { return camera->pos; }
