@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "../../Include/Headers/Utils.hh"
+#include "../../Include/Utils/Utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -21,13 +21,14 @@ class Player {
 
     // Dash
     bool isPreparingToDash = false;
-    // bool isDashing = false;
-    //
-    // float preDashAnimationBegin = 0;
-    // float preDashAnimationEnd = 0;
-    // float preDashDurationInMs = 2000;
-    //
-    float angleDash = 0;  // in radians
+    bool isDashing = false;
+    float DashEnd;
+    float whenNextDashAvailable;
+
+    float preDashAnimationEnd;
+    float preDashDurationInMs;
+
+    float angleDash = 0;  // in angles
     //--
 
     Vec2i hitbox = {75, 75};

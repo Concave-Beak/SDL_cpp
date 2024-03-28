@@ -7,7 +7,7 @@
 #include <cmath>
 #include <cstdio>
 
-#include "../../Include/Headers/Utils.hh"
+#include "../../Include/Utils/Utils.hh"
 #include "../Main/Camera.hh"
 
 //------------------------------------------------------------------------------
@@ -61,8 +61,8 @@ void Player::PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* r
     float modOfAngleDash = fmod(angleDash, 360);
     angleDash = modOfAngleDash;
     // decrease timeMultiplier
-    if (*timeMultiplier > 0.25) {
-        *timeMultiplier += (0.25 - *timeMultiplier) / 100;
+    if (*timeMultiplier > 0.1) {
+        *timeMultiplier += (0.1 - *timeMultiplier) / 50;
     }
     switch (moveOpt) {
         // each angle position represents an angle
@@ -95,11 +95,13 @@ void Player::PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* r
             break;
         }
     }
-    float angleDashInRadians = angleDash * 3.14 / 180;
+    float angleDashInRadians = DegreesToRadians(angleDash);
 
-    Vec2i pointStart = {(int)pos.x + hitbox.x / 2, (int)pos.y + hitbox.y / 2};
     int lineDistance = 100;
-    Vec2i pointEnd = {int(pointStart.x + lineDistance * cos(angleDashInRadians)), int(pointStart.y + lineDistance * sin(angleDashInRadians))};
+    Vec2i pointStart = {(int)pos.x + hitbox.x / 2,
+                        (int)pos.y + hitbox.y / 2};
+    Vec2i pointEnd = {int(pointStart.x + lineDistance * cos(angleDashInRadians)),
+                      int(pointStart.y + lineDistance * sin(angleDashInRadians))};
 
     Vec2f cameraPos = Camera::pos;
     SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0x00);
@@ -108,8 +110,12 @@ void Player::PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* r
 }
 
 void Player::Dash() {
-    float dashVelX,
-        dashVelY;
+    Vec2f dashStrenght = {300.0f, 300.0f};
+    float dashAngleInRadians = DegreesToRadians(angleDash);
+    Vec2f dashVel = {dashStrenght.x * cos(dashAngleInRadians), dashStrenght.y * sin(dashAngleInRadians)};
+    printf("x: %f\ty: %f\n", dashVel.x, dashVel.y);
+    velocity.x += dashVel.x;
+    velocity.y += dashVel.y;
 }
 
 //------------------------------------------------------------------------------

@@ -14,7 +14,7 @@
 #include <cstdlib>
 #include <string>
 
-#include "../../Include/Headers/Utils.hh"
+#include "../../Include/Utils/Utils.hh"
 #include "Level.hh"
 
 //------------------------------------------------------------------------------
@@ -32,10 +32,10 @@ void Engine::Loop() {
     Vec2f *velPlayer = &playerInstance->velocity;
     Vec2i playerColisionboxInfo = playerInstance->GetHitboxInfo();
 
-    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff});                                  // Placeolder
-    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff});                            // Placeolder
-    new LevelItem(Vec2i{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff});  // Placeolder
-    new LevelItem(Vec2i{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff});                                     // Placeolder
+    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                                 // Placeholder
+    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);                          // Placeholder
+    new LevelItem(Vec2i{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);  // Placeholder
+    new LevelItem(Vec2i{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);                                    // Placeholder
 
     while (!quit) {
         beginTick = SDL_GetTicks();
@@ -53,8 +53,8 @@ void Engine::Loop() {
             SDL_RenderClear(renderer);
         }
         // reset timeMultiplier
-        if (timeMultiplier < 1) {
-            timeMultiplier += (1 - timeMultiplier) / 100;
+        if (timeMultiplier < 1 && !playerInstance->isPreparingToDash) {
+            timeMultiplier += (1 - timeMultiplier) / 50;
         }
     }
 }
@@ -63,16 +63,11 @@ void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColi
     Uint32 timeNow = SDL_GetTicks();
     float delta = (timeNow - lastUpdate) / 300.0f;  // 300 is just to make delta easier to work with
 
-    HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta);
-    camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT}, playerColisionboxInfo, timeMultiplier);
-
-    velPlayer->x *= 1.0f - delta * timeMultiplier;
-    posPlayer->x += velPlayer->x * timeMultiplier;
-
     if (playerInstance->colidedDown == false) {
         velPlayer->y += delta * GRAVITY * timeMultiplier;
         posPlayer->y += velPlayer->y * delta * timeMultiplier;
     }
+    float attritionCoefficient = 0;
 
     {
         if (velPlayer->y > MAX_Y_SPEED) {
@@ -90,10 +85,19 @@ void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColi
         }
     }
 
+    if (!playerInstance->colidedDown) attritionCoefficient = 0.8;
+
+    HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta, &attritionCoefficient);
+
+    velPlayer->x -= delta * attritionCoefficient * velPlayer->x * timeMultiplier;
+    posPlayer->x += velPlayer->x * timeMultiplier;
+
+    camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT}, playerColisionboxInfo, timeMultiplier);
+
     lastUpdate = SDL_GetTicks();
 }
 
-void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionBoxPlayer, float delta) {
+void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionBoxPlayer, float delta, float *attritionCoefficient) {
     playerInstance->colidedUp = false;
     playerInstance->colidedLeft = false;
     playerInstance->colidedRight = false;
@@ -109,7 +113,7 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionB
     bool isHorizontallyOverlaped, hitFeet, hitHead,
         isVerticallyOverlaped, hitRight, hitLeft;
 
-    int colItemTop,
+    float colItemTop,
         colItemLeft,
         colItemRight,
         colItemBottom;
@@ -138,6 +142,7 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionB
 
         if (hitFeet) {
             playerInstance->colidedDown = true;
+            *attritionCoefficient = colisionItem.attritionCoefficient;
             posPlayer->y = colItemTop - colisionBoxPlayer.y;
             velPlayer->y = 0;
             if (colisionItem.colisionType == PLATFORM) playerInstance->isAbovePlatform = true;
@@ -260,7 +265,10 @@ void Engine::HandleEvent(SDL_Event *event) {
         playerInstance->isPreparingToDash = true;
     }
     if (keyStates[SDLK_e] == false) {
-        playerInstance->isPreparingToDash = false;
+        if (playerInstance->isPreparingToDash) {
+            playerInstance->Dash();
+            playerInstance->isPreparingToDash = false;
+        }
     }
     if (keyStates[SDLK_LEFT]) {
         camera->Move(LEFT);

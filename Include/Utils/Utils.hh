@@ -27,4 +27,8 @@ struct Vec2f {
     float y;
 };
 
+float DegreesToRadians(float degrees);
+
+float DegreesToRadians(int degrees);
+
 #endif
