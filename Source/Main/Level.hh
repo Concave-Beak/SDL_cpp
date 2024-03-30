@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "../../Include/Headers/Utils.hh"
+#include "../../Include/Utils/Utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -15,24 +15,27 @@ enum ColisionType {
     PLATFORM,
 };
 
-struct LevelItem {
-    // std::unordered_map<std::string, float> TerrainType{
-    //     {"dirt", 1.0},
-    //     {"mud", 0.8},
-    // };
-    // Not implemented
+enum TextureID {
+    VOID = -1,
+    DIRT = 1,
+    MUD = 2,
+    WOOD = 3,
+    STONE = 4,
+};
 
+struct LevelItem {
     Vec2i pos;
     ColisionType colisionType;
     SDL_Color color;
     SDL_Rect wireframe;
-    // SDL_Texture *texture; // not used
 
-    LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor);
+    TextureID textureID;   // this will be used to find the texture later on
+    SDL_Texture *texture;  // there should also be a footstep sound depending on the surface
+    float attritionCoefficient;
+
+    LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID);
     LevelItem();
     ~LevelItem();
-
-   private:
 };
 
 //------------------------------------------------------------------------------

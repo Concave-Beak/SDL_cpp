@@ -2,9 +2,10 @@
 
 #include <SDL2/SDL_render.h>
 
+#include <cstdio>
 #include <vector>
 
-#include "../../Include/Headers/Utils.hh"
+#include "../../Include/Utils/Utils.hh"
 
 std::vector<LevelItem> Level::colisions;
 std::vector<LevelItem> Level::textures = {};
@@ -32,8 +33,30 @@ LevelItem::~LevelItem() {
 };
 
 LevelItem::LevelItem(){};
-LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor) : pos(ppos), colisionType(pcolType), color(pcolor) {
+LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
     this->wireframe = {ppos.x, ppos.y, size.x, size.y};
+    switch (ptextID) {
+        case VOID: {  // this is where the textures should be applied
+            this->attritionCoefficient = 0;
+            break;
+        }
+        case DIRT: {
+            this->attritionCoefficient = 2;
+            break;
+        }
+        case MUD: {
+            this->attritionCoefficient = 3.5;
+            break;
+        }
+        case WOOD: {
+            this->attritionCoefficient = 2;
+            break;
+        }
+        case STONE: {
+            this->attritionCoefficient = 2;
+            break;
+        }
+    }
 
     if (pcolType != NO_COLISION) {
         Level::colisions.push_back(*this);  // This is used when checking

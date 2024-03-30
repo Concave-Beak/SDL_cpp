@@ -10,43 +10,15 @@
 #include <unordered_map>
 
 #include "../Entities/Player.hh"
+#include "./Camera.hh"
 #include "./Config.hh"
-
-//------------------------------------------------------------------------------
-
-class Camera {
-   public:
-    static Camera* GetCameraInstance();
-
-    void FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i hitboxPlayer);
-    void Move(MoveOptions);
-
-    std::array<Vec2f, 2> GetPlayerMinMaxOffset();
-    void SetPlayerMinMaxOffsetMultiply(const float multiply);
-    void SetPlayerMinMaxOffsetAbsolute(const float absVal);
-
-   public:
-    Vec2f pos = {0, 0};  // TODO: make private
-
-   private:
-    Vec2f vel = {0, 0};
-    Vec2f playerOffset = {0, 0};
-
-    Vec2i maxPlayerOffset = {10, 100};
-    Vec2f minPlayerOffset = {-10, 100};  // both may change depending on player's items.
-    Vec2i cameraMovementSpeed = {0, 0};
-    // const int zoom = 1; // not used
-
-    bool isBeingMoved = false;
-
-   private:
-    static Camera* instance;
-};
 
 //------------------------------------------------------------------------------
 
 class Engine {
    public:
+    bool debugMode = false;  // will change
+
     // SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
 
@@ -55,7 +27,9 @@ class Engine {
     void Init();
     int Run();
 
-    bool debugMode = false;  // will change
+    // float GetTimeMultiplier(); // not used
+    Vec2f GetCameraPos();
+
    private:
     static Engine* instance;
 
@@ -71,6 +45,7 @@ class Engine {
 
     Uint16 fpsCap = 60;
     const Uint8 minFPS = 10;
+    float timeMultiplier = 1;
 
     bool quit = false;
     bool paused = false;
@@ -80,14 +55,16 @@ class Engine {
 
     TTF_Font* debugFont;
 
+    Uint32 lastUpdate = 0;
+
    private:
     void Loop();
 
     void HandleFPS(float startTick);
     void HandleEvent(SDL_Event* event);
-    void HandlePlayerVel(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
 
-    void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta);
+    void HandleVelocity(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
+    void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta, float* attritionCoefficient, const float timeMultiplier);
 
     void DrawText(const std::string& text, SDL_Rect textureRect, const SDL_Color fontColor);
     void ShowDebugInfo();
