@@ -6,7 +6,7 @@ Camera *Camera::instance = new Camera;
 
 Camera *Camera::GetCameraInstance() { return instance; }
 
-Vec2f Camera::pos = {0.0};
+Vec2f Camera::pos = {0, 0};
 
 void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i hitboxPlayer, float timeMultiplier) {
     playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0f + hitboxPlayer.x / 2.0f;
@@ -28,6 +28,9 @@ void Camera::Move(MoveOptions moveOpt) {
     cameraMovementSpeed = {maxPlayerOffset.x / 2, maxPlayerOffset.y / 8};  // Values to make it smoother
     isBeingMoved = true;
     switch (moveOpt) {
+        case NONE: {
+            break;
+        }
         case UP: {
             if (playerOffset.y < maxPlayerOffset.y) {
                 vel.y -= cameraMovementSpeed.y;

@@ -41,7 +41,7 @@ LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pc
             break;
         }
         case DIRT: {
-            this->attritionCoefficient = 2.5;
+            this->attritionCoefficient = 2;
             break;
         }
         case MUD: {

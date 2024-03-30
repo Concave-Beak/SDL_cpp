@@ -64,7 +64,7 @@ class Engine {
     void HandleEvent(SDL_Event* event);
 
     void HandleVelocity(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
-    void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta, float* attritionCoefficient);
+    void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta, float* attritionCoefficient, const float timeMultiplier);
 
     void DrawText(const std::string& text, SDL_Rect textureRect, const SDL_Color fontColor);
     void ShowDebugInfo();

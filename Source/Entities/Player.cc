@@ -39,12 +39,11 @@ void Player::Move(const MoveOptions moveOpt) {
         case UP: {
             if (colidedDown && !colidedUp) {
                 velocity.y -= accelSpeed.y;
-                break;
             }
+            break;
         }
         case DOWN: {
             if (isAbovePlatform) {
-                velocity.y += 10;
                 pos.y += 6;               // 6 is the safest i've found given the height
                 colidedDown = false;      // of the plaform in Engine.cc. This needs to be done
                 isAbovePlatform = false;  // to place the player bellow the platform's top
@@ -62,10 +61,13 @@ void Player::PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* r
     angleDash = modOfAngleDash;
     // decrease timeMultiplier
     if (*timeMultiplier > 0.1) {
-        *timeMultiplier += (0.1 - *timeMultiplier) / 50;
+        *timeMultiplier += (0.1 - *timeMultiplier) / 25;
     }
     switch (moveOpt) {
         // each angle position represents an angle
+        case NONE: {
+            break;
+        }
         case LEFT: {
             angleDash += (180 - angleDash) / 20.0;
             break;
@@ -113,9 +115,8 @@ void Player::Dash() {
     Vec2f dashStrenght = {300.0f, 300.0f};
     float dashAngleInRadians = DegreesToRadians(angleDash);
     Vec2f dashVel = {dashStrenght.x * cos(dashAngleInRadians), dashStrenght.y * sin(dashAngleInRadians)};
-    printf("x: %f\ty: %f\n", dashVel.x, dashVel.y);
-    velocity.x += dashVel.x;
-    velocity.y += dashVel.y;
+    velocity.x = dashVel.x;
+    velocity.y = dashVel.y;
 }
 
 //------------------------------------------------------------------------------

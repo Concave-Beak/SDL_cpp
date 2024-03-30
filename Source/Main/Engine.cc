@@ -61,12 +61,9 @@ void Engine::Loop() {
 
 void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColisionboxInfo) {
     Uint32 timeNow = SDL_GetTicks();
+
     float delta = (timeNow - lastUpdate) / 300.0f;  // 300 is just to make delta easier to work with
 
-    if (playerInstance->colidedDown == false) {
-        velPlayer->y += delta * GRAVITY * timeMultiplier;
-        posPlayer->y += velPlayer->y * delta * timeMultiplier;
-    }
     float attritionCoefficient = 0;
 
     {
@@ -85,9 +82,14 @@ void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColi
         }
     }
 
+    if (playerInstance->colidedDown == false) {
+        velPlayer->y += delta * GRAVITY * timeMultiplier;
+        posPlayer->y += velPlayer->y * delta * timeMultiplier;
+    }
+
     if (!playerInstance->colidedDown) attritionCoefficient = 0.8;
 
-    HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta, &attritionCoefficient);
+    HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta, &attritionCoefficient, timeMultiplier);
 
     velPlayer->x -= delta * attritionCoefficient * velPlayer->x * timeMultiplier;
     posPlayer->x += velPlayer->x * timeMultiplier;
@@ -97,7 +99,7 @@ void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColi
     lastUpdate = SDL_GetTicks();
 }
 
-void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionBoxPlayer, float delta, float *attritionCoefficient) {
+void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, const Vec2i colisionBoxPlayer, const float delta, float *attritionCoefficient, const float timeMultipler) {
     playerInstance->colidedUp = false;
     playerInstance->colidedLeft = false;
     playerInstance->colidedRight = false;
@@ -130,11 +132,11 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionB
             isHorizontallyOverlaped = (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) ||
                                       (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
 
-            hitFeet = feetOfPLayer + delta * velPlayer->y >= colItemTop &&
+            hitFeet = feetOfPLayer + delta * velPlayer->y * timeMultiplier >= colItemTop &&
                       feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.8 &&  // 0.8 is the maximum that i've found not to break colision,
                       isHorizontallyOverlaped;                                           // this makes it so the player only goes up if above 20% o the colItem's height
 
-            hitHead = headOfPlayer + delta * velPlayer->y <= colItemBottom &&
+            hitHead = headOfPlayer + delta * velPlayer->y * timeMultiplier <= colItemBottom &&
                       headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
                       isHorizontallyOverlaped &&
                       colisionItem.colisionType != PLATFORM;
@@ -163,11 +165,11 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i colisionB
                 isVerticallyOverlaped = ((headOfPlayer > colItemTop && headOfPlayer < colItemBottom) ||
                                          (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
 
-                hitRight = rightOfPlayer + velPlayer->x * (1 - delta) >= colItemLeft &&
+                hitRight = rightOfPlayer - velPlayer->x * delta * *(attritionCoefficient)*timeMultiplier >= colItemLeft &&
                            rightOfPlayer <= colItemRight &&
                            isVerticallyOverlaped;
 
-                hitLeft = leftOfPlayer + velPlayer->x * (1 - delta) <= colItemRight &&
+                hitLeft = leftOfPlayer - velPlayer->x * delta * *(attritionCoefficient)*timeMultiplier <= colItemRight &&
                           leftOfPlayer >= colItemLeft &&
                           isVerticallyOverlaped;
             }
@@ -262,6 +264,7 @@ void Engine::HandleEvent(SDL_Event *event) {
         }
     }
     if (keyStates[SDLK_e]) {
+        playerInstance->PrepareToDash(NONE, 0, renderer, &timeMultiplier);
         playerInstance->isPreparingToDash = true;
     }
     if (keyStates[SDLK_e] == false) {

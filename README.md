@@ -15,7 +15,6 @@ make
 ## TODO
 
 - Create a pause tech
-- Fix issue: More fps = player moves faster
 - Random Level Generator
 - Player and texture assets
 - Improve code quality

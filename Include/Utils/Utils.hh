@@ -10,6 +10,7 @@
 #define MIN_Y_SPEED -400
 
 enum MoveOptions {
+    NONE = 0,
     LEFT = 1,
     RIGHT,
     UP,
