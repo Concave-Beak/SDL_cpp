@@ -117,6 +117,7 @@ void Player::Dash() {
     Vec2f dashVel = {dashStrenght.x * cos(dashAngleInRadians), dashStrenght.y * sin(dashAngleInRadians)};
     velocity.x = dashVel.x;
     velocity.y = dashVel.y;
+    isPreparingToDash = false;
 }
 
 //------------------------------------------------------------------------------

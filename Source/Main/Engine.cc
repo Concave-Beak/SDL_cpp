@@ -263,14 +263,22 @@ void Engine::HandleEvent(SDL_Event *event) {
             playerInstance->Move(MoveOptions::DOWN);
         }
     }
-    if (keyStates[SDLK_e]) {
-        playerInstance->PrepareToDash(NONE, 0, renderer, &timeMultiplier);
-        playerInstance->isPreparingToDash = true;
+    if (keyStates[SDLK_e] && SDL_GetTicks() >= playerInstance->whenNextDashAvailable) {
+        if (!playerInstance->isPreparingToDash) {
+            playerInstance->PrepareToDash(NONE, 0, renderer, &timeMultiplier);
+            playerInstance->DashEnd = SDL_GetTicks() + 2000;
+            playerInstance->isPreparingToDash = true;
+        }
+        if (SDL_GetTicks() >= playerInstance->DashEnd) {
+            playerInstance->Dash();
+            playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
+        }
     }
     if (keyStates[SDLK_e] == false) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->Dash();
             playerInstance->isPreparingToDash = false;
+            playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
         }
     }
     if (keyStates[SDLK_LEFT]) {
