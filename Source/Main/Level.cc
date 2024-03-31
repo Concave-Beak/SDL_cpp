@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "../../Include/Utils/Utils.hh"
+#include "../Utils/Utils.hh"
 
 std::vector<LevelItem> Level::colisions;
 std::vector<LevelItem> Level::textures = {};

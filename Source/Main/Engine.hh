@@ -9,8 +9,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "../Entities/Camera.hh"
 #include "../Entities/Player.hh"
-#include "./Camera.hh"
 #include "./Config.hh"
 
 //------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ class Engine {
     // SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
 
-    Vec2i GetScreenInfo();
+    void UpdateScreenInfo();
 
     void Init();
     int Run();

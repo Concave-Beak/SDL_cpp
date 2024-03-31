@@ -1,6 +1,6 @@
 #ifndef __CAMERA_HEADER__
 #define __CAMERA_HEADER__
-#include "../../Include/Utils/Utils.hh"
+#include "../Utils/Utils.hh"
 #include "array"
 
 //------------------------------------------------------------------------------

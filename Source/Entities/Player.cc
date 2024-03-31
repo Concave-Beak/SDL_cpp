@@ -1,14 +1,13 @@
-#include "Player.hh"
+#include "./Player.hh"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 
 #include <cmath>
-#include <cstdio>
 
-#include "../../Include/Utils/Utils.hh"
-#include "../Main/Camera.hh"
+#include "../Utils/Utils.hh"
+#include "./Camera.hh"
 
 //------------------------------------------------------------------------------
 

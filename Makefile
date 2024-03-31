@@ -9,7 +9,7 @@ BUILD_DIR := Build
 BIN_DIR := Bin
 
 # Find source files
-SRCS := $(wildcard $(SRC_DIR)/**/*.cc ./Include/Utils/*)
+SRCS := $(wildcard $(SRC_DIR)/**/*.cc)
 OBJS := $(patsubst $(SRC_DIR)/%.cc, $(BUILD_DIR)/%.o, $(SRCS))
 
 # Target

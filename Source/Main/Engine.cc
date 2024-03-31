@@ -1,12 +1,7 @@
 #include "Engine.hh"
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_pixels.h>
-#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
-#include <SDL2/SDL_timer.h>
-#include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
 
 #include <cstdint>
@@ -14,7 +9,7 @@
 #include <cstdlib>
 #include <string>
 
-#include "../../Include/Utils/Utils.hh"
+#include "../Utils/Utils.hh"
 #include "Level.hh"
 
 //------------------------------------------------------------------------------
@@ -400,6 +395,8 @@ int Engine::Run() {
 Engine *Engine::instance = new Engine;
 Engine *Engine::GetEngineInstance() { return instance; }
 
-Vec2i Engine::GetScreenInfo() { return {SCREEN_WIDTH, SCREEN_HEIGHT}; }
+void Engine::UpdateScreenInfo() {
+    SDL_GetRendererOutputSize(renderer, &SCREEN_WIDTH, &SCREEN_HEIGHT);
+}
 
 Vec2f Engine::GetCameraPos() { return camera->pos; }
