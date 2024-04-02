@@ -2,36 +2,57 @@
 #define __PLAYER_HEADER__
 
 #include <SDL2/SDL.h>
-#include "./EntityUtils.hh"
 
-enum MoveOpts {
-    LEFT = 1,
-    RIGHT,
-    UP,
-    DOWN,
-};
+#include "../../Include/Utils/Utils.hh"
+
+//------------------------------------------------------------------------------
 
 class Player {
    public:
-    static float speed;
+    Vec2f velocity = {0, 0};
+    Vec2f pos = {0, 0};
+
+    bool colidedDown = false;
+    bool colidedLeft = false;
+    bool colidedRight = false;
+    bool colidedUp = false;
+
+    bool isAbovePlatform = false;
+
+    // Dash
+    bool isPreparingToDash = false;
+    bool isDashing = false;
+    float DashEnd;
+    float whenNextDashAvailable;
+
+    float preDashAnimationEnd;
+    float preDashDurationInMs;
+
+    float angleDash = 0;  // in angles
+    //--
+
+    Vec2i hitbox = {75, 75};
 
    public:
     static Player* GetPlayerInstace();
-    static Position GetPlayerPos();
 
-    void DefinePlayerSpeed(float);
-    void Move(const MoveOpts);
-    void Draw(SDL_Renderer* renderer);
+    // Vec2f* GetPlayerPos();  // not used
+    void Move(const MoveOptions);
+    void PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* renderer, float* timeMultiplier);
+    void Dash();
+
+    Vec2i GetHitboxInfo();
 
    private:
     static Player* player;
 
-    static Position new_pos;
-    static Position prev_pos;
-    static Position direction;
+    const Vec2f accelSpeed = {1, 250};  // may change during gameplay, I'll just use it as a const it for now
 
-    const Hitbox hitbox = Hitbox{75, 75};
-
-    void CalcPlayerSpeed();
+    // const SDL_Texture* StandingTexture;  // not used
+    // const SDL_Texture* DuckingTexture;
+    MoveOptions facing = RIGHT;
 };
+
+//------------------------------------------------------------------------------
+
 #endif

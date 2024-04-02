@@ -1,35 +1,53 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_render.h>
 #include "Player.hh"
 
-float Player::speed = 10.0f;
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_timer.h>
+
+#include <cmath>
+#include <cstdio>
+
+#include "../../Include/Utils/Utils.hh"
+#include "../Main/Camera.hh"
+
+//------------------------------------------------------------------------------
+
 Player* Player::player = new Player;
-Position Player::new_pos = Position{0, 0};
 
-Player* Player::GetPlayerInstace() {
-    return Player::player;
+Player* Player::GetPlayerInstace() { return Player::player; }
+
+Vec2i Player::GetHitboxInfo() {
+    return hitbox;
 }
 
-Position Player::GetPlayerPos() {
-    return Player::new_pos;
-}
-
-void Player::Move(const MoveOpts move_options) {
-    switch (move_options) {
+void Player::Move(const MoveOptions moveOpt) {
+    switch (moveOpt) {
         case LEFT: {
-            new_pos.x -= speed;
+            if (!colidedLeft) {
+                velocity.x -= accelSpeed.x;
+            }
+            facing = LEFT;
             break;
         }
         case RIGHT: {
-            new_pos.x += speed;
+            if (!colidedRight) {
+                velocity.x += accelSpeed.x;
+            }
+            facing = RIGHT;
             break;
         }
         case UP: {
-            new_pos.y -= speed;  // It's inverted because SDL renders from top left to bottom right
+            if (colidedDown && !colidedUp) {
+                velocity.y -= accelSpeed.y;
+            }
             break;
         }
         case DOWN: {
-            new_pos.y += speed;
+            if (isAbovePlatform) {
+                pos.y += 6;               // 6 is the safest i've found given the height
+                colidedDown = false;      // of the plaform in Engine.cc. This needs to be done
+                isAbovePlatform = false;  // to place the player bellow the platform's top
+            }                             // TODO: change how this works
             break;
         }
         default: {
@@ -38,23 +56,68 @@ void Player::Move(const MoveOpts move_options) {
     }
 }
 
-void Player::DefinePlayerSpeed(float f) {
-    speed = f;
+void Player::PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* renderer, float* timeMultiplier) {
+    float modOfAngleDash = fmod(angleDash, 360);
+    angleDash = modOfAngleDash;
+    // decrease timeMultiplier
+    if (*timeMultiplier > 0.1) {
+        *timeMultiplier += (0.1 - *timeMultiplier) / 25;
+    }
+    switch (moveOpt) {
+        // each angle position represents an angle
+        case NONE: {
+            break;
+        }
+        case LEFT: {
+            angleDash += (180 - angleDash) / 20.0;
+            break;
+        }
+        case RIGHT: {
+            float addDash = (0 - angleDash) / 20.0f;
+            if (angleDash > 180) {
+                addDash = (360 - angleDash) / 20.0f;
+            }
+            angleDash += addDash;
+            break;
+        }
+        case UP: {  // SDL flips "up" and "down"
+            float addDash = (270 - angleDash) / 20.0f;
+            if (angleDash > -90 && angleDash < 90) {
+                addDash = (-90 - angleDash) / 20.0f;
+            }
+            angleDash += addDash;
+            break;
+        }
+        case DOWN: {
+            float addDash = (90 - angleDash) / 20.0f;
+            if (angleDash > 270) {
+                addDash = (450 - angleDash) / 20.0f;
+            }
+            angleDash += addDash;
+            break;
+        }
+    }
+    float angleDashInRadians = DegreesToRadians(angleDash);
+
+    int lineDistance = 100;
+    Vec2i pointStart = {(int)pos.x + hitbox.x / 2,
+                        (int)pos.y + hitbox.y / 2};
+    Vec2i pointEnd = {int(pointStart.x + lineDistance * cos(angleDashInRadians)),
+                      int(pointStart.y + lineDistance * sin(angleDashInRadians))};
+
+    Vec2f cameraPos = Camera::pos;
+    SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0x00);
+    SDL_RenderDrawLine(renderer, pointStart.x - cameraPos.x, pointStart.y - cameraPos.y, pointEnd.x - cameraPos.x, pointEnd.y - cameraPos.y);
+    (void)startTick;
 }
 
-void Player::CalcPlayerSpeed() {
+void Player::Dash() {
+    Vec2f dashStrenght = {300.0f, 300.0f};
+    float dashAngleInRadians = DegreesToRadians(angleDash);
+    Vec2f dashVel = {dashStrenght.x * cos(dashAngleInRadians), dashStrenght.y * sin(dashAngleInRadians)};
+    velocity.x = dashVel.x;
+    velocity.y = dashVel.y;
+    isPreparingToDash = false;
 }
 
-void Player::Draw(SDL_Renderer* renderer) {
-    SDL_Rect rect = SDL_Rect{
-        new_pos.x,
-        new_pos.y,
-        hitbox.w,
-        hitbox.h,
-    };
-
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_RenderFillRect(renderer, &rect);
-    SDL_RenderPresent(renderer);
-    SDL_RenderClear(renderer);
-}
+//------------------------------------------------------------------------------
