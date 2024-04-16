@@ -4,9 +4,11 @@ CFLAGS := -Wall -Wextra -O2
 LDFLAGS := -lSDL2 -lSDL2_ttf
 
 # Directories
-SRC_DIR := Source
-BUILD_DIR := Build
-BIN_DIR := Bin
+SRC_DIR := src
+BUILD_DIR := build
+BIN_DIR := bin
+INC_DIR := include
+LIB_DIR := lib
 
 # Find source files
 SRCS := $(wildcard $(SRC_DIR)/**/*.cc)
@@ -26,7 +28,7 @@ $(TARGET): $(OBJS)
 # Rule to compile source files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ -I$(INC_DIR)
 
 # Phony targets
 .PHONY: all clean rebuild

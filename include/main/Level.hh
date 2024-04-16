@@ -1,11 +1,10 @@
-#ifndef __MAP_HEADER__
-#define __MAP_HEADER__
+#pragma once
 
 #include <SDL2/SDL.h>
 
 #include <vector>
 
-#include "../Utils/Utils.hh"
+#include "../../lib/utils/utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -44,8 +43,13 @@ class Level {
    public:
     static std::vector<LevelItem> colisions;
     static std::vector<LevelItem> textures;
+
+    Level(){};
+    ~Level(){};
+
+    void GenerateLevel(const Uint8 &levelID);
+
+   private:
 };
 
 //------------------------------------------------------------------------------
-
-#endif

@@ -1,4 +1,4 @@
-#include "Engine.hh"
+#include "../../include/main/Engine.hh"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
@@ -9,8 +9,8 @@
 #include <cstdlib>
 #include <string>
 
-#include "../Utils/Utils.hh"
-#include "Level.hh"
+#include "../../include/main/Level.hh"
+#include "../../lib/utils/utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -26,15 +26,12 @@ void Engine::Loop() {
     Vec2f *posPlayer = &playerInstance->pos;
     Vec2f *velPlayer = &playerInstance->velocity;
     Vec2i playerColisionboxInfo = playerInstance->GetHitboxInfo();
-
-    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                                 // Placeholder
-    new LevelItem(Vec2i{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);                          // Placeholder
-    new LevelItem(Vec2i{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);  // Placeholder
-    new LevelItem(Vec2i{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);                                    // Placeholder
+    Level level;
+    level.GenerateLevel(0);
 
     while (!quit) {
         beginTick = SDL_GetTicks();
-        HandleVelocity(posPlayer, velPlayer, playerColisionboxInfo);
+        HandlePlayerVelocity(posPlayer, velPlayer, playerColisionboxInfo);
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
             if (debugMode) {
@@ -54,7 +51,7 @@ void Engine::Loop() {
     }
 }
 
-void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColisionboxInfo) {
+void Engine::HandlePlayerVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColisionboxInfo) {
     Uint32 timeNow = SDL_GetTicks();
 
     float delta = (timeNow - lastUpdate) / 300.0f;  // 300 is just to make delta easier to work with
@@ -84,7 +81,7 @@ void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColi
 
     if (!playerInstance->colidedDown) attritionCoefficient = 0.8;
 
-    HandleColisions(posPlayer, velPlayer, playerColisionboxInfo, delta, &attritionCoefficient, timeMultiplier);
+    HandlePlayerColisions(posPlayer, velPlayer, playerColisionboxInfo, delta, &attritionCoefficient, timeMultiplier);
 
     velPlayer->x -= delta * attritionCoefficient * velPlayer->x * timeMultiplier;
     posPlayer->x += velPlayer->x * timeMultiplier;
@@ -94,7 +91,7 @@ void Engine::HandleVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i playerColi
     lastUpdate = SDL_GetTicks();
 }
 
-void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, const Vec2i colisionBoxPlayer, const float delta, float *attritionCoefficient, const float timeMultipler) {
+void Engine::HandlePlayerColisions(Vec2f *posPlayer, Vec2f *velPlayer, const Vec2i colisionBoxPlayer, const float delta, float *attritionCoefficient, const float timeMultipler) {
     playerInstance->colidedUp = false;
     playerInstance->colidedLeft = false;
     playerInstance->colidedRight = false;
@@ -133,8 +130,7 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, const Vec2i col
 
             hitHead = headOfPlayer + delta * velPlayer->y * timeMultiplier <= colItemBottom &&
                       headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
-                      isHorizontallyOverlaped &&
-                      colisionItem.colisionType != PLATFORM;
+                      isHorizontallyOverlaped;
         }
 
         if (hitFeet) {
@@ -185,16 +181,16 @@ void Engine::HandleColisions(Vec2f *posPlayer, Vec2f *velPlayer, const Vec2i col
 
 void Engine::HandleFPS(float loopBegin) {
     float timeStepInMS = 1000.0f / fpsCap;
-    float loopStop = SDL_GetTicks();
-    float timeDifference = timeStepInMS - (loopStop - loopBegin);
-    SDL_Color fontColor = {0x00, 0xff, 0x00, 0x00};
+    float loopEnd = SDL_GetTicks();
+    float timeDifference = timeStepInMS - (loopEnd - loopBegin);
     if (config->ShowFPSState() == true) {
+        SDL_Color fontColor = {0x00, 0xff, 0x00, 0x00};
         std::string fpsStr = "FPS: " +
                              std::to_string(int(fpsCap - (timeDifference / 1000.0f)));  // fps is in secods, timeDifference is in ms.
         DrawText(fpsStr, SDL_Rect{SCREEN_WIDTH - 100, 0, 100, 25}, fontColor);          // The 1000.0f is to transform the timeDiff to seconds
     }
     if (timeDifference >= 0) {
-        SDL_Delay(timeStepInMS - (loopStop - loopBegin));
+        SDL_Delay(timeStepInMS - (loopEnd - loopBegin));
         return;
     }
 }
@@ -372,7 +368,7 @@ void Engine::Init() {
         printf("INFO: Starting in debug mode\n");
     }
 
-    debugFont = TTF_OpenFont("./Include/Fonts/BigBlueTermMono.ttf", 15);
+    debugFont = TTF_OpenFont("./assets/fonts/BigBlueTermMono.ttf", 15);
     if (!debugFont) {
         fprintf(stderr, "SDL TTF could not open font\n");
         exit(EXIT_FAILURE);

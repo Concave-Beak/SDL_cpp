@@ -1,6 +1,6 @@
-#ifndef __CAMERA_HEADER__
-#define __CAMERA_HEADER__
-#include "../Utils/Utils.hh"
+#pragma once
+
+#include "../../lib/utils/utils.hh"
 #include "array"
 
 //------------------------------------------------------------------------------
@@ -35,4 +35,3 @@ class Camera {
 };
 
 //------------------------------------------------------------------------------
-#endif

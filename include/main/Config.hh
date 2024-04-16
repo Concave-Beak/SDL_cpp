@@ -1,5 +1,4 @@
-#ifndef __CONFIG_HEADER__
-#define __CONFIG_HEADER__
+#pragma once
 
 class Config {
    public:
@@ -12,7 +11,5 @@ class Config {
     bool fakeFullscreen = false;
     static Config* config;
 };
-
-#endif
 
 // TO BE IMPLEMENTED

@@ -1,4 +1,4 @@
-#include "./Engine.hh"
+#include "../../include/main/Engine.hh"
 
 int main(int argc, char** argv) {
     Engine* instance = Engine::GetEngineInstance();

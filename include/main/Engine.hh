@@ -1,5 +1,4 @@
-#ifndef __ENGINE_HEADER__
-#define __ENGINE_HEADER__
+#pragma once
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
@@ -9,8 +8,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "../Entities/Camera.hh"
-#include "../Entities/Player.hh"
+#include "../entities/Camera.hh"
+#include "../entities/Player.hh"
 #include "./Config.hh"
 
 //------------------------------------------------------------------------------
@@ -43,9 +42,10 @@ class Engine {
 
     std::unordered_map<SDL_Keycode, bool> keyStates;
 
-    Uint16 fpsCap = 60;
+    const Uint16 fpsCap = 60;
     const Uint8 minFPS = 10;
     float timeMultiplier = 1;
+    Uint32 lastUpdate = 0;
 
     bool quit = false;
     bool paused = false;
@@ -55,16 +55,14 @@ class Engine {
 
     TTF_Font* debugFont;
 
-    Uint32 lastUpdate = 0;
-
    private:
     void Loop();
 
     void HandleFPS(float startTick);
     void HandleEvent(SDL_Event* event);
 
-    void HandleVelocity(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
-    void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta, float* attritionCoefficient, const float timeMultiplier);
+    void HandlePlayerVelocity(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
+    void HandlePlayerColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta, float* attritionCoefficient, const float timeMultiplier);
 
     void DrawText(const std::string& text, SDL_Rect textureRect, const SDL_Color fontColor);
     void ShowDebugInfo();
@@ -74,5 +72,3 @@ class Engine {
 };
 
 //------------------------------------------------------------------------------
-
-#endif

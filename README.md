@@ -15,7 +15,6 @@ make
 ## TODO
 
 - Create a pause tech
-- Random Level Generator
 - Player and texture assets
 - Improve code quality
 - Improve code performance

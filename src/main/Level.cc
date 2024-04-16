@@ -1,11 +1,13 @@
-#include "./Level.hh"
+#include "../../include/main/Level.hh"
 
 #include <SDL2/SDL_render.h>
 
 #include <cstdio>
+#include <cstdlib>
+#include <ctime>
 #include <vector>
 
-#include "../Utils/Utils.hh"
+#include "../../lib/utils/utils.hh"
 
 std::vector<LevelItem> Level::colisions;
 std::vector<LevelItem> Level::textures = {};
@@ -65,6 +67,11 @@ LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pc
     } else {
         Level::textures.push_back(*this);
     }
+}
+
+//------------------------------------------------------------------------------
+
+void Level::GenerateLevel(const Uint8 &levelID) {
 }
 
 //------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-#include "./Player.hh"
+#include "../../include/entities/Player.hh"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
@@ -6,8 +6,9 @@
 
 #include <cmath>
 
-#include "../Utils/Utils.hh"
-#include "./Camera.hh"
+#include "../../include/entities/Camera.hh"
+#include "../../lib/utils/math_utils.hh"
+#include "../../lib/utils/utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -46,7 +47,7 @@ void Player::Move(const MoveOptions moveOpt) {
                 pos.y += 6;               // 6 is the safest i've found given the height
                 colidedDown = false;      // of the plaform in Engine.cc. This needs to be done
                 isAbovePlatform = false;  // to place the player bellow the platform's top
-            }                             // TODO: change how this works
+            }  // TODO: change how this works
             break;
         }
         default: {

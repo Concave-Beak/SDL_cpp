@@ -1,9 +1,8 @@
-#ifndef __PLAYER_HEADER__
-#define __PLAYER_HEADER__
+#pragma once
 
 #include <SDL2/SDL.h>
 
-#include "../Utils/Utils.hh"
+#include "../../lib/utils/utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -54,5 +53,3 @@ class Player {
 };
 
 //------------------------------------------------------------------------------
-
-#endif

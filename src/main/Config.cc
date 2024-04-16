@@ -1,4 +1,4 @@
-#include "./Config.hh"
+#include "../../include/main/Config.hh"
 
 bool Config::ShowFPSState() {
     return showFPS;
