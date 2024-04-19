@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "../../lib/utils/utils.hh"
+#include "../../lib/utils/math_utils.hh"
 
 //------------------------------------------------------------------------------
 

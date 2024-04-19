@@ -7,7 +7,7 @@
 #include <ctime>
 #include <vector>
 
-#include "../../lib/utils/utils.hh"
+#include "../../lib/utils/math_utils.hh"
 
 std::vector<LevelItem> Level::colisions;
 std::vector<LevelItem> Level::textures = {};

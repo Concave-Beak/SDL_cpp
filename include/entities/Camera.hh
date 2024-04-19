@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../../lib/utils/utils.hh"
+#include "../../lib/utils/engine_utils.hh"
+#include "../../lib/utils/math_utils.hh"
 #include "array"
 
 //------------------------------------------------------------------------------

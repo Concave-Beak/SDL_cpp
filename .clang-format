@@ -1,4 +1,4 @@
 BasedOnStyle: Google
-SortIncludes: true # These can break compilation, NOTE: turn of later
+SortIncludes: false
 IndentWidth: 4
 ColumnLimit: 0 # We don't want to add too many additional linebreaks for now

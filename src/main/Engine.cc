@@ -10,7 +10,8 @@
 #include <string>
 
 #include "../../include/main/Level.hh"
-#include "../../lib/utils/utils.hh"
+
+#include "../../lib/utils/sdl_utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -91,7 +92,8 @@ void Engine::HandlePlayerVelocity(Vec2f *posPlayer, Vec2f *velPlayer, Vec2i play
     lastUpdate = SDL_GetTicks();
 }
 
-void Engine::HandlePlayerColisions(Vec2f *posPlayer, Vec2f *velPlayer, const Vec2i colisionBoxPlayer, const float delta, float *attritionCoefficient, const float timeMultipler) {
+void Engine::HandlePlayerColisions(Vec2f *posPlayer, Vec2f *velPlayer, const Vec2i colisionBoxPlayer, const float delta, float *attritionCoefficient, const float &timeMultipler) {
+    (void)timeMultipler;  // just so the compilers doesnt bitch about it
     playerInstance->colidedUp = false;
     playerInstance->colidedLeft = false;
     playerInstance->colidedRight = false;
@@ -187,7 +189,8 @@ void Engine::HandleFPS(float loopBegin) {
         SDL_Color fontColor = {0x00, 0xff, 0x00, 0x00};
         std::string fpsStr = "FPS: " +
                              std::to_string(int(fpsCap - (timeDifference / 1000.0f)));  // fps is in secods, timeDifference is in ms.
-        DrawText(fpsStr, SDL_Rect{SCREEN_WIDTH - 100, 0, 100, 25}, fontColor);          // The 1000.0f is to transform the timeDiff to seconds
+        // DrawText(fpsStr, SDL_Rect{SCREEN_WIDTH - 100, 0, 100, 25}, fontColor);          // The 1000.0f is to transform the timeDiff to seconds
+        DrawText();
     }
     if (timeDifference >= 0) {
         SDL_Delay(timeStepInMS - (loopEnd - loopBegin));
@@ -199,11 +202,11 @@ void Engine::ShowDebugInfo() {
     SDL_Color fontColor = {0xff, 0xff, 0xff, 0xff};
     std::string levelItemStr = "LI: " + std::to_string(Level::colisions.size() + Level::textures.size());
     std::string colisionsAndTexturesStr = "C/T: " + std::to_string(Level::colisions.size()) + "/" + std::to_string(Level::textures.size());
-    DrawText(levelItemStr, SDL_Rect{0, 5, GetTextRectangleWidth(levelItemStr.size()), 25}, fontColor);
-    DrawText(colisionsAndTexturesStr, SDL_Rect{0, 30, GetTextRectangleWidth(colisionsAndTexturesStr.size()), 25}, fontColor);
+    // DrawText(levelItemStr, SDL_Rect{0, 5, GetTextRectangleWidth(levelItemStr.size()), 25}, fontColor);
+    // DrawText(colisionsAndTexturesStr, SDL_Rect{0, 30, GetTextRectangleWidth(colisionsAndTexturesStr.size()), 25}, fontColor);
 
     std::string playerInfo = "XY: " + std::to_string(playerInstance->pos.x) + " " + std::to_string(playerInstance->pos.y);
-    DrawText(playerInfo, SDL_Rect{0, 55, GetTextRectangleWidth(playerInfo.size()), 25}, fontColor);
+    // DrawText(playerInfo, SDL_Rect{0, 55, GetTextRectangleWidth(playerInfo.size()), 25}, fontColor);
 }
 
 int Engine::GetTextRectangleWidth(size_t strSize) {
@@ -319,22 +322,9 @@ void Engine::Render() {
     SDL_RenderFillRect(renderer, &playerModel);
 }
 
-void Engine::DrawText(const std::string &text, SDL_Rect textureRect, const SDL_Color fontColor) {
-    SDL_Surface *textSurface = TTF_RenderText_Blended(debugFont, text.c_str(), fontColor);
-    if (!textSurface) {
-        fprintf(stderr, "SDL TTF could not render text\n");
-        return;
-    }
-
-    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    if (!textTexture) {
-        fprintf(stderr, "SDL TTF could not create texture\n");
-        return;
-    }
-
-    SDL_RenderCopy(renderer, textTexture, NULL, &textureRect);
-
-    SDL_FreeSurface(textSurface);
+void Engine::DrawText() {
+    scc(SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0));
+    RenderTextSized(renderer, &debugFont, "filhodaputa", 11, Vec2f{0, 0}, 0x00ff00, 5);
 }
 
 void Engine::Init() {
@@ -343,12 +333,6 @@ void Engine::Init() {
         exit(EXIT_FAILURE);
     }
     printf("INFO: SDL_Init initialized succesfully\n");
-
-    if (TTF_Init() != 0) {
-        fprintf(stderr, "SDL TTF could not initialize! SDL_Error: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-    printf("INFO: SDL_TTF initialized succesfully\n");
 
     window = SDL_CreateWindow("Game", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == NULL) {
@@ -368,11 +352,7 @@ void Engine::Init() {
         printf("INFO: Starting in debug mode\n");
     }
 
-    debugFont = TTF_OpenFont("./assets/fonts/BigBlueTermMono.ttf", 15);
-    if (!debugFont) {
-        fprintf(stderr, "SDL TTF could not open font\n");
-        exit(EXIT_FAILURE);
-    }
+    debugFont = FontLoadFromFile(renderer, "./assets/fonts/charmap-oldschool_white.png");
     printf("INFO: Loaded Debug Font\n");
 }
 
@@ -382,8 +362,6 @@ int Engine::Run() {
 
     printf("Game closed");
     SDL_DestroyWindow(window);
-    TTF_CloseFont(debugFont);
-    TTF_Quit();
     SDL_Quit();
     return 0;
 }

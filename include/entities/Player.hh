@@ -2,7 +2,8 @@
 
 #include <SDL2/SDL.h>
 
-#include "../../lib/utils/utils.hh"
+#include "../../lib/utils/engine_utils.hh"
+#include "../../lib/utils/math_utils.hh"
 
 //------------------------------------------------------------------------------
 

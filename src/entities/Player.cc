@@ -7,8 +7,8 @@
 #include <cmath>
 
 #include "../../include/entities/Camera.hh"
+#include "../../lib/utils/engine_utils.hh"
 #include "../../lib/utils/math_utils.hh"
-#include "../../lib/utils/utils.hh"
 
 //------------------------------------------------------------------------------
 
