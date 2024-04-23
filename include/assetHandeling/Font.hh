@@ -1,7 +1,6 @@
 #include <SDL2/SDL.h>
 
 #include <array>
-#include <string>
 
 #include "../../lib/utils/math_utils.hh"
 
@@ -22,8 +21,7 @@ struct Font {
     std::array<SDL_Rect, ASCII_DISPLAY_HIGH - ASCII_DISPLAY_LOW + 1> glyphTable;
 };
 
-Font FontLoadFromFile(SDL_Renderer *renderer, std::string path);
-
+Font FontLoadFromFile(SDL_Renderer *renderer, const char *path);
 void RenderChar(SDL_Renderer *renderer, const Font *font, char ch, Vec2f pos, float scale);
-
 void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vec2f pos, Uint32 color, float scale);
+void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vec2f pos, Uint32 color, float scale);

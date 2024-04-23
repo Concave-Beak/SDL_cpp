@@ -7,11 +7,11 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <iomanip>
+#include <sstream>
 #include <string>
 
 #include "../../include/main/Level.hh"
-
-#include "../../lib/utils/sdl_utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -187,10 +187,10 @@ void Engine::HandleFPS(float loopBegin) {
     float timeDifference = timeStepInMS - (loopEnd - loopBegin);
     if (config->ShowFPSState() == true) {
         SDL_Color fontColor = {0x00, 0xff, 0x00, 0x00};
-        std::string fpsStr = "FPS: " +
-                             std::to_string(int(fpsCap - (timeDifference / 1000.0f)));  // fps is in secods, timeDifference is in ms.
-        // DrawText(fpsStr, SDL_Rect{SCREEN_WIDTH - 100, 0, 100, 25}, fontColor);          // The 1000.0f is to transform the timeDiff to seconds
-        DrawText();
+        std::stringstream fpsStr;  // fps is in secods, timeDifference is in ms.
+        fpsStr << "FPS: " << std::setprecision(4) << fpsCap - (timeDifference / 1000.0f);
+        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vec2f{0, 0}, 0xffffffff, 3);
+        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vec2f{0, 0}, 0xffffffff, 3);
     }
     if (timeDifference >= 0) {
         SDL_Delay(timeStepInMS - (loopEnd - loopBegin));
@@ -320,11 +320,6 @@ void Engine::Render() {
     };
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
     SDL_RenderFillRect(renderer, &playerModel);
-}
-
-void Engine::DrawText() {
-    scc(SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0));
-    RenderTextSized(renderer, &debugFont, "filhodaputa", 11, Vec2f{0, 0}, 0x00ff00, 5);
 }
 
 void Engine::Init() {

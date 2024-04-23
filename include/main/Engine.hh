@@ -4,7 +4,6 @@
 #include <SDL2/SDL_stdinc.h>
 #include <sys/wait.h>
 
-#include <string>
 #include <unordered_map>
 
 #include "../assetHandeling/Font.hh"
@@ -64,7 +63,6 @@ class Engine {
     void HandlePlayerVelocity(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
     void HandlePlayerColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta, float* attritionCoefficient, const float& timeMultiplier);
 
-    void DrawText();
     void ShowDebugInfo();
     int GetTextRectangleWidth(size_t strSize);
 
