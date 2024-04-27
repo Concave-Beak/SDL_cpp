@@ -58,12 +58,12 @@ inline SDL_Surface *SurfaceFromFile(std::string file_path) {
         rmask, gmask, bmask, amask));
 }
 
-inline void SetTextureColor(SDL_Texture *texture, Uint32 color) {
+inline void SetTextureColor(SDL_Texture *texture, SDL_Color color) {
     scc(SDL_SetTextureColorMod(
         texture,
-        (color >> (8 * 0)) & 0xff,  // this gets the uint32 and translates it to uint8
-        (color >> (8 * 1)) & 0xff,
-        (color >> (8 * 2)) & 0xff));
+        color.r,
+        color.g,
+        color.b));
 
-    scc(SDL_SetTextureAlphaMod(texture, (color >> (8 * 3)) & 0xff));
+    scc(SDL_SetTextureAlphaMod(texture, color.a));
 }

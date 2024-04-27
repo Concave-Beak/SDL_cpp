@@ -186,11 +186,12 @@ void Engine::HandleFPS(float loopBegin) {
     float loopEnd = SDL_GetTicks();
     float timeDifference = timeStepInMS - (loopEnd - loopBegin);
     if (config->ShowFPSState() == true) {
-        SDL_Color fontColor = {0x00, 0xff, 0x00, 0x00};
         std::stringstream fpsStr;  // fps is in secods, timeDifference is in ms.
         fpsStr << "FPS: " << std::setprecision(4) << fpsCap - (timeDifference / 1000.0f);
-        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vec2f{0, 0}, 0xffffffff, 3);
-        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vec2f{0, 0}, 0xffffffff, 3);
+        RenderTextSized(renderer, &debugFont,
+                        fpsStr.str().c_str(), fpsStr.str().size(),
+                        Vec2f{0, 0},
+                        SDL_Color{0x00, 0xff, 0x00, 0xff}, 3);
     }
     if (timeDifference >= 0) {
         SDL_Delay(timeStepInMS - (loopEnd - loopBegin));

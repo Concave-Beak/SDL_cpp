@@ -43,7 +43,7 @@ void RenderChar(SDL_Renderer *renderer, const Font *font, char c, Vec2f pos, flo
     scc(SDL_RenderCopy(renderer, font->spritesheet, &font->glyphTable[index], &dst));
 }
 
-void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vec2f pos, Uint32 color, float scale) {
+void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vec2f pos, SDL_Color color, float scale) {
     SetTextureColor(font->spritesheet, color);
 
     Vec2f pen = pos;
@@ -53,6 +53,6 @@ void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_
     }
 }
 
-void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vec2f pos, Uint32 color, float scale) {
+void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vec2f pos, SDL_Color color, float scale) {
     RenderTextSized(renderer, font, text, strlen(text), pos, color, scale);
 }
