@@ -67,3 +67,11 @@ inline void SetTextureColor(SDL_Texture *texture, SDL_Color color) {
 
     scc(SDL_SetTextureAlphaMod(texture, color.a));
 }
+
+#define RED \
+    SDL_Color { 0xff, 0x00, 0x00, 0xff }
+#define WHITE \
+    SDL_Color { 0xff, 0xff, 0xff, 0xff }
+
+#define GREEN \
+    SDL_Color { 0x00, 0xff, 0x00, 0xff }
