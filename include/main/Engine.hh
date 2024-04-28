@@ -26,7 +26,6 @@ class Engine {
     int Run();
 
     // float GetTimeMultiplier(); // not used
-    Vec2f GetCameraPos();
 
    private:
     static Engine* instance;
@@ -60,8 +59,14 @@ class Engine {
     void HandleFPS(float startTick);
     void HandleEvent(SDL_Event* event);
 
-    void HandlePlayerVelocity(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
-    void HandlePlayerColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta, float* attritionCoefficient, const float& timeMultiplier);
+    void HandlePlayerVelocity(Vector2<float>* playerPos,
+                              Vector2<float>* playerVel,
+                              Vector2<int> playerHitboxInfo);
+    void HandlePlayerColisions(Vector2<float>* playerPos,
+                               Vector2<float>* playerVel,
+                               Vector2<int> playerColisionboxInfo, float delta,
+                               float* attritionCoefficient,
+                               const float& timeMultiplier);
 
     void ShowDebugInfo();
     int GetTextRectangleWidth(size_t strSize);

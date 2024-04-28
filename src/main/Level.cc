@@ -35,7 +35,7 @@ LevelItem::~LevelItem() {
 };
 
 LevelItem::LevelItem(){};
-LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
+LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
     this->wireframe = {ppos.x, ppos.y, size.x, size.y};
     switch (ptextID) {
         case VOID: {  // this is where the textures should be applied

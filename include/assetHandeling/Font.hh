@@ -22,6 +22,13 @@ struct Font {
 };
 
 Font FontLoadFromFile(SDL_Renderer *renderer, const char *path);
-void RenderChar(SDL_Renderer *renderer, const Font *font, char ch, Vec2f pos, float scale);
-void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vec2f pos, SDL_Color color, float scale);
-void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vec2f pos, SDL_Color color, float scale);
+
+void RenderChar(SDL_Renderer *renderer, const Font *font, char ch,
+                Vector2<float> pos, float scale);
+
+void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text,
+                     size_t text_size, Vector2<float> pos, SDL_Color color,
+                     float scale);
+
+void RenderText(SDL_Renderer *renderer, Font *font, const char *text,
+                Vector2<float> pos, SDL_Color color, float scale);

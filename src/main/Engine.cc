@@ -25,9 +25,9 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b,
 
 void Engine::Loop() {
     float beginTick = 0;
-    Vec2f *posPlayer = &playerInstance->pos;
-    Vec2f *velPlayer = &playerInstance->velocity;
-    Vec2i playerColisionboxInfo = playerInstance->GetHitboxInfo();
+    Vector2<float> *posPlayer = &playerInstance->pos;
+    Vector2<float> *velPlayer = &playerInstance->velocity;
+    Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
     Level level;
     level.GenerateLevel(0);
 
@@ -53,8 +53,9 @@ void Engine::Loop() {
     }
 }
 
-void Engine::HandlePlayerVelocity(Vec2f *posPlayer, Vec2f *velPlayer,
-                                  Vec2i playerColisionboxInfo) {
+void Engine::HandlePlayerVelocity(Vector2<float> *posPlayer,
+                                  Vector2<float> *velPlayer,
+                                  Vector2<int> playerColisionboxInfo) {
     Uint32 timeNow = SDL_GetTicks();
 
     float delta = (timeNow - lastUpdate) /
@@ -98,8 +99,9 @@ void Engine::HandlePlayerVelocity(Vec2f *posPlayer, Vec2f *velPlayer,
     lastUpdate = SDL_GetTicks();
 }
 
-void Engine::HandlePlayerColisions(Vec2f *posPlayer, Vec2f *velPlayer,
-                                   const Vec2i colisionBoxPlayer,
+void Engine::HandlePlayerColisions(Vector2<float> *posPlayer,
+                                   Vector2<float> *velPlayer,
+                                   const Vector2<int> colisionBoxPlayer,
                                    const float delta,
                                    float *attritionCoefficient,
                                    const float &timeMultipler) {
@@ -217,7 +219,7 @@ void Engine::HandleFPS(float loopBegin) {
                             1000.0f);  // that's why it's divided by 1000
 
         RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(),
-                        fpsStr.str().size(), Vec2f{0, 0}, GREEN, 3);
+                        fpsStr.str().size(), Vector2<float>{0, 0}, GREEN, 3);
     }
 
     if (timeDifference >= 0) {
@@ -234,9 +236,10 @@ void Engine::ShowDebugInfo() {
     RenderTextSized(
         renderer, &debugFont, levelItemStr.str().c_str(),
         levelItemStr.str().size(),
-        Vec2f{float(SCREEN_WIDTH -
-                    GetTextRectangleWidth(levelItemStr.str().size()) * 2),
-              0},
+        Vector2<float>{
+            float(SCREEN_WIDTH -
+                  GetTextRectangleWidth(levelItemStr.str().size()) * 2),
+            0},
         WHITE, 3);
 
     std::stringstream playerInfo;
@@ -244,9 +247,10 @@ void Engine::ShowDebugInfo() {
                << std::setprecision(4) << playerInstance->pos.y;
     RenderTextSized(
         renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(),
-        Vec2f{float(SCREEN_WIDTH -
-                    GetTextRectangleWidth(playerInfo.str().size()) * 2),
-              100},
+        Vector2<float>{
+            float(SCREEN_WIDTH -
+                  GetTextRectangleWidth(playerInfo.str().size()) * 2),
+            100},
         WHITE, 3);
 }
 
@@ -338,7 +342,7 @@ void Engine::HandleEvent(SDL_Event *event) {
 }
 
 void Engine::Render() {
-    Vec2f cameraPos = camera->pos;
+    Vector2<float> cameraPos = camera->pos;
 
     for (LevelItem levelItem : Level::colisions) {
         SDL_Color color = levelItem.color;
@@ -412,5 +416,3 @@ Engine *Engine::GetEngineInstance() { return instance; }
 void Engine::UpdateScreenInfo() {
     SDL_GetRendererOutputSize(renderer, &SCREEN_WIDTH, &SCREEN_HEIGHT);
 }
-
-Vec2f Engine::GetCameraPos() { return camera->pos; }
