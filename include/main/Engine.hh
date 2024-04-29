@@ -1,16 +1,14 @@
-#ifndef __ENGINE_HEADER__
-#define __ENGINE_HEADER__
+#pragma once
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
-#include <SDL2/SDL_ttf.h>
 #include <sys/wait.h>
 
-#include <string>
 #include <unordered_map>
 
-#include "../Entities/Player.hh"
-#include "./Camera.hh"
+#include "../assetHandeling/Font.hh"
+#include "../entities/Camera.hh"
+#include "../entities/Player.hh"
 #include "./Config.hh"
 
 //------------------------------------------------------------------------------
@@ -22,13 +20,12 @@ class Engine {
     // SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
 
-    Vec2i GetScreenInfo();
+    void UpdateScreenInfo();
 
     void Init();
     int Run();
 
     // float GetTimeMultiplier(); // not used
-    Vec2f GetCameraPos();
 
    private:
     static Engine* instance;
@@ -43,9 +40,10 @@ class Engine {
 
     std::unordered_map<SDL_Keycode, bool> keyStates;
 
-    Uint16 fpsCap = 60;
+    const Uint16 fpsCap = 60;
     const Uint8 minFPS = 10;
     float timeMultiplier = 1;
+    Uint32 lastUpdate = 0;
 
     bool quit = false;
     bool paused = false;
@@ -53,9 +51,7 @@ class Engine {
     int SCREEN_WIDTH = 1024;
     int SCREEN_HEIGHT = 768;
 
-    TTF_Font* debugFont;
-
-    Uint32 lastUpdate = 0;
+    Font debugFont;
 
    private:
     void Loop();
@@ -63,10 +59,15 @@ class Engine {
     void HandleFPS(float startTick);
     void HandleEvent(SDL_Event* event);
 
-    void HandleVelocity(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerHitboxInfo);
-    void HandleColisions(Vec2f* playerPos, Vec2f* playerVel, Vec2i playerColisionboxInfo, float delta, float* attritionCoefficient, const float timeMultiplier);
+    void HandlePlayerVelocity(Vector2<float>* playerPos,
+                              Vector2<float>* playerVel,
+                              Vector2<int> playerHitboxInfo);
+    void HandlePlayerColisions(Vector2<float>* playerPos,
+                               Vector2<float>* playerVel,
+                               Vector2<int> playerColisionboxInfo, float delta,
+                               float* attritionCoefficient,
+                               const float& timeMultiplier);
 
-    void DrawText(const std::string& text, SDL_Rect textureRect, const SDL_Color fontColor);
     void ShowDebugInfo();
     int GetTextRectangleWidth(size_t strSize);
 
@@ -74,5 +75,3 @@ class Engine {
 };
 
 //------------------------------------------------------------------------------
-
-#endif

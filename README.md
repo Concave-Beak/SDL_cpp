@@ -9,13 +9,12 @@ git clone https://github.com/RyanQueirozS/SDL_cpp.git
 # git checkout develop 
 
 make
-./Bin/project # project name will change later
+./bin/project # project name will change later
 ```
 
 ## TODO
 
 - Create a pause tech
-- Random Level Generator
 - Player and texture assets
 - Improve code quality
 - Improve code performance

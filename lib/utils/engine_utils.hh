@@ -1,5 +1,4 @@
-#ifndef __ENTITY_HEADER__
-#define __ENTITY_HEADER__
+#pragma once
 
 #define ENTITY_MAX 1024
 
@@ -17,19 +16,3 @@ enum MoveOptions {
     DOWN,
 
 };
-
-struct Vec2i {
-    int x;
-    int y;
-};
-
-struct Vec2f {
-    float x;
-    float y;
-};
-
-float DegreesToRadians(float degrees);
-
-float DegreesToRadians(int degrees);
-
-#endif

@@ -1,16 +1,16 @@
-#ifndef __PLAYER_HEADER__
-#define __PLAYER_HEADER__
+#pragma once
 
 #include <SDL2/SDL.h>
 
-#include "../../Include/Utils/Utils.hh"
+#include "../../lib/utils/engine_utils.hh"
+#include "../../lib/utils/math_utils.hh"
 
 //------------------------------------------------------------------------------
 
 class Player {
    public:
-    Vec2f velocity = {0, 0};
-    Vec2f pos = {0, 0};
+    Vector2<float> velocity = {0, 0};
+    Vector2<float> pos = {0, 0};
 
     bool colidedDown = false;
     bool colidedLeft = false;
@@ -31,22 +31,25 @@ class Player {
     float angleDash = 0;  // in angles
     //--
 
-    Vec2i hitbox = {75, 75};
+    Vector2<int> hitbox = {75, 75};
 
    public:
     static Player* GetPlayerInstace();
 
-    // Vec2f* GetPlayerPos();  // not used
+    // Vector2<float>* GetPlayerPos();  // not used
     void Move(const MoveOptions);
-    void PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* renderer, float* timeMultiplier);
+    void PrepareToDash(MoveOptions moveOpt, float startTick,
+                       SDL_Renderer* renderer, float* timeMultiplier);
     void Dash();
 
-    Vec2i GetHitboxInfo();
+    Vector2<int> GetHitboxInfo();
 
    private:
     static Player* player;
 
-    const Vec2f accelSpeed = {1, 250};  // may change during gameplay, I'll just use it as a const it for now
+    const Vector2<float> accelSpeed = {
+        1, 250};  // may change during gameplay, I'll just
+                  // use it as a const it for now
 
     // const SDL_Texture* StandingTexture;  // not used
     // const SDL_Texture* DuckingTexture;
@@ -54,5 +57,3 @@ class Player {
 };
 
 //------------------------------------------------------------------------------
-
-#endif

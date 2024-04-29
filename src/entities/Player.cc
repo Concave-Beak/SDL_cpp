@@ -1,14 +1,14 @@
-#include "Player.hh"
+#include "../../include/entities/Player.hh"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 
 #include <cmath>
-#include <cstdio>
 
-#include "../../Include/Utils/Utils.hh"
-#include "../Main/Camera.hh"
+#include "../../include/entities/Camera.hh"
+#include "../../lib/utils/engine_utils.hh"
+#include "../../lib/utils/math_utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ Player* Player::player = new Player;
 
 Player* Player::GetPlayerInstace() { return Player::player; }
 
-Vec2i Player::GetHitboxInfo() {
+Vector2<int> Player::GetHitboxInfo() {
     return hitbox;
 }
 
@@ -47,7 +47,7 @@ void Player::Move(const MoveOptions moveOpt) {
                 pos.y += 6;               // 6 is the safest i've found given the height
                 colidedDown = false;      // of the plaform in Engine.cc. This needs to be done
                 isAbovePlatform = false;  // to place the player bellow the platform's top
-            }                             // TODO: change how this works
+            }  // TODO: change how this works
             break;
         }
         default: {
@@ -100,21 +100,21 @@ void Player::PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* r
     float angleDashInRadians = DegreesToRadians(angleDash);
 
     int lineDistance = 100;
-    Vec2i pointStart = {(int)pos.x + hitbox.x / 2,
+    Vector2<int> pointStart = {(int)pos.x + hitbox.x / 2,
                         (int)pos.y + hitbox.y / 2};
-    Vec2i pointEnd = {int(pointStart.x + lineDistance * cos(angleDashInRadians)),
+    Vector2<int> pointEnd = {int(pointStart.x + lineDistance * cos(angleDashInRadians)),
                       int(pointStart.y + lineDistance * sin(angleDashInRadians))};
 
-    Vec2f cameraPos = Camera::pos;
+    Vector2<float> cameraPos = Camera::pos;
     SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0x00);
     SDL_RenderDrawLine(renderer, pointStart.x - cameraPos.x, pointStart.y - cameraPos.y, pointEnd.x - cameraPos.x, pointEnd.y - cameraPos.y);
     (void)startTick;
 }
 
 void Player::Dash() {
-    Vec2f dashStrenght = {300.0f, 300.0f};
+    Vector2<float> dashStrenght = {300.0f, 300.0f};
     float dashAngleInRadians = DegreesToRadians(angleDash);
-    Vec2f dashVel = {dashStrenght.x * cos(dashAngleInRadians), dashStrenght.y * sin(dashAngleInRadians)};
+    Vector2<float> dashVel = {dashStrenght.x * cos(dashAngleInRadians), dashStrenght.y * sin(dashAngleInRadians)};
     velocity.x = dashVel.x;
     velocity.y = dashVel.y;
     isPreparingToDash = false;
