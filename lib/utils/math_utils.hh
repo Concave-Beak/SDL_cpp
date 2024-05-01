@@ -22,6 +22,14 @@
 */
 #pragma once
 
+#include <cstdint>
+// the compiler bitchs about this, but if this isn't included it wont work
+
+#define Uint8 uint8_t
+#define Uint16 uint16_t
+#define Uint32 uint32_t
+#define Uint64 uint64_t
+
 inline float DegreesToRadians(float degrees) { return degrees * 3.14f / 180; }
 
 inline float DegreesToRadians(int degrees) { return degrees * 3.14f / 180; }

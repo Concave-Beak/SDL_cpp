@@ -1,7 +1,7 @@
 # Compiler and flags
 CC := g++
 CFLAGS := -Wall -Wextra -O2
-LDFLAGS := -lSDL2 
+LDFLAGS := -lSDL2 -lINIReader
 
 # Directories
 SRC_DIR := src

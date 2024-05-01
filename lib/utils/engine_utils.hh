@@ -16,3 +16,9 @@ enum MoveOptions {
     DOWN,
 
 };
+
+enum WindowMode {
+    FULLSCREEN = 0,
+    FULLSCREEN_WINDOWED,
+    WINDOWED,
+};

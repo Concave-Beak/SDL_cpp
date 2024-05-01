@@ -33,6 +33,7 @@ void Engine::Loop() {
 
     while (!quit) {
         beginTick = SDL_GetTicks();
+        config->ReadConfig();
         HandlePlayerVelocity(posPlayer, velPlayer, playerColisionboxInfo);
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
