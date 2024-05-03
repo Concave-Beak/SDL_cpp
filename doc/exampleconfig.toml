@@ -1,0 +1,34 @@
+# Exmaple config file
+# Config values are case sensitive. Ex: fullscreen and Fullscreen are not the same
+
+[Graphics]
+window_mode = "fullscreen" # Window Mode Options: fullscreen / fullscreen-windowed / windowed
+resolution = [
+    1920, # width
+    1080, # heigt
+]
+graphics_quality = "high" # Graphics Quality Options: low / medium / high / ultra # NOT USED
+anti_aliasing = "FXAA" # Anti-aliasing Options: none / FXAA / MSAA / SMAA # NOT USED
+
+[Audio] # NOT USED
+output_device = "default" # Sound Output Device: specify device name or default
+music_volume = 60         # Music Volume: specify volume level (0-100)
+voice_volume = 70         # Voiceover Volume: specify volume level (0-100)
+
+[Debug]
+debug_enabled = true              # Needs to be true for the options below, this option itself does nothing, only enables or disables the below
+log_file_path = ".logs/debug.log" # Log File Path: specify path for debug log file not relative to the game's path
+show_fps = true
+show_debug_info = true
+
+[Controls] # NOT USED
+mouse_sensitivity = 5.0      # Mouse Sensitivity (0.1 - 10)
+invert_x_axis = false        # invert-x-axis 
+invert_y_axis = false        # invert-y-axis 
+controller_sensitivity = 7.5 # Controller Sensitivity (0.1 - 10)
+
+[Keybindings] # NOT USED
+move_up = "W"
+move_down = "S"
+move_left = "A"
+move_right = "D"

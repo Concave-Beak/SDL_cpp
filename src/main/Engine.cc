@@ -30,10 +30,10 @@ void Engine::Loop() {
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
     Level level;
     level.GenerateLevel(0);
+    config->ReadConfig();
 
     while (!quit) {
         beginTick = SDL_GetTicks();
-        config->ReadConfig();
         HandlePlayerVelocity(posPlayer, velPlayer, playerColisionboxInfo);
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);

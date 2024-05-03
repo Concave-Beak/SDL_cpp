@@ -1,26 +1,36 @@
 #pragma once
 
-#include "../../lib/utils/math_utils.hh"
+#include <SDL2/SDL_stdinc.h>
+
+#include <string>
+
 #include "../../lib/utils/engine_utils.hh"
+#include "../../lib/utils/math_utils.hh"
 
 class Config {
    public:
     static Config* GetConfig();
 
-    int WriteConfig();
-    int ReadConfig();
+    void WriteConfig();
+    void ReadConfig();
 
     bool ShowFPSState();
     bool fullscreen = false;
 
    private:
+    Uint32 windowFlags;
+    Uint32 rendererFlags;
+
     // Graphics
-    WindowMode windowMode;
-    Vector2<float> windowResolution;
+    WindowMode windowMode = WINDOWED;
+    Vector2<float> windowResolution = {1024.0f, 768.0f};
 
     // Debug
-    bool showFPS = true;
-    bool fakeFullscreen = false;
+    bool debugMode = false;
+    std::string logPath = "./logs/debug.log";
+    bool showFPS = false;
+    bool showDebugInfo = false;
+
     static Config* config;
 };
 

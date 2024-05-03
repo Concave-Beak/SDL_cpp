@@ -16,6 +16,5 @@ make
 
 - Create a pause tech
 - Player and texture assets
-- Improve code quality
 - Improve code performance
 - Create enemies and AI

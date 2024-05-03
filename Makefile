@@ -1,7 +1,7 @@
 # Compiler and flags
 CC := g++
 CFLAGS := -Wall -Wextra -O2
-LDFLAGS := -lSDL2 -lINIReader
+LDFLAGS := -lSDL2 
 
 # Directories
 SRC_DIR := src
@@ -13,6 +13,7 @@ LIB_DIR := lib
 # Find source files
 SRCS := $(wildcard $(SRC_DIR)/**/*.cc)
 OBJS := $(patsubst $(SRC_DIR)/%.cc, $(BUILD_DIR)/%.o, $(SRCS))
+DEPS := $(OBJS:.o=.d)
 
 # Target
 TARGET := $(BIN_DIR)/project
@@ -28,7 +29,10 @@ $(TARGET): $(OBJS)
 # Rule to compile source files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@ -I$(INC_DIR)
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@ -I$(INC_DIR)
+
+# Include dependency files
+-include $(DEPS)
 
 # Phony targets
 .PHONY: all clean rebuild
@@ -39,3 +43,4 @@ clean:
 
 # Rebuild
 rebuild: clean all
+

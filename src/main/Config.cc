@@ -1,44 +1,62 @@
 #include "../../include/main/Config.hh"
-#include <INIReader.h>
-#include <algorithm>
+
+#include <SDL2/SDL_render.h>
+
 #include <cstdio>
+#include <string>
+
+#define TOML_EXCEPTIONS 0
+#include "../../lib/tomlplusplus/tomlplusplus.hh"
+#include "../../lib/utils/error_handeling.hh"
 
 bool Config::ShowFPSState() { return showFPS; }
 
 Config* Config::config = new Config{};
 Config* Config::GetConfig() { return config; };
 
-int Config::ReadConfig() {
-    INIReader reader("./doc/exampleconfig.ini");
+void Config::ReadConfig() {
+    std::string path = "./doc/exampleconfig.tol";
 
-    if (reader.ParseError() < 0) {
-        printf("ERROR: Cannot load config file");
-        return 1;
+    toml::parse_result result;
+
+    result = toml::parse_file(path);
+    if (!result) {
+        ThrowError(COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", MAJOR, logPath);
     }
+    toml::table table = std::move(result.table());
 
-    {  // Graphics
-        std::string windowMode_ =
-            reader.GetString("Graphics", "window-mode", "windowed");
-        std::transform(windowMode_.begin(), windowMode_.end(),
-                       windowMode_.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
+    {
+        toml::node_view<toml::node> debug = table["Debug"];
 
-        config->windowMode = WINDOWED;
-        if (windowMode_ == "fullscreen") {
-            config->windowMode = FULLSCREEN;
+        if (debug["debug_enabled"] == true) {
+            debugMode = true;
         }
-        if (windowMode_ == "windowed") {
-            config->windowMode = WINDOWED;
+        if (debug["log_file_path"]) {
+            logPath = *debug["log_file_path"].value<std::string>();
         }
-        if (windowMode_ == "fullscreen-windowed") {
-            config->windowMode = FULLSCREEN_WINDOWED;
+        if (debug["show_fps"] == true) {
+            showFPS = true;
+        }
+        if (debug["show_debug_info"] == true) {
+            showDebugInfo = true;
+        }
+    };
+    {
+        toml::node_view<toml::node> graphics = table["Graphics"];
+
+        // Window Mode
+        if (graphics["window_mode"].value<std::string>() == "fullscreen") {
+            windowMode = FULLSCREEN;
+        }
+        if (graphics["window_mode"].value<std::string>() == "fullscreen-windowed") {
+            windowMode = FULLSCREEN_WINDOWED;
+        }
+        if (graphics["window_mode"].value<std::string>() == "windowed") {
+            windowMode = WINDOWED;
         }
 
-        std::string resolution_ =
-            reader.GetString("Graphics", "resolution", "1024x768");
-
-        reader.GetBoolean("Graphics", "vsync-enabled", false);
+        // Resolution
+        if (graphics["resolution"]) {
+        }
     }
-
-    return 0;
 }
