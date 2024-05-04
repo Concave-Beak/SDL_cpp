@@ -2,10 +2,11 @@
 # Config values are case sensitive. Ex: fullscreen and Fullscreen are not the same
 
 [Graphics]
-window_mode = "fullscreen" # Window Mode Options: fullscreen / fullscreen-windowed / windowed
+window_mode = "fullscreen" # Window Mode Options: fullscreen / windowed
+fullscreen_mode = "fs-desktop" # Fullscreen Mode: fs-default / fs-dekstop / fs-windowed 
 resolution = [
-    1920, # width
-    1080, # heigt
+    1024, # width
+    768,  # heigt
 ]
 graphics_quality = "high" # Graphics Quality Options: low / medium / high / ultra # NOT USED
 anti_aliasing = "FXAA" # Anti-aliasing Options: none / FXAA / MSAA / SMAA # NOT USED

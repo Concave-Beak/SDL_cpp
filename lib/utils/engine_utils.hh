@@ -17,8 +17,8 @@ enum MoveOptions {
 
 };
 
-enum WindowMode {
-    FULLSCREEN = 0,
+enum FullscreenMode {
+    FULLSCREEN_DEFAULT = 0,
     FULLSCREEN_WINDOWED,
-    WINDOWED,
+    FULLSCREEN_DESKTOP,
 };

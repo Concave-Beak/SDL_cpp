@@ -45,11 +45,11 @@ class Engine {
     float timeMultiplier = 1;
     Uint32 lastUpdate = 0;
 
+    int SCREEN_WIDTH = 0;
+    int SCREEN_HEIGHT = 0;
+
     bool quit = false;
     bool paused = false;
-
-    int SCREEN_WIDTH = 1024;
-    int SCREEN_HEIGHT = 768;
 
     Font debugFont;
 

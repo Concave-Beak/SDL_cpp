@@ -13,17 +13,20 @@ class Config {
 
     void WriteConfig();
     void ReadConfig();
+    void ApplyConfig();
+
+    Vector2<int> GetWindowResolution();
 
     bool ShowFPSState();
-    bool fullscreen = false;
 
    private:
     Uint32 windowFlags;
     Uint32 rendererFlags;
 
     // Graphics
-    WindowMode windowMode = WINDOWED;
-    Vector2<float> windowResolution = {1024.0f, 768.0f};
+    bool fullscreen = false;
+    FullscreenMode fullscreenMode = FULLSCREEN_WINDOWED;
+    Vector2<int> windowResolution = {1024, 768};
 
     // Debug
     bool debugMode = false;

@@ -30,7 +30,6 @@ void Engine::Loop() {
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
     Level level;
     level.GenerateLevel(0);
-    config->ReadConfig();
 
     while (!quit) {
         beginTick = SDL_GetTicks();
@@ -143,9 +142,9 @@ void Engine::HandlePlayerColisions(Vector2<float> *posPlayer,
                     colItemBottom - colisionItem.wireframe.h *
                                         0.8 &&  // 0.8 is the maximum that i've
                                                 // found not to break colision,
-                isHorizontallyOverlaped;  // this makes it so the player only
-                                          // goes up if above 20% o the
-                                          // colItem's height
+                isHorizontallyOverlaped;        // this makes it so the player only
+                                                // goes up if above 20% o the
+                                                // colItem's height
 
             hitHead =
                 headOfPlayer + delta * velPlayer->y * timeMultiplier <=
@@ -374,6 +373,11 @@ void Engine::Init() {
         exit(EXIT_FAILURE);
     }
     printf("INFO: SDL_Init initialized succesfully\n");
+
+    config->ReadConfig();
+    SCREEN_WIDTH = config->GetWindowResolution().x;
+    SCREEN_HEIGHT = config->GetWindowResolution().y;
+    printf("INFO: Config read succesfully\n");
 
     window = SDL_CreateWindow("Game", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
                               SDL_WINDOW_SHOWN);
