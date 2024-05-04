@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL2/SDL_stdinc.h>
+#include <SDL2/SDL.h>
 
 #include <string>
 
@@ -12,21 +12,21 @@ class Config {
     static Config* GetConfig();
 
     void WriteConfig();
-    void ReadConfig();
-    void ApplyConfig();
+    void ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution);
 
-    Vector2<int> GetWindowResolution();
+    Vector2<int> GetScreenResolution();
+    Uint32 GetWindowFlags();
 
     bool ShowFPSState();
 
    private:
-    Uint32 windowFlags;
+    Uint32 windowFlags = SDL_WINDOW_BORDERLESS;
     Uint32 rendererFlags;
 
     // Graphics
     bool fullscreen = false;
     FullscreenMode fullscreenMode = FULLSCREEN_WINDOWED;
-    Vector2<int> windowResolution = {1024, 768};
+    Vector2<int> screenResolution = {1024, 768};
 
     // Debug
     bool debugMode = false;
@@ -35,6 +35,7 @@ class Config {
     bool showDebugInfo = false;
 
     static Config* config;
-};
 
-// TO BE IMPROVED
+   private:
+    void ReadConfig();
+};

@@ -15,8 +15,6 @@
 
 class Engine {
    public:
-    bool debugMode = false;  // will change
-
     // SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
 

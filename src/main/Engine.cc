@@ -36,9 +36,7 @@ void Engine::Loop() {
         HandlePlayerVelocity(posPlayer, velPlayer, playerColisionboxInfo);
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
-            if (debugMode) {
-                ShowDebugInfo();
-            }
+            ShowDebugInfo();
 
             Render();
             HandleEvent(&event);
@@ -319,6 +317,9 @@ void Engine::HandleEvent(SDL_Event *event) {
             playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
         }
     }
+    if (keyStates[SDLK_o]) {
+        config->ApplyConfig(window, renderer, Vector2<int *>{&SCREEN_WIDTH, &SCREEN_HEIGHT});
+    }
     if (keyStates[SDLK_LEFT]) {
         camera->Move(LEFT);
     }
@@ -334,6 +335,7 @@ void Engine::HandleEvent(SDL_Event *event) {
 
     if (keyStates[SDLK_r]) {
         playerInstance->pos = {0, 0};
+        playerInstance->velocity = {0, 0};
     }
     if (keyStates[SDLK_q]) {
         quit = true;
@@ -374,13 +376,17 @@ void Engine::Init() {
     }
     printf("INFO: SDL_Init initialized succesfully\n");
 
-    config->ReadConfig();
-    SCREEN_WIDTH = config->GetWindowResolution().x;
-    SCREEN_HEIGHT = config->GetWindowResolution().y;
-    printf("INFO: Config read succesfully\n");
+    {
+        config->ApplyConfig(window, renderer, Vector2<int *>{&SCREEN_WIDTH, &SCREEN_HEIGHT});
+        SCREEN_WIDTH = config->GetWindowResolution().x;
+        SCREEN_HEIGHT = config->GetWindowResolution().y;
+        printf("INFO: Config read succesfully\n");
+    }
 
-    window = SDL_CreateWindow("Game", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
-                              SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("Game",
+                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                              SCREEN_WIDTH, SCREEN_HEIGHT,
+                              config->GetWindowFlags());
     if (window == NULL) {
         fprintf(stderr, "SDL could not create window! SDL_Error: %s\n",
                 SDL_GetError());
@@ -395,10 +401,6 @@ void Engine::Init() {
         exit(EXIT_FAILURE);
     }
     printf("INFO: Renderer initialized succesfully\n");
-
-    if (debugMode) {
-        printf("INFO: Starting in debug mode\n");
-    }
 
     debugFont = FontLoadFromFile(renderer,
                                  "./assets/fonts/charmap-oldschool_white.png");

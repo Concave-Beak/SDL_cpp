@@ -12,8 +12,13 @@
 
 enum ErrorCode {
     FAILED_TO_OPEN_FILE = 20,
+
+    // Config items
     COULDNT_PARSE_CONFIG_FILE = 100,
     INVALID_TOKEN = 101,
+
+    // SDL Error
+    SDL_FUNCTION_ERROR = 200,
 };
 
 enum Severity {

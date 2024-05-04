@@ -16,7 +16,9 @@ bool Config::ShowFPSState() { return showFPS; }
 Config* Config::config = new Config{};
 Config* Config::GetConfig() { return config; };
 
-Vector2<int> Config::GetWindowResolution() { return windowResolution; }
+Vector2<int> Config::GetScreenResolution() { return screenResolution; }
+
+Uint32 Config::GetWindowFlags() { return windowFlags; };
 
 void Config::ReadConfig() {
     std::string path = "./doc/exampleconfig.toml";
@@ -65,11 +67,45 @@ void Config::ReadConfig() {
 
         // Resolution
         if (graphics["resolution"]) {
-            windowResolution.x = *graphics["resolution"][0].value<int>();
-            windowResolution.y = *graphics["resolution"][1].value<int>();
+            screenResolution.x = *graphics["resolution"][0].value<int>();
+            screenResolution.y = *graphics["resolution"][1].value<int>();
         }
     }
 }
 
-void Config::ApplyConfig() {
+void Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution_) {
+    ReadConfig();
+
+    *screenResolution_.x = screenResolution.x;
+    *screenResolution_.y = screenResolution.y;
+
+    if (window == NULL || renderer == NULL) {
+        return;
+    }
+
+    windowFlags &= SDL_WINDOW_FULLSCREEN;
+    windowFlags &= SDL_WINDOW_FULLSCREEN_DESKTOP;
+
+    if (fullscreen) {
+        if (fullscreenMode == FULLSCREEN_WINDOWED) {
+            SDL_DisplayMode mode;
+            if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
+                ThrowError(SDL_FUNCTION_ERROR,
+                           "Error setting DisplayMode, couldn't go fullscreen windowed\n",
+                           MEDIUM, logPath);
+            } else {
+                SDL_SetWindowSize(window, mode.w, mode.h);
+                SDL_SetWindowPosition(window, 0, 0);
+                *screenResolution_.x = mode.w;
+                *screenResolution_.y = mode.h;
+            }
+        }
+        if (fullscreenMode == FULLSCREEN_DEFAULT) {
+            windowFlags |= SDL_WINDOW_FULLSCREEN;
+        }
+        if (fullscreenMode == FULLSCREEN_DESKTOP) {
+            windowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+        }
+    }
+    SDL_SetWindowFullscreen(window, windowFlags);
 }
