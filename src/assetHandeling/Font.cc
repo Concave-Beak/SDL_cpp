@@ -3,13 +3,13 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
 
-#include <cstdio>
 #include <cassert>
+#include <cstdio>
 
 #include "../../lib/utils/sdl_utils.hh"
 
 Font FontLoadFromFile(SDL_Renderer *renderer, const char *path) {
-    Font font = Font{0};
+    Font font = Font{};
     SDL_Surface *fontSurface = SurfaceFromFile(path);
     scc(SDL_SetColorKey(fontSurface, SDL_TRUE, 0xff000000));
     font.spritesheet =

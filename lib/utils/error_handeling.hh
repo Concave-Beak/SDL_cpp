@@ -11,6 +11,9 @@
 #include <unordered_map>
 
 enum ErrorCode {
+    NO_CODE = -1,
+
+    // File input/output
     FAILED_TO_OPEN_FILE = 20,
 
     // Config items
@@ -54,11 +57,10 @@ struct Error {
     void CreateLog(std::string path);
 
    private:
-    std::string defaultMessage;
-    std::string info;
-
-    ErrorCode code;
-    Severity severity;
+    ErrorCode code = NO_CODE;
+    std::string info = "";
+    Severity severity = MINOR;
+    std::string defaultMessage = "";
 
     static Error lastError;  // Gets updated with ThrowError function
 
@@ -74,9 +76,7 @@ void CreateLog(Error, std::string path);
 
 inline Error::~Error() {};
 inline Error::Error() {};
-inline Error::Error(ErrorCode errorCode_, std::string errorInfo_,
-                    Severity severity_)
-    : code(errorCode_), info(errorInfo_), severity(severity_) {
+inline Error::Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_) : code(errorCode_), info(errorInfo_), severity(severity_) {
     this->defaultMessage = "ERROR: Could not initialize error!";
 
     if (mapErrorMessage.find(errorCode_) != mapErrorMessage.end()) {

@@ -378,8 +378,8 @@ void Engine::Init() {
 
     {
         config->ApplyConfig(window, renderer, Vector2<int *>{&SCREEN_WIDTH, &SCREEN_HEIGHT});
-        SCREEN_WIDTH = config->GetWindowResolution().x;
-        SCREEN_HEIGHT = config->GetWindowResolution().y;
+        SCREEN_WIDTH = config->GetScreenResolution().x;
+        SCREEN_HEIGHT = config->GetScreenResolution().y;
         printf("INFO: Config read succesfully\n");
     }
 

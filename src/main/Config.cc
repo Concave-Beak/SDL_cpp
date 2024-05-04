@@ -91,7 +91,7 @@ void Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int
             SDL_DisplayMode mode;
             if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
                 ThrowError(SDL_FUNCTION_ERROR,
-                           "Error setting DisplayMode, couldn't go fullscreen windowed\n",
+                           "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
                            MEDIUM, logPath);
             } else {
                 SDL_SetWindowSize(window, mode.w, mode.h);
