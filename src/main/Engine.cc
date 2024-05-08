@@ -28,8 +28,8 @@ void Engine::Loop() {
     Vector2<float> *posPlayer = &playerInstance->pos;
     Vector2<float> *velPlayer = &playerInstance->velocity;
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
-    Level level;
-    level.GenerateLevel(0);
+    // Level level;
+    // level.GenerateLevel(0);
 
     while (!quit) {
         beginTick = SDL_GetTicks();
@@ -376,17 +376,10 @@ void Engine::Init() {
     }
     printf("INFO: SDL_Init initialized succesfully\n");
 
-    {
-        config->ApplyConfig(window, renderer, Vector2<int *>{&SCREEN_WIDTH, &SCREEN_HEIGHT});
-        SCREEN_WIDTH = config->GetScreenResolution().x;
-        SCREEN_HEIGHT = config->GetScreenResolution().y;
-        printf("INFO: Config read succesfully\n");
-    }
-
     window = SDL_CreateWindow("Game",
                               SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                               SCREEN_WIDTH, SCREEN_HEIGHT,
-                              config->GetWindowFlags());
+                              SDL_WINDOW_BORDERLESS);
     if (window == NULL) {
         fprintf(stderr, "SDL could not create window! SDL_Error: %s\n",
                 SDL_GetError());
@@ -405,6 +398,11 @@ void Engine::Init() {
     debugFont = FontLoadFromFile(renderer,
                                  "./assets/fonts/charmap-oldschool_white.png");
     printf("INFO: Loaded Debug Font\n");
+
+    {
+        config->ApplyConfig(window, renderer, Vector2<int *>{&SCREEN_WIDTH, &SCREEN_HEIGHT});
+        printf("INFO: Config read succesfully\n");
+    }
 }
 
 int Engine::Run() {

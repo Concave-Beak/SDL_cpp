@@ -6,7 +6,7 @@
 
 #include <unordered_map>
 
-#include "../assetHandeling/Font.hh"
+#include "../assetHandling/Font.hh"
 #include "../entities/Camera.hh"
 #include "../entities/Player.hh"
 #include "./Config.hh"

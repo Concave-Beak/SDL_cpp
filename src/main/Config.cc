@@ -6,19 +6,15 @@
 #include <cstdio>
 #include <string>
 
-#define TOML_EXCEPTIONS 0
+#define TOML_EXCEPTIONS 0  // to remove try/catch statmement
 #include "../../lib/tomlplusplus/tomlplusplus.hh"
 #include "../../lib/utils/engine_utils.hh"
-#include "../../lib/utils/error_handeling.hh"
+#include "../../lib/utils/error_handling.hh"
 
 bool Config::ShowFPSState() { return showFPS; }
 
 Config* Config::config = new Config{};
 Config* Config::GetConfig() { return config; };
-
-Vector2<int> Config::GetScreenResolution() { return screenResolution; }
-
-Uint32 Config::GetWindowFlags() { return windowFlags; };
 
 void Config::ReadConfig() {
     std::string path = "./doc/exampleconfig.toml";
@@ -32,6 +28,7 @@ void Config::ReadConfig() {
     toml::table table = std::move(result.table());
 
     {
+        debugMode = false, showFPS = false, showDebugInfo = false;
         toml::node_view<toml::node> debug = table["Debug"];
 
         if (debug["debug_enabled"] == true) {
@@ -48,6 +45,7 @@ void Config::ReadConfig() {
         }
     }
     {
+        fullscreen = false, fullscreenMode = FullscreenMode::FULLSCREEN_WINDOWED;
         toml::node_view<toml::node> graphics = table["Graphics"];
 
         // Window Mode
@@ -75,37 +73,46 @@ void Config::ReadConfig() {
 
 void Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution_) {
     ReadConfig();
+    (void)renderer;
 
     *screenResolution_.x = screenResolution.x;
     *screenResolution_.y = screenResolution.y;
+    SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
 
     if (window == NULL || renderer == NULL) {
         return;
     }
 
-    windowFlags &= SDL_WINDOW_FULLSCREEN;
-    windowFlags &= SDL_WINDOW_FULLSCREEN_DESKTOP;
-
     if (fullscreen) {
-        if (fullscreenMode == FULLSCREEN_WINDOWED) {
-            SDL_DisplayMode mode;
-            if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
-                ThrowError(SDL_FUNCTION_ERROR,
-                           "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
-                           MEDIUM, logPath);
-            } else {
-                SDL_SetWindowSize(window, mode.w, mode.h);
-                SDL_SetWindowPosition(window, 0, 0);
-                *screenResolution_.x = mode.w;
-                *screenResolution_.y = mode.h;
-            }
-        }
         if (fullscreenMode == FULLSCREEN_DEFAULT) {
-            windowFlags |= SDL_WINDOW_FULLSCREEN;
+            SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
         }
         if (fullscreenMode == FULLSCREEN_DESKTOP) {
-            windowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+            SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        }
+
+        SDL_DisplayMode mode;
+        if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
+            ThrowError(SDL_FUNCTION_ERROR,
+                       "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
+                       MEDIUM, logPath);
+        } else {
+            SDL_SetWindowSize(window, mode.w, mode.h);
+            SDL_SetWindowPosition(window, 0, 0);
+            *screenResolution_.x = mode.w;
+            *screenResolution_.y = mode.h;
         }
     }
-    SDL_SetWindowFullscreen(window, windowFlags);
+    SDL_SetWindowSize(window, screenResolution.x, screenResolution.y);
+}
+
+void Config::ToggleConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
+    if (isConfigMenuToggled) {
+        DrawConfigMenu(window, renderer);
+        return;
+    }
+    isConfigMenuToggled = !isConfigMenuToggled;
+}
+
+void Config::DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
 }

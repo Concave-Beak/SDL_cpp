@@ -1,4 +1,4 @@
-#include "../../include/assetHandeling/Font.hh"
+#include "../../include/assetHandling/Font.hh"
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>

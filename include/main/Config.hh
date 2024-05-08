@@ -13,15 +13,13 @@ class Config {
 
     void WriteConfig();
     void ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution);
-
-    Vector2<int> GetScreenResolution();
-    Uint32 GetWindowFlags();
+    void DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer);
 
     bool ShowFPSState();
+    void ToggleConfigMenu(SDL_Window* window, SDL_Renderer* renderer);
 
    private:
-    Uint32 windowFlags = SDL_WINDOW_BORDERLESS;
-    Uint32 rendererFlags;
+    bool isConfigMenuToggled = false;
 
     // Graphics
     bool fullscreen = false;
