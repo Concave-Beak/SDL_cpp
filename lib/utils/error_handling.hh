@@ -14,7 +14,7 @@ enum ErrorCode {
     NO_CODE = -1,
 
     // Wrong code
-    LAWFULL_PARAMS = 10,
+    BAD_PARAMS = 10,
 
     // File input/output
     FAILED_TO_OPEN_FILE = 20,
@@ -28,7 +28,7 @@ enum ErrorCode {
 };
 
 enum Severity {
-    MINOR = 0,  // see ThrowErrorFunction;
+    MINOR = 0,
     MEDIUM = 1,
     MAJOR = 2,
 };
@@ -41,6 +41,7 @@ inline static std::unordered_map<ErrorCode, std::string> mapErrorMessage = {
 
 struct Error {
    public:
+    Error();
     Error(ErrorCode errorCode_, std::string errorInfo_,
           Severity severity_);
     ~Error();
@@ -54,8 +55,6 @@ struct Error {
     void SetErrorInfo(std::string);
     static void SetLastError(Error);
 
-    void ThrowError();
-
    private:
     void CreateLog(std::string path);
 
@@ -65,15 +64,12 @@ struct Error {
     Severity severity = MINOR;
     std::string defaultMessage = "";
 
-    static Error lastError;  // Gets updated with ThrowError function
-
-   private:
-    Error();
+    static Error lastError;  // NOTE: Not used
 };
 
-void ThrowError(ErrorCode, std::string errorInfo_, Severity severity_);
-
 void CreateLog(Error, std::string path);
+
+void Crash(Error);
 
 //------------------------------------------------------------------------------
 
@@ -99,46 +95,6 @@ inline Error Error::GetLastError() { return Error::lastError; }
 inline void Error::SetErrorInfo(std::string info_) { this->info = info_; };
 inline void Error::SetLastError(Error error_) { Error::lastError = error_; };
 
-inline void Error::ThrowError() {
-    lastError = *this;
-    printf("%s%s", mapErrorMessage[this->code].c_str(), this->defaultMessage.c_str());
-    switch ((*this).severity) {
-        case MINOR: {
-            // should just print
-            break;
-        }
-        case MEDIUM: {
-            // should be drawn to screen
-            break;
-        }
-        case MAJOR: {
-            exit(1);
-        }
-    }
-}
-
-inline void ThrowError(ErrorCode codeError_, std::string errorInfo_, Severity severity_) {
-    Error err(codeError_, errorInfo_, severity_);
-    Error::SetLastError(err);
-
-    if (mapErrorMessage.find(codeError_) != mapErrorMessage.end()) {
-        printf("%s%s", mapErrorMessage[codeError_].c_str(), errorInfo_.c_str());
-    }
-
-    switch (severity_) {
-        case MINOR: {
-            break;
-        }
-        case MEDIUM: {
-            // should be drawn to screen
-            break;
-        }
-        case MAJOR: {
-            exit(1);
-        }
-    }
-}
-
 inline void Error::CreateLog(std::string path) {
     if (std::filesystem::create_directories("logs/")) {
         printf("INFO: Created logs directory\n");
@@ -146,7 +102,7 @@ inline void Error::CreateLog(std::string path) {
     std::ofstream logFile(path, std::ios::app);
 
     if (!logFile.is_open()) {
-        ::ThrowError(ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::MINOR);
+        Crash(Error{COULDNT_PARSE_CONFIG_FILE, path, MEDIUM});
         return;
     }
     {
@@ -172,7 +128,7 @@ inline void CreateLog(Error err, std::string path) {
     std::ofstream logFile(path, std::ios::app);
 
     if (!logFile.is_open()) {
-        ThrowError(ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::MINOR);
+        Crash(Error{ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::MINOR});
         return;
     }
 

@@ -9,7 +9,6 @@
 #include <string>
 
 #include "../../lib/utils/engine_utils.hh"
-#include "../../lib/utils/error_handling.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
 #define TOML_EXCEPTIONS 0  // to remove try/catch statmement
@@ -27,14 +26,14 @@ bool Config::ShowFPSState() { return showFPS; }
 Config* Config::config = new Config{};
 Config* Config::GetConfig() { return config; };
 
-void Config::ReadConfig() {
+const Error Config::ReadConfig() {
     std::string path = "./doc/exampleconfig.toml";
 
     toml::parse_result result;
 
     result = toml::parse_file(path);
     if (!result) {
-        ThrowError(COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", MEDIUM);
+        return Error(COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", MEDIUM);
     }
     toml::table table = std::move(result.table());
 
@@ -80,9 +79,10 @@ void Config::ReadConfig() {
             screenResolution.y = *graphics["resolution"][1].value<int>();
         }
     }
+    return Error{};
 }
 
-void Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution_) {
+const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution_) {
     ReadConfig();
     (void)renderer;
 
@@ -91,7 +91,7 @@ void Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int
     SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
 
     if (window == NULL || renderer == NULL) {
-        return;
+        return Error(BAD_PARAMS, "Window or renderer are null", MINOR);
     }
 
     if (fullscreen) {
@@ -104,9 +104,7 @@ void Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int
 
         SDL_DisplayMode mode;
         if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
-            ThrowError(SDL_FUNCTION_ERROR,
-                       "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
-                       MEDIUM);
+            return Error(SDL_FUNCTION_ERROR, "Couldn't get DisplayMode, couldn't go fullscreen windowed\n", MEDIUM);
         } else {
             SDL_SetWindowSize(window, mode.w, mode.h);
             SDL_SetWindowPosition(window, 0, 0);
@@ -115,6 +113,7 @@ void Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int
         }
     }
     SDL_SetWindowSize(window, screenResolution.x, screenResolution.y);
+    return Error{};
 }
 
 void Config::ToggleConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {

@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../../lib/utils/engine_utils.hh"
+#include "../../lib/utils/error_handling.hh"
 #include "../../lib/utils/math_utils.hh"
 
 class Config {
@@ -12,7 +13,7 @@ class Config {
     static Config* GetConfig();
 
     void WriteConfig();
-    void ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution);
+    const Error ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution);
     void DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer);
 
     bool ShowFPSState();
@@ -35,5 +36,5 @@ class Config {
     static Config* config;
 
    private:
-    void ReadConfig();
+    const Error ReadConfig();
 };

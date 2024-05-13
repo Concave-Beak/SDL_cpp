@@ -8,7 +8,7 @@
 
 UI::Button::Button(SDL_Rect grid_, std::string ID_) : grid(grid_) {
     if (ID_ == std::string{}) {
-        ThrowError(LAWFULL_PARAMS, "Could not create button\n", Severity::MAJOR);
+        Crash(Error{LAWFULL_PARAMS, "Could not create button\n", Severity::MAJOR});
         return;
     }
     this->ID = ID_;
