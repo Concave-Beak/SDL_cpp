@@ -1,7 +1,7 @@
 # Example config file
 
 [Graphics]
-window_mode = "fullscreen" # Window Mode Options: fullscreen / windowed
+window_mode = "windowed" # Window Mode Options: fullscreen / windowed
 fullscreen_mode = "fs-windowed" # Fullscreen Mode: fs-default / fs-desktop / fs-windowed 
 resolution = [
     1024, # width

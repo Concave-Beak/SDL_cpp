@@ -1,15 +1,26 @@
 #include "../../include/main/Config.hh"
 
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 
+#include <array>
 #include <cstdio>
 #include <string>
 
-#define TOML_EXCEPTIONS 0  // to remove try/catch statmement
-#include "../../lib/tomlplusplus/tomlplusplus.hh"
 #include "../../lib/utils/engine_utils.hh"
 #include "../../lib/utils/error_handling.hh"
+#include "../../lib/utils/sdl_utils.hh"
+
+#define TOML_EXCEPTIONS 0  // to remove try/catch statmement
+#include "../../lib/tomlplusplus/tomlplusplus.hh"
+
+SDL_Texture* LoadConfigMenuButtons(SDL_Renderer* renderer, const char* path) {
+    SDL_Surface* buttonSurface = SurfaceFromFile(path);
+    return (SDL_Texture*)scp(SDL_CreateTextureFromSurface(renderer, buttonSurface));
+}
+
+//------------------------------------------------------------------------------
 
 bool Config::ShowFPSState() { return showFPS; }
 
@@ -23,7 +34,7 @@ void Config::ReadConfig() {
 
     result = toml::parse_file(path);
     if (!result) {
-        ThrowError(COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", MEDIUM, logPath);
+        ThrowError(COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", MEDIUM);
     }
     toml::table table = std::move(result.table());
 
@@ -95,7 +106,7 @@ void Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int
         if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
             ThrowError(SDL_FUNCTION_ERROR,
                        "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
-                       MEDIUM, logPath);
+                       MEDIUM);
         } else {
             SDL_SetWindowSize(window, mode.w, mode.h);
             SDL_SetWindowPosition(window, 0, 0);
@@ -115,4 +126,26 @@ void Config::ToggleConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
 }
 
 void Config::DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
+    SDL_Texture* checkedBtn = LoadConfigMenuButtons(renderer, "./assets/Menu/checked-button.png");
+    SDL_Texture* uncheckedBtn = LoadConfigMenuButtons(renderer, "./assets/Menu/unchecked-button.png");
+    std::array<SDL_Rect, 3> btn = {
+        SDL_Rect{
+            .x = 100,
+            .y = 100,
+            .w = 16,
+            .h = 16,
+        },
+        SDL_Rect{
+            .x = 200,
+            .y = 200,
+            .w = 16,
+            .h = 16,
+        },
+        SDL_Rect{
+            .x = 300,
+            .y = 300,
+            .w = 16,
+            .h = 16,
+        },
+    };
 }

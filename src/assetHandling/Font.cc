@@ -8,6 +8,8 @@
 
 #include "../../lib/utils/sdl_utils.hh"
 
+//------------------------------------------------------------------------------
+
 Font FontLoadFromFile(SDL_Renderer *renderer, const char *path) {
     Font font = Font{};
     SDL_Surface *fontSurface = SurfaceFromFile(path);

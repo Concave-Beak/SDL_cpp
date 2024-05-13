@@ -13,6 +13,9 @@
 enum ErrorCode {
     NO_CODE = -1,
 
+    // Wrong code
+    LAWFULL_PARAMS = 10,
+
     // File input/output
     FAILED_TO_OPEN_FILE = 20,
 
@@ -51,7 +54,7 @@ struct Error {
     void SetErrorInfo(std::string);
     static void SetLastError(Error);
 
-    void ThrowError(std::string path);
+    void ThrowError();
 
    private:
     void CreateLog(std::string path);
@@ -68,7 +71,7 @@ struct Error {
     Error();
 };
 
-void ThrowError(ErrorCode, std::string errorInfo_, Severity severity_, std::string path);
+void ThrowError(ErrorCode, std::string errorInfo_, Severity severity_);
 
 void CreateLog(Error, std::string path);
 
@@ -96,7 +99,7 @@ inline Error Error::GetLastError() { return Error::lastError; }
 inline void Error::SetErrorInfo(std::string info_) { this->info = info_; };
 inline void Error::SetLastError(Error error_) { Error::lastError = error_; };
 
-inline void Error::ThrowError(std::string logPath) {
+inline void Error::ThrowError() {
     lastError = *this;
     printf("%s%s", mapErrorMessage[this->code].c_str(), this->defaultMessage.c_str());
     switch ((*this).severity) {
@@ -109,13 +112,12 @@ inline void Error::ThrowError(std::string logPath) {
             break;
         }
         case MAJOR: {
-            CreateLog(logPath);
             exit(1);
         }
     }
 }
 
-inline void ThrowError(ErrorCode codeError_, std::string errorInfo_, Severity severity_, std::string logPath) {
+inline void ThrowError(ErrorCode codeError_, std::string errorInfo_, Severity severity_) {
     Error err(codeError_, errorInfo_, severity_);
     Error::SetLastError(err);
 
@@ -132,7 +134,6 @@ inline void ThrowError(ErrorCode codeError_, std::string errorInfo_, Severity se
             break;
         }
         case MAJOR: {
-            CreateLog(err, logPath);
             exit(1);
         }
     }
@@ -145,7 +146,7 @@ inline void Error::CreateLog(std::string path) {
     std::ofstream logFile(path, std::ios::app);
 
     if (!logFile.is_open()) {
-        ::ThrowError(ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::MINOR, path);  // minor so it doesnt enter in a loop of not being able to open logFile
+        ::ThrowError(ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::MINOR);
         return;
     }
     {
@@ -171,7 +172,7 @@ inline void CreateLog(Error err, std::string path) {
     std::ofstream logFile(path, std::ios::app);
 
     if (!logFile.is_open()) {
-        ThrowError(ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::MINOR, path);  // minor so it doesnt enter in a loop of not being able to open logFile
+        ThrowError(ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::MINOR);
         return;
     }
 

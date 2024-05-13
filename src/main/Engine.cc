@@ -41,6 +41,8 @@ void Engine::Loop() {
             Render();
             HandleEvent(&event);
             HandleFPS(beginTick);
+            config->DrawConfigMenu(window, renderer);
+
             SDL_RenderPresent(renderer);
             SDL_RenderClear(renderer);
         }
