@@ -4,10 +4,10 @@
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 
-#include <array>
 #include <cstdio>
 #include <string>
 
+#include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../lib/utils/engine_utils.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
@@ -125,26 +125,9 @@ void Config::ToggleConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
 }
 
 void Config::DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
-    SDL_Texture* checkedBtn = LoadConfigMenuButtons(renderer, "./assets/Menu/checked-button.png");
-    SDL_Texture* uncheckedBtn = LoadConfigMenuButtons(renderer, "./assets/Menu/unchecked-button.png");
-    std::array<SDL_Rect, 3> btn = {
-        SDL_Rect{
-            .x = 100,
-            .y = 100,
-            .w = 16,
-            .h = 16,
-        },
-        SDL_Rect{
-            .x = 200,
-            .y = 200,
-            .w = 16,
-            .h = 16,
-        },
-        SDL_Rect{
-            .x = 300,
-            .y = 300,
-            .w = 16,
-            .h = 16,
-        },
-    };
+    using namespace UI;
+    Button btn(ButtonFlags::TEXTURE_BUTTON,
+               SDL_Rect{.x = 100, .y = 100, .w = 64, .h = 64},
+               "myBtn");
+    Button::DrawButtons(renderer);
 }

@@ -8,8 +8,9 @@ git clone https://github.com/RyanQueirozS/SDL_cpp.git
 # If you want to play the development version:
 # git checkout develop 
 
+cmake .
 make
-./bin/project # project name will change later
+./bin/SoulBound # project name will change later
 ```
 
 ## TODO

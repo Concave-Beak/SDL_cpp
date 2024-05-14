@@ -378,8 +378,8 @@ void Engine::Init() {
     }
     printf("INFO: SDL_Init initialized succesfully\n");
 
-    window = SDL_CreateWindow("Game",
-                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+    window = SDL_CreateWindow("SoulBound",
+                              0, 0,
                               SCREEN_WIDTH, SCREEN_HEIGHT,
                               SDL_WINDOW_BORDERLESS);
     if (window == NULL) {

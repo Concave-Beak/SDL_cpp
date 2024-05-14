@@ -15,9 +15,9 @@ namespace UI {
  * ButtonType enum, used to define a type for a Button, can be used multiple times
  * in a single button.
  */
-enum ButtonType {
-    TEXT_BUTTON = 0x01,
-    TEXTURE_BUTTON = 0x02,
+enum ButtonFlags {
+    TEXTURE_BUTTON = 0x01,
+    TEXT_BUTTON = 0x02,
     SWITCH_BUTTON = 0x04,
 };
 
@@ -27,18 +27,18 @@ enum ButtonType {
  */
 class Button {
    public:
-    Button(ButtonType type_, SDL_Rect grid_, std::string ID_);
-    Button(ButtonType type_, SDL_Rect grid_, std::string ID_, SDL_Color outCol, SDL_Color fillCol, SDL_Color hovCol, SDL_Color textCol);
+    Button(ButtonFlags type_, SDL_Rect grid_, std::string ID_);
+    Button(ButtonFlags type_, SDL_Rect grid_, std::string ID_, SDL_Color outCol, SDL_Color fillCol, SDL_Color hovCol, SDL_Color textCol);
     ~Button();
 
     void SetColor(SDL_Color& color, const Uint8& textureField);
     void SetText(std::string& text_);
     const Error SetTexture(SDL_Renderer* renderer, const Uint8 textureField, std::string& path);
 
-    const Error DrawButton();
+    static const Error DrawButtons(SDL_Renderer* renderer);
 
    private:
-    Uint8 type;
+    Uint8 flags;
 
     SDL_Rect grid = {};
 
@@ -53,7 +53,7 @@ class Button {
 
     bool isShown = false;
 
-    bool isClicked = false;  // Only used in Switch style buttons
+    bool isClicked = false;
     bool isHovered = false;
 
     std::string text;
@@ -61,5 +61,5 @@ class Button {
     std::string ID;
 };
 
-// inline static std::vector<Button> buttonVector{};
+inline static std::vector<Button*> buttonVector{};
 }  // namespace UI
