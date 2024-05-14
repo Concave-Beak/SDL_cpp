@@ -8,10 +8,11 @@
 #include <ios>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 enum ErrorCode {
-    NO_CODE = -1,
+    NON = -1,
 
     // Wrong code
     BAD_PARAMS = 10,
@@ -25,12 +26,14 @@ enum ErrorCode {
 
     // SDL Error
     SDL_FUNCTION_ERROR = 200,
+    COULDNT_LOAD_TEXTURE = 201,
+    TEXTURE_ALREADY_SET = 202,
 };
 
 enum Severity {
-    MINOR = 0,
+    LOW = 0,
     MEDIUM = 1,
-    MAJOR = 2,
+    HIGH = 2,
 };
 
 inline static std::unordered_map<ErrorCode, std::string> mapErrorMessage = {
@@ -42,7 +45,7 @@ inline static std::unordered_map<ErrorCode, std::string> mapErrorMessage = {
 struct Error {
    public:
     Error();
-    Error(ErrorCode errorCode_, std::string errorInfo_,
+    Error(ErrorCode errorCode_, std::string_view errorInfo_,
           Severity severity_);
     ~Error();
 
@@ -59,9 +62,9 @@ struct Error {
     void CreateLog(std::string path);
 
    private:
-    ErrorCode code = NO_CODE;
+    ErrorCode code = NON;
     std::string info = "";
-    Severity severity = MINOR;
+    Severity severity = LOW;
     std::string defaultMessage = "";
 
     static Error lastError;  // NOTE: Not used
@@ -75,7 +78,7 @@ void Crash(Error);
 
 inline Error::~Error() {};
 inline Error::Error() {};
-inline Error::Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_) : code(errorCode_), info(errorInfo_), severity(severity_) {
+inline Error::Error(ErrorCode errorCode_, std::string_view errorInfo_, Severity severity_) : code(errorCode_), info(errorInfo_), severity(severity_) {
     this->defaultMessage = "ERROR: Could not initialize error!";
 
     if (mapErrorMessage.find(errorCode_) != mapErrorMessage.end()) {
@@ -128,7 +131,7 @@ inline void CreateLog(Error err, std::string path) {
     std::ofstream logFile(path, std::ios::app);
 
     if (!logFile.is_open()) {
-        Crash(Error{ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::MINOR});
+        Crash(Error{ErrorCode::FAILED_TO_OPEN_FILE, path + "\n", Severity::LOW});
         return;
     }
 
