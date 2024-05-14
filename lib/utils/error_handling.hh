@@ -1,14 +1,8 @@
 #pragma once
 
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
 #include <filesystem>
 #include <fstream>
-#include <ios>
-#include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 
 enum ErrorCode {
@@ -44,9 +38,9 @@ inline static std::unordered_map<ErrorCode, std::string> mapErrorMessage = {
 
 struct Error {
    public:
-    Error();
-    Error(ErrorCode errorCode_, std::string_view errorInfo_,
+    Error(ErrorCode errorCode_, std::string errorInfo_,
           Severity severity_);
+    Error();
     ~Error();
 
     ErrorCode GetErrorCode();
@@ -78,7 +72,7 @@ void Crash(Error);
 
 inline Error::~Error() {};
 inline Error::Error() {};
-inline Error::Error(ErrorCode errorCode_, std::string_view errorInfo_, Severity severity_) : code(errorCode_), info(errorInfo_), severity(severity_) {
+inline Error::Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_) : code(errorCode_), info(errorInfo_), severity(severity_) {
     this->defaultMessage = "ERROR: Could not initialize error!";
 
     if (mapErrorMessage.find(errorCode_) != mapErrorMessage.end()) {
@@ -149,4 +143,8 @@ inline void CreateLog(Error err, std::string path) {
         logFile << logMessage.str();
     }
     logFile.close();
+}
+
+inline void Crash(Error error_) {
+    // TODO: to be implemented
 }

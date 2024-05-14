@@ -23,7 +23,7 @@ enum ButtonType {
 
 /*
  * Button struct, used in UI. Once it's been created it gets pushed to a vector
- * to get handled. Check HandleButton() function for more info
+ * to get drawn. Check DrawButton() function for more info
  */
 class Button {
    public:
@@ -33,7 +33,7 @@ class Button {
 
     void SetColor(SDL_Color& color, const Uint8& textureField);
     void SetText(std::string& text_);
-    const Error SetTexture(SDL_Renderer* renderer, const Uint8 textureField, std::string path);
+    const Error SetTexture(SDL_Renderer* renderer, const Uint8 textureField, std::string& path);
 
     const Error DrawButton();
 
@@ -61,5 +61,5 @@ class Button {
     std::string ID;
 };
 
-inline std::vector<Button> buttonVector{};
+// inline static std::vector<Button> buttonVector{};
 }  // namespace UI

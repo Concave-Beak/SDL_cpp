@@ -91,7 +91,7 @@ const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vect
     SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
 
     if (window == NULL || renderer == NULL) {
-        return Error(BAD_PARAMS, "Window or renderer are null", MINOR);
+        return Error(BAD_PARAMS, "Window or renderer are null", LOW);
     }
 
     if (fullscreen) {
