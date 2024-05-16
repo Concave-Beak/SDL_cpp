@@ -23,17 +23,21 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b,
 
 //------------------------------------------------------------------------------
 
-void Engine::Loop() {
+void Engine::GameLoop() {
     float beginTick = 0;
     Vector2<float> *posPlayer = &playerInstance->pos;
     Vector2<float> *velPlayer = &playerInstance->velocity;
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
-    // Level level;
-    // level.GenerateLevel(0);
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                                 // Placeholder
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);                          // Placeholder
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);  // Placeholder
+    new LevelItem(Vector2<int>{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);                                    // Placeholder
 
     while (!quit) {
         beginTick = SDL_GetTicks();
-        HandlePlayerVelocity(posPlayer, velPlayer, playerColisionboxInfo);
+        playerInstance->HandleColisions(delta, timeMultiplier);
+        playerInstance->HandleVelocity(delta, timeMultiplier);
+        lastLoopIteration = SDL_GetTicks();
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
             ShowDebugInfo();
@@ -42,9 +46,13 @@ void Engine::Loop() {
             HandleEvent(&event);
             HandleFPS(beginTick);
             config->DrawConfigMenu(window, renderer);
+            camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT},
+                                 playerColisionboxInfo, timeMultiplier);
 
             SDL_RenderPresent(renderer);
-            SDL_RenderClear(renderer);
+            scc(SDL_RenderClear(renderer));
+
+            CalculateDelta();
         }
         // reset timeMultiplier
         if (timeMultiplier < 1 && !playerInstance->isPreparingToDash) {
@@ -53,159 +61,7 @@ void Engine::Loop() {
     }
 }
 
-void Engine::HandlePlayerVelocity(Vector2<float> *posPlayer,
-                                  Vector2<float> *velPlayer,
-                                  Vector2<int> playerColisionboxInfo) {
-    Uint32 timeNow = SDL_GetTicks();
-
-    float delta = (timeNow - lastUpdate) /
-                  300.0f;  // 300 is just to make delta easier to work with
-
-    float attritionCoefficient = 0;
-
-    {
-        if (velPlayer->y > MAX_Y_SPEED) {
-            velPlayer->y = MAX_Y_SPEED;
-        }
-        if (velPlayer->y < MIN_Y_SPEED) {
-            velPlayer->y = MIN_Y_SPEED;
-        }
-
-        if (velPlayer->x > MAX_X_SPEED) {
-            velPlayer->x = MAX_X_SPEED;
-        }
-        if (velPlayer->x < MIN_X_SPEED) {
-            velPlayer->x = MIN_X_SPEED;
-        }
-    }
-
-    if (playerInstance->colidedDown == false) {
-        velPlayer->y += delta * GRAVITY * timeMultiplier;
-        posPlayer->y += velPlayer->y * delta * timeMultiplier;
-    }
-
-    if (!playerInstance->colidedDown) attritionCoefficient = 0.8;
-
-    HandlePlayerColisions(posPlayer, velPlayer, playerColisionboxInfo, delta,
-                          &attritionCoefficient, timeMultiplier);
-
-    velPlayer->x -=
-        delta * attritionCoefficient * velPlayer->x * timeMultiplier;
-    posPlayer->x += velPlayer->x * timeMultiplier;
-
-    camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT},
-                         playerColisionboxInfo, timeMultiplier);
-
-    lastUpdate = SDL_GetTicks();
-}
-
-void Engine::HandlePlayerColisions(Vector2<float> *posPlayer,
-                                   Vector2<float> *velPlayer,
-                                   const Vector2<int> colisionBoxPlayer,
-                                   const float delta,
-                                   float *attritionCoefficient,
-                                   const float &timeMultipler) {
-    (void)timeMultipler;  // just so the compilers doesnt bitch about it
-    playerInstance->colidedUp = false;
-    playerInstance->colidedLeft = false;
-    playerInstance->colidedRight = false;
-    playerInstance->colidedDown = false;
-
-    playerInstance->isAbovePlatform = false;
-
-    float headOfPlayer = posPlayer->y, leftOfPlayer = posPlayer->x,
-          rightOfPlayer = posPlayer->x + colisionBoxPlayer.x,
-          feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;
-
-    bool isHorizontallyOverlaped, hitFeet, hitHead, isVerticallyOverlaped,
-        hitRight, hitLeft;
-
-    float colItemTop, colItemLeft, colItemRight, colItemBottom;
-
-    for (LevelItem colisionItem : Level::colisions) {
-        {
-            colItemTop = colisionItem.pos.y;
-            colItemBottom = colisionItem.pos.y + colisionItem.wireframe.h;
-            colItemLeft = colisionItem.pos.x;
-            colItemRight = colisionItem.pos.x + colisionItem.wireframe.w;
-        }
-
-        {
-            isHorizontallyOverlaped =
-                (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) ||
-                (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
-
-            hitFeet =
-                feetOfPLayer + delta * velPlayer->y * timeMultiplier >=
-                    colItemTop &&
-                feetOfPLayer <=
-                    colItemBottom - colisionItem.wireframe.h *
-                                        0.8 &&  // 0.8 is the maximum that i've
-                                                // found not to break colision,
-                isHorizontallyOverlaped;        // this makes it so the player only
-                                                // goes up if above 20% o the
-                                                // colItem's height
-
-            hitHead =
-                headOfPlayer + delta * velPlayer->y * timeMultiplier <=
-                    colItemBottom &&
-                headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
-                isHorizontallyOverlaped;
-        }
-
-        if (hitFeet) {
-            playerInstance->colidedDown = true;
-            *attritionCoefficient = colisionItem.attritionCoefficient;
-            posPlayer->y = colItemTop - colisionBoxPlayer.y;
-            velPlayer->y = 0;
-            if (colisionItem.colisionType == PLATFORM)
-                playerInstance->isAbovePlatform = true;
-        }
-
-        if (colisionItem.colisionType != PLATFORM) {
-            if (hitHead) {
-                playerInstance->colidedUp = true;
-                posPlayer->y = colItemBottom;
-                velPlayer->y = -velPlayer->y * 0.2f;
-            }
-            {  // this needs to be recalculated after changing the players pos
-               // in hitFeet and/or hitHead
-                headOfPlayer = posPlayer->y, leftOfPlayer = posPlayer->x,
-                rightOfPlayer = posPlayer->x + colisionBoxPlayer.x,
-                feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;
-
-                isVerticallyOverlaped = ((headOfPlayer > colItemTop &&
-                                          headOfPlayer < colItemBottom) ||
-                                         (feetOfPLayer > colItemTop &&
-                                          feetOfPLayer < colItemBottom));
-
-                hitRight = rightOfPlayer -
-                                   velPlayer->x * delta *
-                                       *(attritionCoefficient)*timeMultiplier >=
-                               colItemLeft &&
-                           rightOfPlayer <= colItemRight &&
-                           isVerticallyOverlaped;
-
-                hitLeft =
-                    leftOfPlayer - velPlayer->x * delta *
-                                       *(attritionCoefficient)*timeMultiplier <=
-                        colItemRight &&
-                    leftOfPlayer >= colItemLeft && isVerticallyOverlaped;
-            }
-
-            if (hitRight) {
-                playerInstance->colidedRight = true;
-                velPlayer->x = -velPlayer->x * 0.2;
-                posPlayer->x = colItemLeft - colisionBoxPlayer.x;
-            }
-            if (hitLeft) {
-                playerInstance->colidedLeft = true;
-                velPlayer->x = -velPlayer->x * 0.2;
-                posPlayer->x = colItemRight;
-            }
-        }
-    }
-}
+void Engine::CalculateDelta() { delta = (SDL_GetTicks() - lastLoopIteration) / 300.0f /*300 is just to make delta easier to work with*/; }
 
 void Engine::HandleFPS(float loopBegin) {
     float timeStepInMS = 1000.0f / fpsCap;
@@ -233,28 +89,15 @@ void Engine::ShowDebugInfo() {
     levelItemStr << "LI: " << Level::colisions.size() + Level::textures.size()
                  << "C/T: " << Level::colisions.size() << "/"
                  << Level::textures.size();
-    RenderTextSized(
-        renderer, &debugFont, levelItemStr.str().c_str(),
-        levelItemStr.str().size(),
-        Vector2<float>{
-            float(SCREEN_WIDTH -
-                  GetTextRectangleWidth(levelItemStr.str().size()) * 2),
-            0},
-        WHITE, 3);
+    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vector2<float>{float(SCREEN_WIDTH - GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, WHITE, 3);
 
     std::stringstream playerInfo;
     playerInfo << "XY: " << std::setprecision(4) << playerInstance->pos.x << " "
                << std::setprecision(4) << playerInstance->pos.y;
-    RenderTextSized(
-        renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(),
-        Vector2<float>{
-            float(SCREEN_WIDTH -
-                  GetTextRectangleWidth(playerInfo.str().size()) * 2),
-            100},
-        WHITE, 3);
+    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(), Vector2<float>{float(SCREEN_WIDTH - GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, WHITE, 3);
 }
 
-int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }
+int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
 void Engine::HandleEvent(SDL_Event *event) {
     SDL_PollEvent(event);
@@ -356,8 +199,8 @@ void Engine::Render() {
             levelItem.wireframe.w,
             levelItem.wireframe.h,
         };
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_RenderFillRect(renderer, &levelItemWireframe);
+        scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a));
+        scc(SDL_RenderFillRect(renderer, &levelItemWireframe));
     }
 
     SDL_Rect playerModel = {
@@ -366,55 +209,49 @@ void Engine::Render() {
         playerInstance->hitbox.x,
         playerInstance->hitbox.y,
     };
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
-    SDL_RenderFillRect(renderer, &playerModel);
+    scc(SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0));
+    scc(SDL_RenderFillRect(renderer, &playerModel));
 }
 
-void Engine::Init() {
+const Error Engine::Init() {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n",
-                SDL_GetError());
-        exit(EXIT_FAILURE);
+        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }
-    printf("INFO: SDL_Init initialized succesfully\n");
+    std::cout << "INFO: SDL_Init initialized succesfully\n";
 
     window = SDL_CreateWindow("SoulBound",
                               0, 0,
                               SCREEN_WIDTH, SCREEN_HEIGHT,
                               SDL_WINDOW_BORDERLESS);
     if (window == NULL) {
-        fprintf(stderr, "SDL could not create window! SDL_Error: %s\n",
-                SDL_GetError());
-        exit(EXIT_FAILURE);
+        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }
-    printf("INFO: Window initialized succesfully\n");
+    std::cout << "INFO: Window initialized succesfully\n";
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
-        fprintf(stderr, "SDL could not create renderer! SDL_Error: %s\n",
-                SDL_GetError());
-        exit(EXIT_FAILURE);
+        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }
-    printf("INFO: Renderer initialized succesfully\n");
+    std::cout << "INFO: Renderer initialized succesfully\n";
 
-    debugFont = FontLoadFromFile(renderer,
-                                 "./assets/fonts/charmap-oldschool_white.png");
-    printf("INFO: Loaded Debug Font\n");
+    debugFont = FontLoadFromFile(renderer, "./assets/fonts/charmap-oldschool_white.png");
+    std::cout << "INFO: Loaded Debug Font\n";
 
     {
         config->ApplyConfig(window, renderer, Vector2<int *>{&SCREEN_WIDTH, &SCREEN_HEIGHT});
-        printf("INFO: Config read succesfully\n");
+        std::cout << "INFO: Config read succesfully\n";
     }
+    return Error{};
 }
 
-int Engine::Run() {
-    printf("Starting the game loop...\n");
-    Loop();
+void Engine::Run() {
+    std::cout << "Starting the game loop...\n";
+    GameLoop();
 
-    printf("Game closed");
+    std::cout << "Game closed\n";
     SDL_DestroyWindow(window);
     SDL_Quit();
-    return 0;
+    return;
 }
 
 Engine *Engine::instance = new Engine;

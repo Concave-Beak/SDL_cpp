@@ -44,8 +44,8 @@ class Level {
     static std::vector<LevelItem> colisions;
     static std::vector<LevelItem> textures;
 
-    Level(){};
-    ~Level(){};
+    Level() {};
+    ~Level() {};
 
     void GenerateLevel(const Uint8 &levelID);
 

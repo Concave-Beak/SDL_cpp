@@ -1,12 +1,14 @@
 #pragma once
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <unordered_map>
 
 enum ErrorCode {
-    NON = -1,
+    NON = 0,
 
     // Wrong code
     BAD_PARAMS = 10,
@@ -36,7 +38,10 @@ inline static std::unordered_map<ErrorCode, std::string> mapErrorMessage = {
     {INVALID_TOKEN, "ERROR: Invalid token: "},
 };
 
-struct Error {
+class Error {
+   public:
+    operator bool() const { return code != NON; }
+
    public:
     Error(ErrorCode errorCode_, std::string errorInfo_,
           Severity severity_);
@@ -146,5 +151,7 @@ inline void CreateLog(Error err, std::string path) {
 }
 
 inline void Crash(Error error_) {
+    std::cerr << error_.GetInfo();
+    exit(error_.GetErrorCode());
     // TODO: to be implemented
 }

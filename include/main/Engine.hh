@@ -6,6 +6,7 @@
 
 #include <unordered_map>
 
+#include "../../lib/utils/error_handling.hh"
 #include "../assetHandling/Font.hh"
 #include "../entities/Camera.hh"
 #include "../entities/Player.hh"
@@ -20,8 +21,8 @@ class Engine {
 
     void UpdateScreenInfo();
 
-    void Init();
-    int Run();
+    const Error Init();
+    void Run();
 
     // float GetTimeMultiplier(); // not used
 
@@ -40,8 +41,9 @@ class Engine {
 
     const Uint16 fpsCap = 60;
     const Uint8 minFPS = 10;
+    float delta = 0;
     float timeMultiplier = 1;
-    Uint32 lastUpdate = 0;
+    Uint32 lastLoopIteration = 0;
 
     int SCREEN_WIDTH = 0;
     int SCREEN_HEIGHT = 0;
@@ -52,19 +54,12 @@ class Engine {
     Font debugFont;
 
    private:
-    void Loop();
+    void GameLoop();
+
+    void CalculateDelta();
 
     void HandleFPS(float startTick);
     void HandleEvent(SDL_Event* event);
-
-    void HandlePlayerVelocity(Vector2<float>* playerPos,
-                              Vector2<float>* playerVel,
-                              Vector2<int> playerHitboxInfo);
-    void HandlePlayerColisions(Vector2<float>* playerPos,
-                               Vector2<float>* playerVel,
-                               Vector2<int> playerColisionboxInfo, float delta,
-                               float* attritionCoefficient,
-                               const float& timeMultiplier);
 
     void ShowDebugInfo();
     int GetTextRectangleWidth(size_t strSize);

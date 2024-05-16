@@ -8,6 +8,10 @@
 
 int main() {
     Engine* instance = Engine::GetEngineInstance();
-    instance->Init();
-    return instance->Run();
+    Error err = instance->Init();
+
+    if (!err) {
+        std::cout << "INFO: Game initialized successfully\n";
+    }
+    instance->Run();
 }

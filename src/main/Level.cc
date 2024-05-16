@@ -34,7 +34,7 @@ LevelItem::~LevelItem() {
     }
 };
 
-LevelItem::LevelItem(){};
+LevelItem::LevelItem() {};
 LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
     this->wireframe = {ppos.x, ppos.y, size.x, size.y};
     switch (ptextID) {
