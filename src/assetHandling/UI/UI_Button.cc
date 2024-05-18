@@ -42,23 +42,23 @@ Button::~Button() {}
 
 /*
  * \param color The color to be applyed to the field
- * \param textureField The field to apply the texture in: fillColor, outlineColor, textColor, hovercolor from 0-3
+ * \param colorField The field to apply the color in.
  */
 void Button::SetColor(SDL_Color& color_, const Uint8& textureField) {
     switch (textureField) {
-        case 0: {
+        case FILL_COLOR: {
             this->fillColor = color_;
             break;
         }
-        case 1: {
+        case OUTLINE_COLOR: {
             this->outlineColor = color_;
             break;
         }
-        case 2: {
+        case TEXT_COLOR: {
             this->textColor = color_;
             break;
         }
-        case 3: {
+        case HOVER_COLOR: {
             this->hoverColor = color_;
             break;
         }
@@ -79,31 +79,31 @@ void Button::SetText(std::string& text_) {
 
 /*
  * \param renderer The renderer to create the button texture
- * \param textureField The field to apply the texture in: defaultTexture, hoverTexture,clickedTexture from 0-2
+ * \param textureField The field to apply the texture in
  * \param path The path to the image to be turned into a texture
  */
-const Error Button::SetTexture(SDL_Renderer* renderer, const Uint8 textureField, std::string path) {
+const Error Button::SetTexture(SDL_Renderer* renderer, const TextureField& textureField, std::string path) {
     SDL_Surface* buttonSurface = SurfaceFromFile(path);
     SDL_Texture* buttonTexture = (SDL_Texture*)scp(SDL_CreateTextureFromSurface(renderer, buttonSurface));
     if (buttonTexture == NULL) {
         return Error{COULDNT_LOAD_TEXTURE, path, MEDIUM};
     }
     switch (textureField) {
-        case 0: {
+        case DEFAULT_TEXTURE: {
             if (this->defaultTexture != nullptr) {
                 return Error{TEXTURE_ALREADY_SET, "Clicked texture field is already set", LOW};
             }
             this->defaultTexture = buttonTexture;
             break;
         }
-        case 1: {
+        case HOVER_TEXTURE: {
             if (this->hoverTexture != nullptr) {
                 return Error{TEXTURE_ALREADY_SET, "Clicked texture field is already set", LOW};
             }
             this->hoverTexture = buttonTexture;
             break;
         }
-        case 2: {
+        case CLICKED_TEXTURE: {
             if (this->clickedTexture != nullptr) {
                 return Error{TEXTURE_ALREADY_SET, "Clicked texture field is already set", LOW};
             }
@@ -126,21 +126,35 @@ const Error Button::SetTexture(SDL_Renderer* renderer, const Uint8 textureField,
 /*
  * Checks the buttonVector for every button and draws it. Should be simple to understand just from reading the code
  */
-const Error Button::DrawButtons(SDL_Renderer* renderer) {
+const Error Button::DrawButtons(SDL_Renderer* renderer) {  // TODO: remove elseifs
     for (const Button* btn : buttonVector) {
-        if (btn->flags & TEXTURE_BUTTON) {
-            if (btn->defaultTexture == NULL) {
-                Crash(Error(TEXTURE_IS_NULL, btn->ID + "\n", HIGH));
+        if (btn->isShown) {
+            if (btn->flags & TEXTURE_BUTTON) {
+                if (btn->defaultTexture != NULL) {
+                    scc(SDL_RenderCopy(renderer, btn->defaultTexture, NULL, &btn->grid));
+                }
+            } else {
             }
-            scc(SDL_RenderCopy(renderer, btn->defaultTexture, NULL, &btn->grid));
-        } else {
-        }
-        if (btn->flags & TEXT_BUTTON) {
-        }
-        if (btn->flags & SWITCH_BUTTON) {
+            if (btn->flags & TEXT_BUTTON) {
+            }
+            if (btn->flags & SWITCH_BUTTON) {
+            }
         }
     }
     return Error{};
+}
+
+void Button::HandleButtons(SDL_Event event) {
+    for (const Button* btn : buttonVector) {
+        if (btn->isShown) {
+            if (event.type == SDL_MOUSEBUTTONDOWN) {
+            }
+        }
+    }
+}
+
+void Button::ToggleIsShown() {
+    isShown = !isShown;
 }
 
 //------------------------------------------------------------------------------

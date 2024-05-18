@@ -19,8 +19,13 @@ file(GLOB_RECURSE SOURCES "src/*.cc" "src/*.cpp")
 # Add executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Add compiler flags
-add_compile_options(-Wall -Wextra -O2)
+# Specify compiler options for GCC
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wconversion -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wformat=2)
+endif()
+
+# Set optimization level
+add_compile_options(-O2)
 
 # Add include directories
 target_include_directories(${PROJECT_NAME} PUBLIC

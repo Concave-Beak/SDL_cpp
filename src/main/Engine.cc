@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
@@ -24,6 +25,11 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b,
 //------------------------------------------------------------------------------
 
 void Engine::GameLoop() {
+    UI::Button btn(UI::Button::ButtonFlags::TEXTURE_BUTTON,
+                   SDL_Rect{.x = 100, .y = 100, .w = 64, .h = 64},
+                   "myBtn");
+    btn.SetTexture(renderer, UI::Button::DEFAULT_TEXTURE, "./assets/menu/checked-button.png");
+
     float beginTick = 0;
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
     new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                                 // Placeholder
@@ -96,51 +102,44 @@ void Engine::ShowDebugInfo() {
 int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
 void Engine::HandleEvent() {
-    SDL_PollEvent(&event);
-    switch (event.type) {
-        case SDL_QUIT: {
-            quit = true;
-            break;
-        }
-        case SDL_KEYDOWN: {
-            keyStates[event.key.keysym.sym] = true;
-            break;
-        }
-        case SDL_KEYUP: {
-            keyStates[event.key.keysym.sym] = false;
-            break;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+            case SDL_QUIT: {
+                quit = true;
+                break;
+            }
         }
     }
-    if (keyStates[SDLK_a]) {
+
+    if (state[SDL_SCANCODE_A]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(LEFT, 0, renderer, &timeMultiplier);
         } else {
             playerInstance->Move(MoveOptions::LEFT);
         }
     }
-    if (keyStates[SDLK_d]) {
+    if (state[SDL_SCANCODE_D]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(RIGHT, 0, renderer, &timeMultiplier);
         } else {
             playerInstance->Move(MoveOptions::RIGHT);
         }
     }
-    if (keyStates[SDLK_w]) {
+    if (state[SDL_SCANCODE_W]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(UP, 0, renderer, &timeMultiplier);
         } else {
             playerInstance->Move(MoveOptions::UP);
         }
     }
-    if (keyStates[SDLK_s]) {
+    if (state[SDL_SCANCODE_S]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(DOWN, 0, renderer, &timeMultiplier);
         } else {
             playerInstance->Move(MoveOptions::DOWN);
         }
     }
-    if (keyStates[SDLK_e] &&
-        SDL_GetTicks() >= playerInstance->whenNextDashAvailable) {
+    if (state[SDL_SCANCODE_E] && SDL_GetTicks() >= playerInstance->whenNextDashAvailable) {
         if (!playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(NONE, 0, renderer, &timeMultiplier);
             playerInstance->DashEnd = SDL_GetTicks() + 2000;
@@ -151,34 +150,34 @@ void Engine::HandleEvent() {
             playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
         }
     }
-    if (keyStates[SDLK_e] == false) {
+    if (!state[SDL_SCANCODE_E]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->Dash();
             playerInstance->isPreparingToDash = false;
             playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
         }
     }
-    if (keyStates[SDLK_o]) {
+    if (state[SDL_SCANCODE_O]) {
         config->ApplyConfig(window, renderer, Vector2<int *>{&SCREEN_WIDTH, &SCREEN_HEIGHT});
     }
-    if (keyStates[SDLK_LEFT]) {
+    if (state[SDL_SCANCODE_LEFT]) {
         camera->Move(LEFT);
     }
-    if (keyStates[SDLK_RIGHT]) {
+    if (state[SDL_SCANCODE_RIGHT]) {
         camera->Move(RIGHT);
     }
-    if (keyStates[SDLK_UP]) {
+    if (state[SDL_SCANCODE_UP]) {
         camera->Move(UP);
     }
-    if (keyStates[SDLK_DOWN]) {
+    if (state[SDL_SCANCODE_DOWN]) {
         camera->Move(DOWN);
     }
 
-    if (keyStates[SDLK_r]) {
+    if (state[SDL_SCANCODE_R]) {
         // playerInstance->pos = {0, 0};
         // playerInstance->velocity = {0, 0};
     }
-    if (keyStates[SDLK_q]) {
+    if (state[SDL_SCANCODE_Q]) {
         quit = true;
         return;
     }

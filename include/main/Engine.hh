@@ -4,8 +4,6 @@
 #include <SDL2/SDL_stdinc.h>
 #include <sys/wait.h>
 
-#include <unordered_map>
-
 #include "../../lib/utils/error_handling.hh"
 #include "../assetHandling/Font.hh"
 #include "../entities/Camera.hh"
@@ -37,7 +35,7 @@ class Engine {
     SDL_Window* window = NULL;
     SDL_Event event = SDL_Event{};
 
-    std::unordered_map<SDL_Keycode, bool> keyStates;
+    const Uint8* state = SDL_GetKeyboardState(NULL);
 
     const Uint16 fpsCap = 60;
     const Uint8 minFPS = 10;
