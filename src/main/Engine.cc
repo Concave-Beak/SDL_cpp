@@ -47,7 +47,7 @@ void Engine::GameLoop() {
             ShowDebugInfo();
 
             Render();
-            HandleEvent();
+            HandleEvents();
             HandleFPS(beginTick);
             config->DrawConfigMenu(window, renderer);
             camera->FollowPlayer(playerInstance->GetPos(), delta, {SCREEN_WIDTH, SCREEN_HEIGHT},
@@ -101,7 +101,7 @@ void Engine::ShowDebugInfo() {
 
 int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
-void Engine::HandleEvent() {
+void Engine::HandleEvents() {
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
             case SDL_QUIT: {
@@ -110,7 +110,11 @@ void Engine::HandleEvent() {
             }
         }
     }
+    HandleKeyboard();
+    HandleMouse();
+}
 
+void Engine::HandleKeyboard() {
     if (state[SDL_SCANCODE_A]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(LEFT, 0, renderer, &timeMultiplier);
@@ -180,6 +184,16 @@ void Engine::HandleEvent() {
     if (state[SDL_SCANCODE_Q]) {
         quit = true;
         return;
+    }
+}
+
+void Engine::HandleMouse() {
+    int x, y;
+    Uint32 buttons = SDL_GetMouseState(&x, &y);
+
+    if (buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+    }
+    if (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
     }
 }
 

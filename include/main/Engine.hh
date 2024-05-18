@@ -57,7 +57,10 @@ class Engine {
     void CalculateDelta();
 
     void HandleFPS(float startTick);
-    void HandleEvent();
+
+    void HandleEvents();
+    void HandleKeyboard();
+    void HandleMouse();
 
     void ShowDebugInfo();
     int GetTextRectangleWidth(size_t strSize);
