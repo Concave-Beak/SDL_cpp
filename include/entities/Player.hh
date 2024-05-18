@@ -9,9 +9,6 @@
 
 class Player {
    public:
-    Vector2<float> velocity = {0, 0};
-    Vector2<float> pos = {0, 0};
-
     bool colidedDown = false;
     bool colidedLeft = false;
     bool colidedRight = false;
@@ -22,11 +19,11 @@ class Player {
     // Dash
     bool isPreparingToDash = false;
     bool isDashing = false;
-    float DashEnd;
-    float whenNextDashAvailable;
+    float DashEnd = 0;
+    float whenNextDashAvailable = 0;
 
-    float preDashAnimationEnd;
-    float preDashDurationInMs;
+    float preDashAnimationEnd = 0;
+    float preDashDurationInMs = 0;
 
     float angleDash = 0;  // in degrees
     //--
@@ -36,7 +33,8 @@ class Player {
    public:
     static Player* GetPlayerInstace();
 
-    // Vector2<float>* GetPlayerPos();  // not used
+    Vector2<float> GetPos();  // not used
+    Vector2<float> GetVelocity();
     void HandleVelocity(const float& delta, const float& timeMultiplier);
     void HandleColisions(const float& delta, const float& timeMultiplier);
 
@@ -50,11 +48,10 @@ class Player {
    private:
     static Player* playerInstance;
 
-    const Vector2<float> accelSpeed = {
-        1,
-        250,
-    };  // may change during gameplay, I'll just
-        // use it as a const it for now
+    Vector2<float> velocity = {0, 0};
+    Vector2<float> pos = {0, 0};
+    const Vector2<float> accelSpeed = {1, 250};  // may change during gameplay, I'll just
+                                                 // use it as a const it for now
 
     float attrition = 0;
 

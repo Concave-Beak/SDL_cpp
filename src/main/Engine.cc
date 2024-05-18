@@ -25,8 +25,6 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b,
 
 void Engine::GameLoop() {
     float beginTick = 0;
-    Vector2<float> *posPlayer = &playerInstance->pos;
-    Vector2<float> *velPlayer = &playerInstance->velocity;
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
     new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                                 // Placeholder
     new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);                          // Placeholder
@@ -43,10 +41,10 @@ void Engine::GameLoop() {
             ShowDebugInfo();
 
             Render();
-            HandleEvent(&event);
+            HandleEvent();
             HandleFPS(beginTick);
             config->DrawConfigMenu(window, renderer);
-            camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT},
+            camera->FollowPlayer(playerInstance->GetPos(), delta, {SCREEN_WIDTH, SCREEN_HEIGHT},
                                  playerColisionboxInfo, timeMultiplier);
 
             SDL_RenderPresent(renderer);
@@ -61,7 +59,7 @@ void Engine::GameLoop() {
     }
 }
 
-void Engine::CalculateDelta() { delta = (SDL_GetTicks() - lastLoopIteration) / 300.0f /*300 is just to make delta easier to work with*/; }
+void Engine::CalculateDelta() { delta = (SDL_GetTicks() - lastLoopIteration) / 300.0f; }  // 300 is just to make delta easier to work with
 
 void Engine::HandleFPS(float loopBegin) {
     float timeStepInMS = 1000.0f / fpsCap;
@@ -69,10 +67,8 @@ void Engine::HandleFPS(float loopBegin) {
     float timeDifference = timeStepInMS - (loopEnd - loopBegin);
 
     if (config->ShowFPSState() == true) {
-        std::stringstream fpsStr;  // fps is in secods, timeDifference is in ms.
-        fpsStr << "FPS: " << std::setprecision(4)
-               << fpsCap - (timeDifference /
-                            1000.0f);  // that's why it's divided by 1000
+        std::stringstream fpsStr;                                                          // fps is in secods, timeDifference is in ms.
+        fpsStr << "FPS: " << std::setprecision(4) << fpsCap - (timeDifference / 1000.0f);  // that's why it's divided by 1000
 
         RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(),
                         fpsStr.str().size(), Vector2<float>{0, 0}, GREEN, 3);
@@ -92,26 +88,26 @@ void Engine::ShowDebugInfo() {
     RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vector2<float>{float(SCREEN_WIDTH - GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, WHITE, 3);
 
     std::stringstream playerInfo;
-    playerInfo << "XY: " << std::setprecision(4) << playerInstance->pos.x << " "
-               << std::setprecision(4) << playerInstance->pos.y;
+    playerInfo << "XY: " << std::setprecision(4) << playerInstance->GetPos().x << " "
+               << std::setprecision(4) << playerInstance->GetPos().y;
     RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(), Vector2<float>{float(SCREEN_WIDTH - GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, WHITE, 3);
 }
 
 int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
-void Engine::HandleEvent(SDL_Event *event) {
-    SDL_PollEvent(event);
-    switch (event->type) {
+void Engine::HandleEvent() {
+    SDL_PollEvent(&event);
+    switch (event.type) {
         case SDL_QUIT: {
             quit = true;
             break;
         }
         case SDL_KEYDOWN: {
-            keyStates[event->key.keysym.sym] = true;
+            keyStates[event.key.keysym.sym] = true;
             break;
         }
         case SDL_KEYUP: {
-            keyStates[event->key.keysym.sym] = false;
+            keyStates[event.key.keysym.sym] = false;
             break;
         }
     }
@@ -179,8 +175,8 @@ void Engine::HandleEvent(SDL_Event *event) {
     }
 
     if (keyStates[SDLK_r]) {
-        playerInstance->pos = {0, 0};
-        playerInstance->velocity = {0, 0};
+        // playerInstance->pos = {0, 0};
+        // playerInstance->velocity = {0, 0};
     }
     if (keyStates[SDLK_q]) {
         quit = true;
@@ -204,8 +200,8 @@ void Engine::Render() {
     }
 
     SDL_Rect playerModel = {
-        (int)playerInstance->pos.x - (int)cameraPos.x,
-        (int)playerInstance->pos.y - (int)cameraPos.y,
+        (int)playerInstance->GetPos().x - (int)cameraPos.x,
+        (int)playerInstance->GetPos().y - (int)cameraPos.y,
         playerInstance->hitbox.x,
         playerInstance->hitbox.y,
     };

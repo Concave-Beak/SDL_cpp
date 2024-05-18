@@ -2,7 +2,6 @@
 
 #include <SDL2/SDL_render.h>
 
-#include <iostream>
 #include <string>
 
 #include "../../../lib/utils/sdl_utils.hh"
@@ -83,7 +82,7 @@ void Button::SetText(std::string& text_) {
  * \param textureField The field to apply the texture in: defaultTexture, hoverTexture,clickedTexture from 0-2
  * \param path The path to the image to be turned into a texture
  */
-const Error Button::SetTexture(SDL_Renderer* renderer, const Uint8 textureField, std::string& path) {
+const Error Button::SetTexture(SDL_Renderer* renderer, const Uint8 textureField, std::string path) {
     SDL_Surface* buttonSurface = SurfaceFromFile(path);
     SDL_Texture* buttonTexture = (SDL_Texture*)scp(SDL_CreateTextureFromSurface(renderer, buttonSurface));
     if (buttonTexture == NULL) {
@@ -91,14 +90,14 @@ const Error Button::SetTexture(SDL_Renderer* renderer, const Uint8 textureField,
     }
     switch (textureField) {
         case 0: {
-            if (this->clickedTexture != nullptr) {
+            if (this->defaultTexture != nullptr) {
                 return Error{TEXTURE_ALREADY_SET, "Clicked texture field is already set", LOW};
             }
             this->defaultTexture = buttonTexture;
             break;
         }
         case 1: {
-            if (this->clickedTexture != nullptr) {
+            if (this->hoverTexture != nullptr) {
                 return Error{TEXTURE_ALREADY_SET, "Clicked texture field is already set", LOW};
             }
             this->hoverTexture = buttonTexture;
@@ -112,7 +111,7 @@ const Error Button::SetTexture(SDL_Renderer* renderer, const Uint8 textureField,
             break;
         }
         default: {
-            if (this->clickedTexture != nullptr) {
+            if (this->defaultTexture != nullptr) {
                 return Error{TEXTURE_ALREADY_SET, "Clicked texture field is already set", LOW};
             }
             this->defaultTexture = buttonTexture;
@@ -125,12 +124,15 @@ const Error Button::SetTexture(SDL_Renderer* renderer, const Uint8 textureField,
 }
 
 /*
- * Checks the buttonVector for every button and draws it. Should be simple to understand, just read the code
+ * Checks the buttonVector for every button and draws it. Should be simple to understand just from reading the code
  */
 const Error Button::DrawButtons(SDL_Renderer* renderer) {
     for (const Button* btn : buttonVector) {
         if (btn->flags & TEXTURE_BUTTON) {
-            SDL_RenderCopy(renderer, btn->defaultTexture, NULL, &btn->grid);
+            if (btn->defaultTexture == NULL) {
+                Crash(Error(TEXTURE_IS_NULL, btn->ID + "\n", HIGH));
+            }
+            scc(SDL_RenderCopy(renderer, btn->defaultTexture, NULL, &btn->grid));
         } else {
         }
         if (btn->flags & TEXT_BUTTON) {

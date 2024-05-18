@@ -20,7 +20,7 @@ file(GLOB_RECURSE SOURCES "src/*.cc" "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Add compiler flags
-add_compile_options(-Wall -Wextra)
+add_compile_options(-Wall -Wextra -O2)
 
 # Add include directories
 target_include_directories(${PROJECT_NAME} PUBLIC

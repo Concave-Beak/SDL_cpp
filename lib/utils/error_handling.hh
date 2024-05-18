@@ -23,7 +23,8 @@ enum ErrorCode {
     // SDL Error
     SDL_FUNCTION_ERROR = 200,
     COULDNT_LOAD_TEXTURE = 201,
-    TEXTURE_ALREADY_SET = 202,
+    TEXTURE_IS_NULL = 202,
+    TEXTURE_ALREADY_SET = 203,
 };
 
 enum Severity {

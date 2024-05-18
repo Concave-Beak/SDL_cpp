@@ -11,6 +11,9 @@
 
 namespace UI {
 
+// BUTTON CLASS AND FUNCIONS NEED TO BE DONE
+// TODO
+
 /*
  * ButtonType enum, used to define a type for a Button, can be used multiple times
  * in a single button.
@@ -33,7 +36,7 @@ class Button {
 
     void SetColor(SDL_Color& color, const Uint8& textureField);
     void SetText(std::string& text_);
-    const Error SetTexture(SDL_Renderer* renderer, const Uint8 textureField, std::string& path);
+    const Error SetTexture(SDL_Renderer* renderer, const Uint8 textureField, std::string path);
 
     static const Error DrawButtons(SDL_Renderer* renderer);
 

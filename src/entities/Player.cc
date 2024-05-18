@@ -5,7 +5,6 @@
 #include <SDL2/SDL_timer.h>
 
 #include <cmath>
-#include <iostream>
 
 #include "../../include/entities/Camera.hh"
 #include "../../include/main/Level.hh"
@@ -16,6 +15,8 @@
 
 Player* Player::playerInstance = new Player;
 
+Vector2<float> Player::GetPos() { return pos; }
+Vector2<float> Player::GetVelocity() { return velocity; }
 Player* Player::GetPlayerInstace() { return Player::playerInstance; }
 
 Vector2<int> Player::GetHitboxInfo() {

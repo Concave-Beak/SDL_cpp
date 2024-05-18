@@ -59,7 +59,7 @@ class Engine {
     void CalculateDelta();
 
     void HandleFPS(float startTick);
-    void HandleEvent(SDL_Event* event);
+    void HandleEvent();
 
     void ShowDebugInfo();
     int GetTextRectangleWidth(size_t strSize);

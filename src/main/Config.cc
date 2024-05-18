@@ -124,10 +124,11 @@ void Config::ToggleConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
     isConfigMenuToggled = !isConfigMenuToggled;
 }
 
-void Config::DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
+void Config::DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {  // TODO
     using namespace UI;
     Button btn(ButtonFlags::TEXTURE_BUTTON,
                SDL_Rect{.x = 100, .y = 100, .w = 64, .h = 64},
                "myBtn");
+    btn.SetTexture(renderer, 0, "./assets/menu/checked-button.png");
     Button::DrawButtons(renderer);
 }
