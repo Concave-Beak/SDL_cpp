@@ -7,6 +7,7 @@
 #include "../../../lib/utils/sdl_utils.hh"
 
 //------------------------------------------------------------------------------
+
 using namespace UI;
 
 Button::Button(ButtonFlags type_, SDL_Rect grid_, std::string ID_) {
@@ -18,7 +19,7 @@ Button::Button(ButtonFlags type_, SDL_Rect grid_, std::string ID_) {
 
     this->textColor = SDL_Color{};
     this->outlineColor = SDL_Color{};
-    this->fillColor = SDL_Color{};
+    this->clickedColor = SDL_Color{};
     this->hoverColor = SDL_Color{};
 
     buttonVector.push_back(this);
@@ -33,7 +34,7 @@ Button::Button(ButtonFlags type_, SDL_Rect grid_, std::string ID_, SDL_Color tex
 
     this->textColor = textCol_;
     this->outlineColor = outCol_;
-    this->fillColor = fillCol_;
+    this->clickedColor = fillCol_;
     this->hoverColor = hovCol_;
 
     buttonVector.push_back(this);
@@ -41,13 +42,13 @@ Button::Button(ButtonFlags type_, SDL_Rect grid_, std::string ID_, SDL_Color tex
 Button::~Button() {}
 
 /*
- * \param color The color to be applyed to the field
- * \param colorField The field to apply the color in.
+ * @param color The color to be applyed to the field
+ * @param colorField The field to apply the color in.
  */
 void Button::SetColor(SDL_Color& color_, const Uint8& textureField) {
     switch (textureField) {
         case FILL_COLOR: {
-            this->fillColor = color_;
+            this->clickedColor = color_;
             break;
         }
         case OUTLINE_COLOR: {
@@ -63,24 +64,24 @@ void Button::SetColor(SDL_Color& color_, const Uint8& textureField) {
             break;
         }
         default: {
-            this->fillColor = color_;
+            this->clickedColor = color_;
             break;
         }
     }
 }
 
 /*
- * \param text_ The text to be set
+ * @param text_ The text to be set
  */
 void Button::SetText(std::string& text_) {
     this->text = text_;
-    if (this->flags / TEXT_BUTTON == 0) this->flags |= TEXT_BUTTON;
+    if (!(this->flags & TEXT_BUTTON)) this->flags |= TEXT_BUTTON;  // NOTE: this probably doesn't work lol
 }
 
 /*
- * \param renderer The renderer to create the button texture
- * \param textureField The field to apply the texture in
- * \param path The path to the image to be turned into a texture
+ * @param renderer The renderer to create the button texture
+ * @param textureField The field to apply the texture in
+ * @param path The path to the image to be turned into a texture
  */
 const Error Button::SetTexture(SDL_Renderer* renderer, const TextureField& textureField, std::string path) {
     SDL_Surface* buttonSurface = SurfaceFromFile(path);
@@ -118,7 +119,25 @@ const Error Button::SetTexture(SDL_Renderer* renderer, const TextureField& textu
             break;
         }
     }
-    if (this->flags / TEXTURE_BUTTON == 0) this->flags |= TEXTURE_BUTTON;
+    this->flags |= TEXTURE_BUTTON;
+
+    return Error{};
+}
+
+void Button::SetFlags(int flags_) { flags = flags_; };
+
+const Error Button::DrawTextureBtn(SDL_Renderer* renderer, const Button* btn) {
+    SDL_Texture* textureToRender = nullptr;
+
+    if (btn->flags & SWITCH_BUTTON) {
+        textureToRender = (btn->isClicked && btn->clickedTexture != nullptr) ? btn->clickedTexture : btn->defaultTexture;
+    } else {
+        textureToRender = btn->clickedTexture;
+    }
+
+    if (textureToRender != nullptr) {
+        scc(SDL_RenderCopy(renderer, textureToRender, nullptr, &btn->grid));
+    }
 
     return Error{};
 }
@@ -128,33 +147,35 @@ const Error Button::SetTexture(SDL_Renderer* renderer, const TextureField& textu
  */
 const Error Button::DrawButtons(SDL_Renderer* renderer) {  // TODO: remove elseifs
     for (const Button* btn : buttonVector) {
-        if (btn->isShown) {
-            if (btn->flags & TEXTURE_BUTTON) {
-                if (btn->defaultTexture != NULL) {
-                    scc(SDL_RenderCopy(renderer, btn->defaultTexture, NULL, &btn->grid));
-                }
-            } else {
-            }
-            if (btn->flags & TEXT_BUTTON) {
-            }
-            if (btn->flags & SWITCH_BUTTON) {
-            }
+        if (!btn->isShown) {
+            continue;
+        }
+        if (btn->flags & TEXTURE_BUTTON) {
+            DrawTextureBtn(renderer, btn);
+        }
+        if (btn->flags & TEXT_BUTTON) {
+            // RenderTextSized(renderer, Font *font, const char *text, size_t text_size, Vector2<float> pos, SDL_Color color, float scale)
         }
     }
     return Error{};
 }
 
-void Button::HandleButtons(SDL_Event event) {
-    for (const Button* btn : buttonVector) {
+void Button::HandleButtonClicks(Vector2<int> mousePos) {
+    for (Button* btn : buttonVector) {
         if (btn->isShown) {
-            if (event.type == SDL_MOUSEBUTTONDOWN) {
+            if (btn->grid.x < mousePos.x &&
+                btn->grid.x + btn->grid.w > mousePos.x &&
+                btn->grid.y < mousePos.y &&
+                btn->grid.y + btn->grid.h > mousePos.y) {
+                if (btn->flags & SWITCH_BUTTON) {
+                    btn->isClicked = !btn->isClicked;
+                }
+                break;  // Button handled, exit loop
             }
         }
     }
 }
 
-void Button::ToggleIsShown() {
-    isShown = !isShown;
-}
+void Button::ToggleIsShown() { isShown = !isShown; }
 
 //------------------------------------------------------------------------------

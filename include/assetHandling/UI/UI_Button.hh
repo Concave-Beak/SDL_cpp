@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../../../lib/utils/error_handling.hh"
+#include "../../../lib/utils/math_utils.hh"
 
 namespace UI {
 
@@ -15,15 +16,15 @@ namespace UI {
 // TODO
 
 /*
- * ButtonType enum, used to define a type for a Button, can be used multiple times
- * in a single button.
- */
-/*
  * Button struct, used in UI. Once it's been created it gets pushed to a vector
  * to get drawn. Check DrawButton() function for more info
  */
 class Button {
    public:
+    /*
+     * ButtonFlags enum, used to define a type for a Button, can be used multiple times
+     * in a single button.
+     */
     enum ButtonFlags {
         TEXTURE_BUTTON = 0x01,
         TEXT_BUTTON = 0x02,
@@ -48,18 +49,25 @@ class Button {
         CLICKED_TEXTURE,
     };
     const Error SetTexture(SDL_Renderer* renderer, const TextureField& textureField, std::string path);
+    void SetFlags(int flags_);
 
     static const Error DrawButtons(SDL_Renderer* renderer);
-    static void HandleButtons(SDL_Event event);
+
+    static void HandleButtonClicks(Vector2<int>);
 
     void ToggleIsShown();
+
+   private:
+    static const Error DrawTextBtn(SDL_Renderer* renderer, const Button* btn);
+    static const Error DrawTextureBtn(SDL_Renderer* renderer, const Button* btn);
 
    private:
     Uint8 flags;
 
     SDL_Rect grid = {};
 
-    SDL_Color fillColor = {};
+    SDL_Color defaultColor = {};
+    SDL_Color clickedColor = {};
     SDL_Color outlineColor = {};
     SDL_Color textColor = {};
     SDL_Color hoverColor = {};
@@ -77,6 +85,6 @@ class Button {
 
     std::string ID;
 };
-
 inline static std::vector<Button*> buttonVector{};
+
 }  // namespace UI

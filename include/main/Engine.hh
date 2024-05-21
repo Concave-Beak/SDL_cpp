@@ -1,8 +1,6 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_stdinc.h>
-#include <sys/wait.h>
 
 #include "../../lib/utils/error_handling.hh"
 #include "../assetHandling/Font.hh"
@@ -56,11 +54,15 @@ class Engine {
 
     void CalculateDelta();
 
+    void ResetTimeMultiplier();
+
     void HandleFPS(float startTick);
 
     void HandleEvents();
-    void HandleKeyboard();
-    void HandleMouse();
+    void HandleKeyboardState();
+    void HandleMouseState();
+    void HandleKeyboard(SDL_KeyboardEvent);
+    void HandleMouse(SDL_MouseButtonEvent);
 
     void ShowDebugInfo();
     int GetTextRectangleWidth(size_t strSize);

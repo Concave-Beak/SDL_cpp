@@ -1,6 +1,7 @@
 #include "../../include/main/Engine.hh"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
 
@@ -28,7 +29,16 @@ void Engine::GameLoop() {
     UI::Button btn(UI::Button::ButtonFlags::TEXTURE_BUTTON,
                    SDL_Rect{.x = 100, .y = 100, .w = 64, .h = 64},
                    "myBtn");
-    btn.SetTexture(renderer, UI::Button::DEFAULT_TEXTURE, "./assets/menu/checked-button.png");
+    btn.SetTexture(renderer, UI::Button::DEFAULT_TEXTURE, "./assets/menu/unchecked-button.png");  // placeholder
+    btn.SetTexture(renderer, UI::Button::CLICKED_TEXTURE, "./assets/menu/checked-button.png");
+    btn.SetFlags(UI::Button::SWITCH_BUTTON | UI::Button::TEXTURE_BUTTON);
+
+    UI::Button btn1(UI::Button::ButtonFlags::TEXTURE_BUTTON,
+                    SDL_Rect{.x = 400, .y = 100, .w = 64, .h = 64},
+                    "myBtn");
+    btn1.SetTexture(renderer, UI::Button::DEFAULT_TEXTURE, "./assets/menu/unchecked-button.png");  // placeholder
+    btn1.SetTexture(renderer, UI::Button::CLICKED_TEXTURE, "./assets/menu/checked-button.png");
+    btn1.SetFlags(UI::Button::SWITCH_BUTTON | UI::Button::TEXTURE_BUTTON);
 
     float beginTick = 0;
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
@@ -58,10 +68,13 @@ void Engine::GameLoop() {
 
             CalculateDelta();
         }
-        // reset timeMultiplier
-        if (timeMultiplier < 1 && !playerInstance->isPreparingToDash) {
-            timeMultiplier += (1 - timeMultiplier) / 50;
-        }
+        ResetTimeMultiplier();
+    }
+}
+
+void Engine::ResetTimeMultiplier() {
+    if (timeMultiplier < 1 && !playerInstance->isPreparingToDash) {
+        timeMultiplier += (1 - timeMultiplier) / 50;
     }
 }
 
@@ -108,13 +121,28 @@ void Engine::HandleEvents() {
                 quit = true;
                 break;
             }
+            case SDL_KEYDOWN: {
+                HandleKeyboard(event.key);
+                break;
+            }
+            case SDL_MOUSEBUTTONDOWN: {
+                HandleMouse(event.button);
+                break;
+            }
         }
     }
-    HandleKeyboard();
-    HandleMouse();
+    HandleKeyboardState();
+    HandleMouseState();
 }
 
-void Engine::HandleKeyboard() {
+void Engine::HandleKeyboard(SDL_KeyboardEvent kbEvent) {
+}
+
+void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
+    UI::Button::HandleButtonClicks(Vector2<int>{.x = mbEvent.x, .y = mbEvent.y});
+}
+
+void Engine::HandleKeyboardState() {
     if (state[SDL_SCANCODE_A]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(LEFT, 0, renderer, &timeMultiplier);
@@ -187,7 +215,7 @@ void Engine::HandleKeyboard() {
     }
 }
 
-void Engine::HandleMouse() {
+void Engine::HandleMouseState() {
     int x, y;
     Uint32 buttons = SDL_GetMouseState(&x, &y);
 
