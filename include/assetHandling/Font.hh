@@ -1,6 +1,9 @@
+#pragma once
+
 #include <SDL2/SDL.h>
 
 #include <array>
+#include <cstdio>
 
 #include "../../lib/utils/math_utils.hh"
 
@@ -19,13 +22,14 @@ struct Font {
    public:
     SDL_Texture *spritesheet;
     std::array<SDL_Rect, ASCII_DISPLAY_HIGH - ASCII_DISPLAY_LOW + 1> glyphTable;
+
+    bool IsNull() const { return spritesheet != nullptr; }
 };
 
 Font FontLoadFromFile(SDL_Renderer *renderer, const char *path);
 
-void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text,
-                     size_t text_size, Vector2<float> pos, SDL_Color color,
-                     float scale);
+void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vector2<int> pos,
+                     SDL_Color color, float scale);
 
-void RenderText(SDL_Renderer *renderer, Font *font, const char *text,
-                Vector2<float> pos, SDL_Color color, float scale);
+void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vector2<int> pos, SDL_Color color,
+                float scale);

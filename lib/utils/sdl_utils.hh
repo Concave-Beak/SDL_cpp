@@ -7,6 +7,18 @@
 #include <string>
 
 #include "../../lib/stbi/stb_image.h"
+#include "math_utils.hh"
+
+#define BLACK \
+    SDL_Color { 0x00, 0x00, 0x00, 0xff }
+#define PINK \
+    SDL_Color { 0xec, 0x00, 0x8c, 0xff }
+#define RED \
+    SDL_Color { 0xff, 0x00, 0x00, 0xff }
+#define WHITE \
+    SDL_Color { 0xff, 0xff, 0xff, 0xff }
+#define GREEN \
+    SDL_Color { 0x00, 0xff, 0x00, 0xff }
 
 #define UNHEX(color)                 \
     ((color) >> (8 * 0)) & 0xFF,     \
@@ -68,10 +80,24 @@ inline void SetTextureColor(SDL_Texture *texture, SDL_Color color) {
     scc(SDL_SetTextureAlphaMod(texture, color.a));
 }
 
-#define RED \
-    SDL_Color { 0xff, 0x00, 0x00, 0xff }
-#define WHITE \
-    SDL_Color { 0xff, 0xff, 0xff, 0xff }
+// Draws that classic pink and black default texture in source games
+//
+// @param textureGrid The texture size to be drawn
+// @param resolution The amout of pixels each color should be drawn
+// @param renderer The renderer
+inline void DrawTextureNotFound(SDL_Rect textureGrid, const Vector2<int> resolution, SDL_Renderer *renderer) {
+    for (int y = 0; y < textureGrid.h / resolution.y; ++y) {
+        for (int x = 0; x < textureGrid.w / resolution.x; ++x) {
+            SDL_Rect rect{
+                .x = textureGrid.x + x * resolution.x,
+                .y = textureGrid.y + y * resolution.y,
+                .w = resolution.x,
+                .h = resolution.y,
+            };
+            SDL_Color color = ((x + y) % 2) ? PINK : BLACK;
 
-#define GREEN \
-    SDL_Color { 0x00, 0xff, 0x00, 0xff }
+            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
+}

@@ -18,7 +18,7 @@ enum ErrorCode {
 
     // Config items
     COULDNT_PARSE_CONFIG_FILE = 100,
-    INVALID_TOKEN = 101,
+    INVALID_CONFIG_TOKEN = 101,
 
     // SDL Error
     SDL_FUNCTION_ERROR = 200,
@@ -36,16 +36,16 @@ enum Severity {
 inline static std::unordered_map<ErrorCode, std::string> mapErrorMessage = {
     {FAILED_TO_OPEN_FILE, "ERROR: Failed to open file: "},
     {COULDNT_PARSE_CONFIG_FILE, "ERROR: Could not parse config file: "},
-    {INVALID_TOKEN, "ERROR: Invalid token: "},
+    {INVALID_CONFIG_TOKEN, "ERROR: Invalid token: "},
 };
 
 class Error {
    public:
     operator bool() const { return code != NON; }
+    bool IsNull() const { return code == NON; }  // TODO: Use this instead
 
    public:
-    Error(ErrorCode errorCode_, std::string errorInfo_,
-          Severity severity_);
+    Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_);
     Error();
     ~Error();
 
@@ -78,7 +78,9 @@ void Crash(Error);
 
 inline Error::~Error() {};
 inline Error::Error() {};
-inline Error::Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_) : code(errorCode_), info(errorInfo_), severity(severity_) {
+
+inline Error::Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_)
+    : code(errorCode_), info(errorInfo_), severity(severity_) {
     this->defaultMessage = "ERROR: Could not initialize error!";
 
     if (mapErrorMessage.find(errorCode_) != mapErrorMessage.end()) {
@@ -116,8 +118,7 @@ inline void Error::CreateLog(std::string path) {
                    << "Severity: " << this->GetSeverity() << "\n"
                    << "ErrorCode: " << this->GetErrorCode() << "\n"
                    << "ErrorMessage: " << mapErrorMessage[(*this).GetErrorCode()] << "\n"
-                   << "Info: " << this->GetInfo()
-                   << "}\n";
+                   << "Info: " << this->GetInfo() << "}\n";
 
         logFile << logMessage.str();
     }
@@ -143,8 +144,7 @@ inline void CreateLog(Error err, std::string path) {
                    << "Severity: " << err.GetSeverity() << "\n"
                    << "ErrorCode: " << err.GetErrorCode() << "\n"
                    << "ErrorMessage: " << mapErrorMessage[err.GetErrorCode()] << "\n"
-                   << "Info: " << err.GetInfo()
-                   << "}\n";
+                   << "Info: " << err.GetInfo() << "}\n";
 
         logFile << logMessage.str();
     }

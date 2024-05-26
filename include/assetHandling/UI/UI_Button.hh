@@ -4,6 +4,7 @@
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_stdinc.h>
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -12,37 +13,16 @@
 
 namespace UI {
 
-// BUTTON CLASS AND FUNCIONS NEED TO BE DONE
-// TODO
-
-/*
- * Button struct, used in UI. Once it's been created it gets pushed to a vector
- * to get drawn. Check DrawButton() function for more info
- */
 class Button {
    public:
-    /*
-     * ButtonFlags enum, used to define a type for a Button, can be used multiple times
-     * in a single button.
-     */
     enum ButtonFlags {
-        TEXTURE_BUTTON = 0x01,
-        TEXT_BUTTON = 0x02,
-        SWITCH_BUTTON = 0x04,
+        SWITCH_BUTTON = 0x01,
     };
 
-    Button(ButtonFlags type_, SDL_Rect grid_, std::string ID_);
-    Button(ButtonFlags type_, SDL_Rect grid_, std::string ID_, SDL_Color outCol, SDL_Color fillCol, SDL_Color hovCol, SDL_Color textCol);
+    Button(ButtonFlags type_, SDL_Rect grid_);
     ~Button();
 
-    void SetText(std::string& text_);
-    enum ColorField {
-        FILL_COLOR = 0,
-        OUTLINE_COLOR,
-        TEXT_COLOR,
-        HOVER_COLOR,
-    };
-    void SetColor(SDL_Color& color, const Uint8& colorField);
+    void SetOutlineColor(SDL_Color& color);
     enum TextureField {
         DEFAULT_TEXTURE = 0,
         HOVER_TEXTURE,
@@ -56,9 +36,9 @@ class Button {
     static void HandleButtonClicks(Vector2<int>);
 
     void ToggleIsShown();
+    inline void SetFunction(std::function<Error()> clickEvent_) { clickEvent = clickEvent_; };
 
    private:
-    static const Error DrawTextBtn(SDL_Renderer* renderer, const Button* btn);
     static const Error DrawTextureBtn(SDL_Renderer* renderer, const Button* btn);
 
    private:
@@ -66,25 +46,20 @@ class Button {
 
     SDL_Rect grid = {};
 
-    SDL_Color defaultColor = {};
-    SDL_Color clickedColor = {};
     SDL_Color outlineColor = {};
-    SDL_Color textColor = {};
-    SDL_Color hoverColor = {};
 
-    SDL_Texture* defaultTexture = NULL;
-    SDL_Texture* hoverTexture = NULL;
-    SDL_Texture* clickedTexture = NULL;
+    SDL_Texture* defaultTexture = nullptr;
+    SDL_Texture* hoverTexture = nullptr;
+    SDL_Texture* clickedTexture = nullptr;
 
     bool isShown = true;
 
     bool isClicked = false;
     bool isHovered = false;
 
-    std::string text;
-
-    std::string ID;
+    std::function<Error()> clickEvent;
 };
+
 inline static std::vector<Button*> buttonVector{};
 
 }  // namespace UI

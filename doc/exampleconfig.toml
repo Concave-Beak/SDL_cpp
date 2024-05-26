@@ -27,6 +27,7 @@ mouse_sensitivity = 5.0      # Mouse Sensitivity (0.1 - 10)
 invert_x_axis = false        # invert-x-axis 
 invert_y_axis = false        # invert-y-axis 
 controller_sensitivity = 7.5 # Controller Sensitivity (0.1 - 10)
+dodge_with_mouse = false
 
 [Keybindings] # NOT USED
 move_up = "W"

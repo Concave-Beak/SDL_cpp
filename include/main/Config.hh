@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../lib/utils/engine_utils.hh"
 #include "../../lib/utils/error_handling.hh"
 #include "../../lib/utils/math_utils.hh"
@@ -14,13 +15,11 @@ class Config {
 
     void WriteConfig();
     const Error ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution);
-    void DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer);
-
     bool ShowFPSState();
-    void ToggleConfigMenu(SDL_Window* window, SDL_Renderer* renderer);
+    void ToggleMenuVisibility();
 
    private:
-    bool isConfigMenuToggled = false;
+    bool isConfigMenuVisible = false;
 
     // Graphics
     bool fullscreen = false;

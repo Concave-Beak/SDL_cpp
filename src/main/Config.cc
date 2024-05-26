@@ -1,15 +1,16 @@
 #include "../../include/main/Config.hh"
 
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../lib/utils/engine_utils.hh"
-#include "../../lib/utils/sdl_utils.hh"
 
 #define TOML_EXCEPTIONS 0  // to remove try/catch statmement
 #include "../../lib/tomlplusplus/tomlplusplus.hh"
@@ -99,7 +100,8 @@ const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vect
 
         SDL_DisplayMode mode;
         if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
-            return Error(SDL_FUNCTION_ERROR, "Couldn't get DisplayMode, couldn't go fullscreen windowed\n", MEDIUM);
+            return Error(SDL_FUNCTION_ERROR, "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
+                         MEDIUM);
         } else {
             SDL_SetWindowSize(window, mode.w, mode.h);
             SDL_SetWindowPosition(window, 0, 0);
@@ -111,15 +113,4 @@ const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vect
     return Error{};
 }
 
-void Config::ToggleConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {
-    if (isConfigMenuToggled) {
-        DrawConfigMenu(window, renderer);
-        return;
-    }
-    isConfigMenuToggled = !isConfigMenuToggled;
-}
-
-void Config::DrawConfigMenu(SDL_Window* window, SDL_Renderer* renderer) {  // TODO
-    using namespace UI;
-    Button::DrawButtons(renderer);
-}
+void Config::ToggleMenuVisibility() { isConfigMenuVisible = !isConfigMenuVisible; }

@@ -19,4 +19,4 @@ make
 - Player and texture assets
 - Improve code performance
 - Create enemies and AI
-- Button class
+- Error handling

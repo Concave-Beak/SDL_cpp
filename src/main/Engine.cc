@@ -17,8 +17,7 @@
 
 //------------------------------------------------------------------------------
 
-void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b,
-                     uint8_t a) {
+void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
     SDL_RenderFillRect(renderer, NULL);
 }
@@ -26,26 +25,16 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b,
 //------------------------------------------------------------------------------
 
 void Engine::GameLoop() {
-    UI::Button btn(UI::Button::ButtonFlags::TEXTURE_BUTTON,
-                   SDL_Rect{.x = 100, .y = 100, .w = 64, .h = 64},
-                   "myBtn");
-    btn.SetTexture(renderer, UI::Button::DEFAULT_TEXTURE, "./assets/menu/unchecked-button.png");  // placeholder
-    btn.SetTexture(renderer, UI::Button::CLICKED_TEXTURE, "./assets/menu/checked-button.png");
-    btn.SetFlags(UI::Button::SWITCH_BUTTON | UI::Button::TEXTURE_BUTTON);
-
-    UI::Button btn1(UI::Button::ButtonFlags::TEXTURE_BUTTON,
-                    SDL_Rect{.x = 400, .y = 100, .w = 64, .h = 64},
-                    "myBtn");
-    btn1.SetTexture(renderer, UI::Button::DEFAULT_TEXTURE, "./assets/menu/unchecked-button.png");  // placeholder
-    btn1.SetTexture(renderer, UI::Button::CLICKED_TEXTURE, "./assets/menu/checked-button.png");
-    btn1.SetFlags(UI::Button::SWITCH_BUTTON | UI::Button::TEXTURE_BUTTON);
-
     float beginTick = 0;
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
-    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                                 // Placeholder
-    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);                          // Placeholder
-    new LevelItem(Vector2<int>{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);  // Placeholder
-    new LevelItem(Vector2<int>{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);                                    // Placeholder
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM,
+                  SDL_Color{0, 0xff, 0, 0xff}, WOOD);  // Placeholder
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION,
+                  SDL_Color{0, 0xff, 0, 0xff}, STONE);  // Placeholder
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100},
+                  FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);  // Placeholder
+    new LevelItem(Vector2<int>{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION,
+                  SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
     while (!quit) {
         beginTick = SDL_GetTicks();
@@ -59,7 +48,7 @@ void Engine::GameLoop() {
             Render();
             HandleEvents();
             HandleFPS(beginTick);
-            config->DrawConfigMenu(window, renderer);
+            UI::Button::DrawButtons(renderer);
             camera->FollowPlayer(playerInstance->GetPos(), delta, {SCREEN_WIDTH, SCREEN_HEIGHT},
                                  playerColisionboxInfo, timeMultiplier);
 
@@ -78,7 +67,9 @@ void Engine::ResetTimeMultiplier() {
     }
 }
 
-void Engine::CalculateDelta() { delta = (SDL_GetTicks() - lastLoopIteration) / 300.0f; }  // 300 is just to make delta easier to work with
+void Engine::CalculateDelta() {
+    delta = (SDL_GetTicks() - lastLoopIteration) / 300.0f;
+}  // 300 is just to make delta easier to work with
 
 void Engine::HandleFPS(float loopBegin) {
     float timeStepInMS = 1000.0f / fpsCap;
@@ -86,11 +77,12 @@ void Engine::HandleFPS(float loopBegin) {
     float timeDifference = timeStepInMS - (loopEnd - loopBegin);
 
     if (config->ShowFPSState() == true) {
-        std::stringstream fpsStr;                                                          // fps is in secods, timeDifference is in ms.
-        fpsStr << "FPS: " << std::setprecision(4) << fpsCap - (timeDifference / 1000.0f);  // that's why it's divided by 1000
+        std::stringstream fpsStr;  // fps is in secods, timeDifference is in ms.
+        fpsStr << "FPS: " << std::setprecision(4)
+               << fpsCap - (timeDifference / 1000.0f);  // that's why it's divided by 1000
 
-        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(),
-                        fpsStr.str().size(), Vector2<float>{0, 0}, GREEN, 3);
+        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vector2<int>{0, 0},
+                        GREEN, 3);
     }
 
     if (timeDifference >= 0) {
@@ -102,14 +94,17 @@ void Engine::HandleFPS(float loopBegin) {
 void Engine::ShowDebugInfo() {
     std::stringstream levelItemStr;
     levelItemStr << "LI: " << Level::colisions.size() + Level::textures.size()
-                 << "C/T: " << Level::colisions.size() << "/"
-                 << Level::textures.size();
-    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vector2<float>{float(SCREEN_WIDTH - GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, WHITE, 3);
+                 << "C/T: " << Level::colisions.size() << "/" << Level::textures.size();
+    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(),
+                    Vector2<int>{SCREEN_WIDTH - GetTextRectangleWidth(levelItemStr.str().size()) * 2, 0},
+                    WHITE, 3);
 
     std::stringstream playerInfo;
-    playerInfo << "XY: " << std::setprecision(4) << playerInstance->GetPos().x << " "
-               << std::setprecision(4) << playerInstance->GetPos().y;
-    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(), Vector2<float>{float(SCREEN_WIDTH - GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, WHITE, 3);
+    playerInfo << "XY: " << std::setprecision(4) << playerInstance->GetPos().x << " " << std::setprecision(4)
+               << playerInstance->GetPos().y;
+    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(),
+                    Vector2<int>{SCREEN_WIDTH - GetTextRectangleWidth(playerInfo.str().size()) * 2, 100},
+                    WHITE, 3);
 }
 
 int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
@@ -136,6 +131,9 @@ void Engine::HandleEvents() {
 }
 
 void Engine::HandleKeyboard(SDL_KeyboardEvent kbEvent) {
+    if (kbEvent.keysym.sym == SDLK_o) {
+        config->ToggleMenuVisibility();
+    }
 }
 
 void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
@@ -188,9 +186,6 @@ void Engine::HandleKeyboardState() {
             playerInstance->isPreparingToDash = false;
             playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
         }
-    }
-    if (state[SDL_SCANCODE_O]) {
-        config->ApplyConfig(window, renderer, Vector2<int *>{&SCREEN_WIDTH, &SCREEN_HEIGHT});
     }
     if (state[SDL_SCANCODE_LEFT]) {
         camera->Move(LEFT);
@@ -246,7 +241,7 @@ void Engine::Render() {
         playerInstance->hitbox.x,
         playerInstance->hitbox.y,
     };
-    scc(SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0));
+    scc(SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255));
     scc(SDL_RenderFillRect(renderer, &playerModel));
 }
 
@@ -256,10 +251,7 @@ const Error Engine::Init() {
     }
     std::cout << "INFO: SDL_Init initialized succesfully\n";
 
-    window = SDL_CreateWindow("SoulBound",
-                              0, 0,
-                              SCREEN_WIDTH, SCREEN_HEIGHT,
-                              SDL_WINDOW_BORDERLESS);
+    window = SDL_CreateWindow("SoulBound", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_BORDERLESS);
     if (window == NULL) {
         Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }
@@ -269,6 +261,7 @@ const Error Engine::Init() {
     if (renderer == NULL) {
         Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     std::cout << "INFO: Renderer initialized succesfully\n";
 
     debugFont = FontLoadFromFile(renderer, "./assets/fonts/charmap-oldschool_white.png");
@@ -294,6 +287,4 @@ void Engine::Run() {
 Engine *Engine::instance = new Engine;
 Engine *Engine::GetEngineInstance() { return instance; }
 
-void Engine::UpdateScreenInfo() {
-    SDL_GetRendererOutputSize(renderer, &SCREEN_WIDTH, &SCREEN_HEIGHT);
-}
+void Engine::UpdateScreenInfo() { SDL_GetRendererOutputSize(renderer, &SCREEN_WIDTH, &SCREEN_HEIGHT); }
