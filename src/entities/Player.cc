@@ -6,7 +6,6 @@
 
 #include <cmath>
 
-#include "../../include/entities/Camera.hh"
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/engine_utils.hh"
 #include "../../lib/utils/math_utils.hh"
@@ -27,7 +26,7 @@ void Player::Handle(const float& delta, const float& timeMultiplier, const bool&
     HandleColisions(delta, timeMultiplier, isPaused);
 }
 
-void Player::HandleVelocity(const float& delta, const float& timeMultiplier, const bool& isPaused) {
+void Player::HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
     if (isPaused) return;
     Uint32 timeNow = SDL_GetTicks();
 
@@ -48,17 +47,17 @@ void Player::HandleVelocity(const float& delta, const float& timeMultiplier, con
     }
 
     if (colidedDown == false) {
-        velocity.y += delta * GRAVITY * timeMultiplier;
-        pos.y += velocity.y * delta * timeMultiplier;
+        velocity.y += timeDelta * GRAVITY * timeMultiplier;
+        pos.y += velocity.y * timeDelta * timeMultiplier;
     }
 
     if (!colidedDown) attrition = 0.8;  // resets attrition
 
-    velocity.x -= delta * attrition * velocity.x * timeMultiplier;
+    velocity.x -= timeDelta * attrition * velocity.x * timeMultiplier;
     pos.x += velocity.x * timeMultiplier;
 }
 
-void Player::HandleColisions(const float& delta, const float& timeMultiplier, const bool& isPaused) {
+void Player::HandleColisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
     if (isPaused) return;
     (void)timeMultiplier;  // just so the compilers doesnt bitch about it
     colidedUp = false;
@@ -68,12 +67,18 @@ void Player::HandleColisions(const float& delta, const float& timeMultiplier, co
 
     isAbovePlatform = false;
 
-    float headOfPlayer = pos.y, leftOfPlayer = pos.x, rightOfPlayer = pos.x + hitbox.x,
+    float headOfPlayer = pos.y,
+          leftOfPlayer = pos.x,
+          rightOfPlayer = pos.x + hitbox.x,
           feetOfPLayer = pos.y + hitbox.y;
 
-    bool isHorizontallyOverlaped, hitFeet, hitHead, isVerticallyOverlaped, hitRight, hitLeft;
+    bool isHorizontallyOverlaped, hitFeet, hitHead,
+        isVerticallyOverlaped, hitRight, hitLeft;
 
-    float colItemTop, colItemLeft, colItemRight, colItemBottom;
+    float colItemTop,
+        colItemLeft,
+        colItemRight,
+        colItemBottom;
 
     for (LevelItem colisionItem : Level::colisions) {
         {
@@ -84,15 +89,18 @@ void Player::HandleColisions(const float& delta, const float& timeMultiplier, co
         }
 
         {
-            isHorizontallyOverlaped = (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) || (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
+            isHorizontallyOverlaped = (rightOfPlayer > colItemLeft &&
+                                       rightOfPlayer < colItemRight) ||
+                                      (leftOfPlayer > colItemLeft &&
+                                       leftOfPlayer < colItemRight);
 
-            hitFeet = feetOfPLayer + delta * velocity.y * timeMultiplier >= colItemTop &&  // 0.8 is the maximum that i've
-                      feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.8 &&    // found not to break colision,
-                      isHorizontallyOverlaped;                                             // this makes it so the player only
-                                                                                           // goes up if above 20% o the
-                                                                                           // colItem's height
+            hitFeet = feetOfPLayer + timeDelta * velocity.y * timeMultiplier >= colItemTop &&  // 0.8 is the maximum that i've
+                      feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.8 &&        // found not to break colision,
+                      isHorizontallyOverlaped;                                                 // this makes it so the player only
+                                                                                               // goes up if above 20% o the
+                                                                                               // colItem's height
 
-            hitHead = headOfPlayer + delta * velocity.y * timeMultiplier <= colItemBottom &&
+            hitHead = headOfPlayer + timeDelta * velocity.y * timeMultiplier <= colItemBottom &&
                       headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
                       isHorizontallyOverlaped;
         }
@@ -119,11 +127,11 @@ void Player::HandleColisions(const float& delta, const float& timeMultiplier, co
                 isVerticallyOverlaped = ((headOfPlayer > colItemTop && headOfPlayer < colItemBottom) ||
                                          (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
 
-                hitRight = rightOfPlayer - velocity.x * delta * attrition * timeMultiplier >= colItemLeft &&
+                hitRight = rightOfPlayer - velocity.x * timeDelta * attrition * timeMultiplier >= colItemLeft &&
                            rightOfPlayer <= colItemRight &&
                            isVerticallyOverlaped;
 
-                hitLeft = leftOfPlayer - velocity.x * delta * attrition * timeMultiplier <= colItemRight &&
+                hitLeft = leftOfPlayer - velocity.x * timeDelta * attrition * timeMultiplier <= colItemRight &&
                           leftOfPlayer >= colItemLeft &&
                           isVerticallyOverlaped;
             }
@@ -188,71 +196,6 @@ void Player::Move(const Directions& direction, const bool& isPaused) {
             break;
         };
     }
-}
-
-void Player::PrepareToDash(const Directions& direction, const float& startTick, SDL_Renderer* renderer, float* timeMultiplier) {
-    angleDash = fmod(angleDash, 360);
-
-    // slowly decrease timeMultiplier
-    if (*timeMultiplier > 0.1) {
-        *timeMultiplier += (0.1 - *timeMultiplier) / 25;
-    }
-    switch (direction) {
-        // each angle position represents an angle
-        case NONE: {
-            break;
-        }
-        case LEFT: {
-            angleDash += (180 - angleDash) / 20.0;
-            break;
-        }
-        case RIGHT: {
-            float addDash = (0 - angleDash) / 20.0f;
-            if (angleDash > 180) {
-                addDash = (360 - angleDash) / 20.0f;
-            }
-            angleDash += addDash;
-            break;
-        }
-        case UP: {  // SDL flips "up" and "down"
-            float addDash = (270 - angleDash) / 20.0f;
-            if (angleDash > -90 && angleDash < 90) {
-                addDash = (-90 - angleDash) / 20.0f;
-            }
-            angleDash += addDash;
-            break;
-        }
-        case DOWN: {
-            float addDash = (90 - angleDash) / 20.0f;
-            if (angleDash > 270) {
-                addDash = (450 - angleDash) / 20.0f;
-            }
-            angleDash += addDash;
-            break;
-        }
-    }
-    float angleDashInRadians = DegreesToRadians(angleDash);
-
-    int lineDistance = 100;
-    Vector2<int> pointStart = {(int)pos.x + hitbox.x / 2, (int)pos.y + hitbox.y / 2};
-    Vector2<int> pointEnd = {int(pointStart.x + lineDistance * cos(angleDashInRadians)),
-                             int(pointStart.y + lineDistance * sin(angleDashInRadians))};
-
-    Vector2<float> cameraPos = Camera::pos;
-    SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
-    SDL_RenderDrawLine(renderer, pointStart.x - cameraPos.x, pointStart.y - cameraPos.y,
-                       pointEnd.x - cameraPos.x, pointEnd.y - cameraPos.y);
-    (void)startTick;
-}
-
-void Player::Dash() {
-    Vector2<float> dashStrenght = {300.0f, 300.0f};
-    float dashAngleInRadians = DegreesToRadians(angleDash);
-    Vector2<float> dashVel = {dashStrenght.x * cos(dashAngleInRadians),
-                              dashStrenght.y * sin(dashAngleInRadians)};
-    velocity.x = dashVel.x;
-    velocity.y = dashVel.y;
-    isPreparingToDash = false;
 }
 
 //------------------------------------------------------------------------------

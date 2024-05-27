@@ -26,6 +26,7 @@ void Engine::GameLoop() {
     new LevelItem(Vector2<int>{0, screenSpecs.y - 5}, {screenSpecs.x, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);            // Placeholder
 
     while (!quit) {
+        UpdateScreenSpecs();  // this should only be used after changing the resolution through config
         beginTick = SDL_GetTicks();
         playerInstance->Handle(timeDelta, timeMultiplier, isPaused);
         lastLoopIteration = SDL_GetTicks();
@@ -39,7 +40,7 @@ void Engine::GameLoop() {
 void Engine::ResetTimeMultiplier() {
     if (isPaused) return;
 
-    if (timeMultiplier < 1 && !playerInstance->isPreparingToDash) {
+    if (timeMultiplier < 1) {
         timeMultiplier += (1 - timeMultiplier) / 50;
     }
 }
@@ -119,50 +120,16 @@ void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
 
 void Engine::HandleKeyboardState() {
     if (keyboardState[SDL_SCANCODE_A]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(LEFT, 0, renderer, &timeMultiplier);
-        } else {
-            playerInstance->Move(Directions::LEFT, isPaused);
-        }
+        playerInstance->Move(Directions::LEFT, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_D]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(RIGHT, 0, renderer, &timeMultiplier);
-        } else {
-            playerInstance->Move(Directions::RIGHT, isPaused);
-        }
+        playerInstance->Move(Directions::RIGHT, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_W]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(UP, 0, renderer, &timeMultiplier);
-        } else {
-            playerInstance->Move(Directions::UP, isPaused);
-        }
+        playerInstance->Move(Directions::UP, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_S]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(DOWN, 0, renderer, &timeMultiplier);
-        } else {
-            playerInstance->Move(Directions::DOWN, isPaused);
-        }
-    }
-    if (keyboardState[SDL_SCANCODE_E] && SDL_GetTicks() >= playerInstance->whenNextDashAvailable) {
-        if (!playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(NONE, 0, renderer, &timeMultiplier);
-            playerInstance->DashEnd = SDL_GetTicks() + 2000;
-            playerInstance->isPreparingToDash = true;
-        }
-        if (SDL_GetTicks() >= playerInstance->DashEnd) {
-            playerInstance->Dash();
-            playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
-        }
-    }
-    if (!keyboardState[SDL_SCANCODE_E]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->Dash();
-            playerInstance->isPreparingToDash = false;
-            playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
-        }
+        playerInstance->Move(Directions::DOWN, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_LEFT]) {
         cameraInstance->Move(LEFT, isPaused);

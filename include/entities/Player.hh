@@ -16,19 +16,7 @@ class Player {
 
     bool isAbovePlatform = false;
 
-    // Dash
-    bool isPreparingToDash = false;
-    bool isDashing = false;
-    float DashEnd = 0;
-    float whenNextDashAvailable = 0;
-
-    float preDashAnimationEnd = 0;
-    float preDashDurationInMs = 0;
-
-    float angleDash = 0;  // in degrees
-    //--
-
-    Vector2<int> hitbox = {75, 75};
+    Vector2<int> hitbox = {64, 64};
 
    public:
     static Player* GetPlayerInstace();
@@ -40,8 +28,6 @@ class Player {
     void Draw(const Vector2<int>& cameraPos, SDL_Renderer* renderer);
 
     void Move(const Directions&, const bool& isPaused);
-    void PrepareToDash(const Directions& direction, const float& startTick, SDL_Renderer* renderer, float* timeMultiplier);
-    void Dash();
 
     Vector2<int> GetHitboxInfo();
 
@@ -50,7 +36,7 @@ class Player {
 
     Vector2<float> velocity = {0, 0};
     Vector2<float> pos = {0, 0};
-    const Vector2<float> accelSpeed = {1, 250};  // may change during gameplay, I'll just
+    const Vector2<float> accelSpeed = {1, 200};  // may change during gameplay, I'll just
                                                  // use it as a const it for now
 
     float attrition = 0;
@@ -59,8 +45,8 @@ class Player {
     // const SDL_Texture* DuckingTexture;
     Directions facing = RIGHT;
 
-    void HandleVelocity(const float& delta, const float& timeMultiplier, const bool& isPaused);
-    void HandleColisions(const float& delta, const float& timeMultiplier, const bool& isPaused);
+    void HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
+    void HandleColisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
 };
 
 //------------------------------------------------------------------------------
