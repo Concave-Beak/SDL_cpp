@@ -10,6 +10,7 @@
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/engine_utils.hh"
 #include "../../lib/utils/math_utils.hh"
+#include "../../lib/utils/sdl_utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -20,6 +21,11 @@ Vector2<float> Player::GetVelocity() { return velocity; }
 Player* Player::GetPlayerInstace() { return Player::playerInstance; }
 
 Vector2<int> Player::GetHitboxInfo() { return hitbox; }
+
+void Player::Handle(const float& delta, const float& timeMultiplier, const bool& isPaused) {
+    HandleVelocity(delta, timeMultiplier, isPaused);
+    HandleColisions(delta, timeMultiplier, isPaused);
+}
 
 void Player::HandleVelocity(const float& delta, const float& timeMultiplier, const bool& isPaused) {
     if (isPaused) return;
@@ -78,19 +84,17 @@ void Player::HandleColisions(const float& delta, const float& timeMultiplier, co
         }
 
         {
-            isHorizontallyOverlaped = (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) ||
-                                      (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
+            isHorizontallyOverlaped = (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) || (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
 
-            hitFeet = feetOfPLayer + delta * velocity.y * timeMultiplier >=
-                          colItemTop &&  // 0.8 is the maximum that i've
-                      feetOfPLayer <=
-                          colItemBottom - colisionItem.wireframe.h * 0.8 &&  // found not to break colision,
-                      isHorizontallyOverlaped;  // this makes it so the player only
-                                                // goes up if above 20% o the
-                                                // colItem's height
+            hitFeet = feetOfPLayer + delta * velocity.y * timeMultiplier >= colItemTop &&  // 0.8 is the maximum that i've
+                      feetOfPLayer <= colItemBottom - colisionItem.wireframe.h * 0.8 &&    // found not to break colision,
+                      isHorizontallyOverlaped;                                             // this makes it so the player only
+                                                                                           // goes up if above 20% o the
+                                                                                           // colItem's height
 
             hitHead = headOfPlayer + delta * velocity.y * timeMultiplier <= colItemBottom &&
-                      headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 && isHorizontallyOverlaped;
+                      headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
+                      isHorizontallyOverlaped;
         }
 
         if (hitFeet) {
@@ -116,10 +120,12 @@ void Player::HandleColisions(const float& delta, const float& timeMultiplier, co
                                          (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
 
                 hitRight = rightOfPlayer - velocity.x * delta * attrition * timeMultiplier >= colItemLeft &&
-                           rightOfPlayer <= colItemRight && isVerticallyOverlaped;
+                           rightOfPlayer <= colItemRight &&
+                           isVerticallyOverlaped;
 
                 hitLeft = leftOfPlayer - velocity.x * delta * attrition * timeMultiplier <= colItemRight &&
-                          leftOfPlayer >= colItemLeft && isVerticallyOverlaped;
+                          leftOfPlayer >= colItemLeft &&
+                          isVerticallyOverlaped;
             }
 
             if (hitRight) {
@@ -136,9 +142,20 @@ void Player::HandleColisions(const float& delta, const float& timeMultiplier, co
     }
 }
 
-void Player::Move(const MoveOptions moveOpt, const bool& isPaused) {
+void Player::Draw(const Vector2<int>& cameraPos, SDL_Renderer* renderer) {
+    SDL_Rect playerModel = {
+        (int)pos.x - cameraPos.x,
+        (int)pos.y - cameraPos.y,
+        playerInstance->hitbox.x,
+        playerInstance->hitbox.y,
+    };
+    scc(SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255));
+    scc(SDL_RenderFillRect(renderer, &playerModel));
+}
+
+void Player::Move(const Directions& direction, const bool& isPaused) {
     if (isPaused) return;
-    switch (moveOpt) {
+    switch (direction) {
         case LEFT: {
             if (!colidedLeft) {
                 velocity.x -= accelSpeed.x;
@@ -173,15 +190,14 @@ void Player::Move(const MoveOptions moveOpt, const bool& isPaused) {
     }
 }
 
-void Player::PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* renderer,
-                           float* timeMultiplier) {
-    float modOfAngleDash = fmod(angleDash, 360);
-    angleDash = modOfAngleDash;
-    // decrease timeMultiplier
+void Player::PrepareToDash(const Directions& direction, const float& startTick, SDL_Renderer* renderer, float* timeMultiplier) {
+    angleDash = fmod(angleDash, 360);
+
+    // slowly decrease timeMultiplier
     if (*timeMultiplier > 0.1) {
         *timeMultiplier += (0.1 - *timeMultiplier) / 25;
     }
-    switch (moveOpt) {
+    switch (direction) {
         // each angle position represents an angle
         case NONE: {
             break;

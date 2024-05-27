@@ -49,6 +49,7 @@ class Level {
     ~Level() {};
 
     void GenerateLevel(const Uint8 &levelID);
+    static void Draw(const Vector2<int> &cameraPos, SDL_Renderer *renderer);
 
    private:
 };

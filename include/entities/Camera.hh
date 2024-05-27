@@ -13,7 +13,7 @@ class Camera {
 
     void FollowPlayer(Vector2<float> posPlayer, float delta, Vector2<int> cameraInfo,
                       Vector2<int> hitboxPlayer, float timeMultiplier, const bool& isPaused);
-    void Move(MoveOptions, const bool& isPaused);
+    void Move(Directions, const bool& isPaused);
 
     std::array<Vector2<float>, 2> GetPlayerMinMaxOffset();
     void SetPlayerMinMaxOffsetMultiply(const float multiply);

@@ -33,13 +33,14 @@ class Player {
    public:
     static Player* GetPlayerInstace();
 
-    Vector2<float> GetPos();  // not used
-    Vector2<float> GetVelocity();
-    void HandleVelocity(const float& delta, const float& timeMultiplier, const bool& isPaused);
-    void HandleColisions(const float& delta, const float& timeMultiplier, const bool& isPaused);
+    void Handle(const float& delta, const float& timeMultiplier, const bool& isPaused);
 
-    void Move(const MoveOptions, const bool& isPaused);
-    void PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* renderer, float* timeMultiplier);
+    Vector2<float> GetPos();
+    Vector2<float> GetVelocity();
+    void Draw(const Vector2<int>& cameraPos, SDL_Renderer* renderer);
+
+    void Move(const Directions&, const bool& isPaused);
+    void PrepareToDash(const Directions& direction, const float& startTick, SDL_Renderer* renderer, float* timeMultiplier);
     void Dash();
 
     Vector2<int> GetHitboxInfo();
@@ -56,7 +57,10 @@ class Player {
 
     // const SDL_Texture* StandingTexture;  // not used
     // const SDL_Texture* DuckingTexture;
-    MoveOptions facing = RIGHT;
+    Directions facing = RIGHT;
+
+    void HandleVelocity(const float& delta, const float& timeMultiplier, const bool& isPaused);
+    void HandleColisions(const float& delta, const float& timeMultiplier, const bool& isPaused);
 };
 
 //------------------------------------------------------------------------------

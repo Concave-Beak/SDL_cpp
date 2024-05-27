@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../../lib/utils/math_utils.hh"
+#include "../../lib/utils/sdl_utils.hh"
 
 std::vector<LevelItem> Level::colisions;
 std::vector<LevelItem> Level::textures = {};
@@ -72,6 +73,20 @@ LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType
 //------------------------------------------------------------------------------
 
 void Level::GenerateLevel(const Uint8 &levelID) {
+}
+
+void Level::Draw(const Vector2<int> &cameraPos, SDL_Renderer *renderer) {
+    for (LevelItem levelItem : Level::colisions) {
+        SDL_Color color = levelItem.color;
+        SDL_Rect levelItemWireframe = {
+            levelItem.wireframe.x - (int)cameraPos.x,
+            levelItem.wireframe.y - (int)cameraPos.y,
+            levelItem.wireframe.w,
+            levelItem.wireframe.h,
+        };
+        scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a));
+        scc(SDL_RenderFillRect(renderer, &levelItemWireframe));
+    }
 }
 
 //------------------------------------------------------------------------------

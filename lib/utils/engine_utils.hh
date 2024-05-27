@@ -8,7 +8,7 @@
 #define MAX_Y_SPEED 400
 #define MIN_Y_SPEED -400
 
-enum MoveOptions {
+enum Directions {
     NONE = 0,
     LEFT = 1,
     RIGHT,

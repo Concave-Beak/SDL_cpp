@@ -100,6 +100,7 @@ Error Button::Handle(SDL_Event event, SDL_Renderer* renderer) {
 
     return err;
 }
+
 Error Button::DrawButtons(SDL_Renderer* renderer) {
     for (const auto& btn : buttonVector) {
         if (!btn->isShown || btn->isHovered) continue;

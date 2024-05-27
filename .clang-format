@@ -1,4 +1,4 @@
 BasedOnStyle: Google
 SortIncludes: true # Can break stb, but I will let true
 IndentWidth: 4
-ColumnLimit: 0 
+ColumnLimit: 0  # this creates some really ugly indentation

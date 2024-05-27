@@ -12,35 +12,31 @@
 
 class Engine {
    public:
-    // SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
 
     const Error Init();
     void Run();
 
-    // float GetTimeMultiplier(); // not used
-
    private:
     static Engine* instance;
 
     Player* playerInstance = Player::GetPlayerInstace();
-    Config* config = Config::GetConfig();
-    Camera* camera = Camera::GetCameraInstance();
+    Config* configInstance = Config::GetConfig();
+    Camera* cameraInstance = Camera::GetCameraInstance();
 
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;
     SDL_Event event = SDL_Event{};
 
-    const Uint8* state = SDL_GetKeyboardState(NULL);
+    const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
 
-    const Uint16 fpsCap = 60;
+    const Uint16 fpsMAX = 60;
     const Uint8 minFPS = 10;
-    float delta = 0;
+    float timeDelta = 0;
     float timeMultiplier = 1;
     Uint32 lastLoopIteration = 0;
 
-    int SCREEN_WIDTH = 0;
-    int SCREEN_HEIGHT = 0;
+    Vector2<int> screenSpecs = {0, 0};
 
     bool quit = false;
     bool isPaused = false;
@@ -50,24 +46,34 @@ class Engine {
    private:
     void GameLoop();
 
-    void CalculateDelta();
+    void UpdateTimeDelta();
 
+    // If time multiplier gets changed, it will slowly make it go back to `1` for
+    // a smooth increase in time
     void ResetTimeMultiplier();
 
+    // Handles fps
+    // @param float startTick | The first tick of the loop's iteration
     void HandleFPS(float startTick);
 
+    // Event Handling functions
     void HandleEvents();
     void HandleKeyboardState();
     void HandleMouseState();
     void HandleKeyboard(SDL_KeyboardEvent);
     void HandleMouse(SDL_MouseButtonEvent);
 
+    // Updates screen Specifics to match real window size
     void UpdateScreenSpecs();
 
+    // Shows debug info to the user // TODO:: needs to be improved
     void ShowDebugInfo();
+
+    // Used for fonts // TODO:: NEEDS TO BE REDONE
     int GetTextRectangleWidth(size_t strSize);
 
-    void Render();
+    // Everything related to graphics in the main game loop
+    void Render(float beginTick);
 };
 
 //------------------------------------------------------------------------------
