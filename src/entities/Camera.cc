@@ -1,14 +1,15 @@
-#include "Camera.hh"
+#include "../../include/entities/Camera.hh"
 
 //------------------------------------------------------------------------------
 
-Camera *Camera::instance = new Camera;
+Camera* Camera::instance = new Camera;
 
-Camera *Camera::GetCameraInstance() { return instance; }
+Camera* Camera::GetCameraInstance() { return instance; }
 
-Vec2f Camera::pos = {0, 0};
+Vector2<float> Camera::pos = {0, 0};
 
-void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i hitboxPlayer, float timeMultiplier) {
+void Camera::FollowPlayer(Vector2<float> posPlayer, float delta, Vector2<int> cameraInfo,
+                          Vector2<int> hitboxPlayer, float timeMultiplier, const bool& isPaused) {
     playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0f + hitboxPlayer.x / 2.0f;
     playerOffset.y = posPlayer.y - pos.y - cameraInfo.y / 1.5f + hitboxPlayer.y / 1.5f;
 
@@ -24,10 +25,10 @@ void Camera::FollowPlayer(Vec2f posPlayer, float delta, Vec2i cameraInfo, Vec2i 
     isBeingMoved = false;
 }
 
-void Camera::Move(MoveOptions moveOpt) {
+void Camera::Move(Directions direction, const bool& isPaused) {
     cameraMovementSpeed = {maxPlayerOffset.x / 2, maxPlayerOffset.y / 8};  // Values to make it smoother
     isBeingMoved = true;
-    switch (moveOpt) {
+    switch (direction) {
         case NONE: {
             break;
         }
@@ -57,3 +58,5 @@ void Camera::Move(MoveOptions moveOpt) {
         }
     }
 }
+
+Vector2<float> Camera::GetCameraPos() { return pos; }

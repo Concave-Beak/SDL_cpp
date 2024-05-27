@@ -1,11 +1,10 @@
-#ifndef __MAP_HEADER__
-#define __MAP_HEADER__
+#pragma once
 
 #include <SDL2/SDL.h>
 
 #include <vector>
 
-#include "../../Include/Utils/Utils.hh"
+#include "../../lib/utils/math_utils.hh"
 
 //------------------------------------------------------------------------------
 
@@ -24,7 +23,7 @@ enum TextureID {
 };
 
 struct LevelItem {
-    Vec2i pos;
+    Vector2<int> pos;
     ColisionType colisionType;
     SDL_Color color;
     SDL_Rect wireframe;
@@ -33,7 +32,8 @@ struct LevelItem {
     SDL_Texture *texture;  // there should also be a footstep sound depending on the surface
     float attritionCoefficient;
 
-    LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID);
+    LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType, SDL_Color pcolor,
+              TextureID ptextID);
     LevelItem();
     ~LevelItem();
 };
@@ -44,8 +44,14 @@ class Level {
    public:
     static std::vector<LevelItem> colisions;
     static std::vector<LevelItem> textures;
+
+    Level() {};
+    ~Level() {};
+
+    void GenerateLevel(const Uint8 &levelID);
+    static void Draw(const Vector2<int> &cameraPos, SDL_Renderer *renderer);
+
+   private:
 };
 
 //------------------------------------------------------------------------------
-
-#endif

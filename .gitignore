@@ -1,2 +1,10 @@
-Bin/
-Build/
+bin/
+build/
+logs/
+
+Makefile
+cmake_install.cmake
+CMakeCache.txt
+CMakeFiles/
+
+doc/exampleconfig.toml

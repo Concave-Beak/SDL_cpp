@@ -1,11 +1,14 @@
-#include "./Level.hh"
+#include "../../include/main/Level.hh"
 
 #include <SDL2/SDL_render.h>
 
 #include <cstdio>
+#include <cstdlib>
+#include <ctime>
 #include <vector>
 
-#include "../../Include/Utils/Utils.hh"
+#include "../../lib/utils/math_utils.hh"
+#include "../../lib/utils/sdl_utils.hh"
 
 std::vector<LevelItem> Level::colisions;
 std::vector<LevelItem> Level::textures = {};
@@ -32,8 +35,8 @@ LevelItem::~LevelItem() {
     }
 };
 
-LevelItem::LevelItem(){};
-LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
+LevelItem::LevelItem() {};
+LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
     this->wireframe = {ppos.x, ppos.y, size.x, size.y};
     switch (ptextID) {
         case VOID: {  // this is where the textures should be applied
@@ -64,6 +67,25 @@ LevelItem::LevelItem(Vec2i ppos, Vec2i size, ColisionType pcolType, SDL_Color pc
                                             // want to iterate through every LevelItem
     } else {
         Level::textures.push_back(*this);
+    }
+}
+
+//------------------------------------------------------------------------------
+
+void Level::GenerateLevel(const Uint8 &levelID) {
+}
+
+void Level::Draw(const Vector2<int> &cameraPos, SDL_Renderer *renderer) {
+    for (LevelItem levelItem : Level::colisions) {
+        SDL_Color color = levelItem.color;
+        SDL_Rect levelItemWireframe = {
+            levelItem.wireframe.x - (int)cameraPos.x,
+            levelItem.wireframe.y - (int)cameraPos.y,
+            levelItem.wireframe.w,
+            levelItem.wireframe.h,
+        };
+        scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a));
+        scc(SDL_RenderFillRect(renderer, &levelItemWireframe));
     }
 }
 
