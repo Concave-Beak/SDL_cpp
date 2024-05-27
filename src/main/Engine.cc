@@ -2,13 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
 
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <iomanip>
 #include <sstream>
 
 #include "../../include/assetHandling/UI/UI_Button.hh"
@@ -27,20 +21,17 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
 void Engine::GameLoop() {
     float beginTick = 0;
     Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
-    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM,
-                  SDL_Color{0, 0xff, 0, 0xff}, WOOD);  // Placeholder
-    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION,
-                  SDL_Color{0, 0xff, 0, 0xff}, STONE);  // Placeholder
-    new LevelItem(Vector2<int>{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100},
-                  FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);  // Placeholder
-    new LevelItem(Vector2<int>{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION,
-                  SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                                 // Placeholder
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 2, SCREEN_HEIGHT - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);                          // Placeholder
+    new LevelItem(Vector2<int>{SCREEN_WIDTH / 4, SCREEN_HEIGHT - playerColisionboxInfo.y - 110}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);  // Placeholder
+    new LevelItem(Vector2<int>{0, SCREEN_HEIGHT - 5}, {SCREEN_WIDTH, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);                                    // Placeholder
 
     while (!quit) {
         beginTick = SDL_GetTicks();
-        playerInstance->HandleColisions(delta, timeMultiplier);
-        playerInstance->HandleVelocity(delta, timeMultiplier);
+        playerInstance->HandleColisions(delta, timeMultiplier, isPaused);
+        playerInstance->HandleVelocity(delta, timeMultiplier, isPaused);
         lastLoopIteration = SDL_GetTicks();
+
         {  // Rendering
             ClearBackground(renderer, 100, 100, 100, 255);
             ShowDebugInfo();
@@ -48,9 +39,9 @@ void Engine::GameLoop() {
             Render();
             HandleEvents();
             HandleFPS(beginTick);
-            UI::Button::DrawButtons(renderer);
+            UI::Button::Handle(event, renderer);
             camera->FollowPlayer(playerInstance->GetPos(), delta, {SCREEN_WIDTH, SCREEN_HEIGHT},
-                                 playerColisionboxInfo, timeMultiplier);
+                                 playerColisionboxInfo, timeMultiplier, isPaused);
 
             SDL_RenderPresent(renderer);
             scc(SDL_RenderClear(renderer));
@@ -62,14 +53,16 @@ void Engine::GameLoop() {
 }
 
 void Engine::ResetTimeMultiplier() {
+    if (isPaused) return;
+
     if (timeMultiplier < 1 && !playerInstance->isPreparingToDash) {
         timeMultiplier += (1 - timeMultiplier) / 50;
     }
 }
 
 void Engine::CalculateDelta() {
-    delta = (SDL_GetTicks() - lastLoopIteration) / 300.0f;
-}  // 300 is just to make delta easier to work with
+    delta = (SDL_GetTicks() - lastLoopIteration) / 300.0f;  // 300 is just to make delta easier to work with
+}
 
 void Engine::HandleFPS(float loopBegin) {
     float timeStepInMS = 1000.0f / fpsCap;
@@ -110,20 +103,19 @@ void Engine::ShowDebugInfo() {
 int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
 void Engine::HandleEvents() {
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-            case SDL_QUIT: {
-                quit = true;
-                break;
-            }
-            case SDL_KEYDOWN: {
-                HandleKeyboard(event.key);
-                break;
-            }
-            case SDL_MOUSEBUTTONDOWN: {
-                HandleMouse(event.button);
-                break;
-            }
+    SDL_PollEvent(&event);
+    switch (event.type) {
+        case SDL_QUIT: {
+            quit = true;
+            break;
+        }
+        case SDL_KEYDOWN: {
+            HandleKeyboard(event.key);
+            break;
+        }
+        case SDL_MOUSEBUTTONDOWN: {
+            HandleMouse(event.button);
+            break;
         }
     }
     HandleKeyboardState();
@@ -131,13 +123,14 @@ void Engine::HandleEvents() {
 }
 
 void Engine::HandleKeyboard(SDL_KeyboardEvent kbEvent) {
-    if (kbEvent.keysym.sym == SDLK_o) {
-        config->ToggleMenuVisibility();
+    // if (kbEvent.keysym.sym == SDLK_o) {
+    //     config->ToggleMenuVisibility();
+    // }
+    if (kbEvent.keysym.sym == SDLK_ESCAPE) {
     }
 }
 
 void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
-    UI::Button::HandleButtonClicks(Vector2<int>{.x = mbEvent.x, .y = mbEvent.y});
 }
 
 void Engine::HandleKeyboardState() {
@@ -145,28 +138,28 @@ void Engine::HandleKeyboardState() {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(LEFT, 0, renderer, &timeMultiplier);
         } else {
-            playerInstance->Move(MoveOptions::LEFT);
+            playerInstance->Move(MoveOptions::LEFT, isPaused);
         }
     }
     if (state[SDL_SCANCODE_D]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(RIGHT, 0, renderer, &timeMultiplier);
         } else {
-            playerInstance->Move(MoveOptions::RIGHT);
+            playerInstance->Move(MoveOptions::RIGHT, isPaused);
         }
     }
     if (state[SDL_SCANCODE_W]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(UP, 0, renderer, &timeMultiplier);
         } else {
-            playerInstance->Move(MoveOptions::UP);
+            playerInstance->Move(MoveOptions::UP, isPaused);
         }
     }
     if (state[SDL_SCANCODE_S]) {
         if (playerInstance->isPreparingToDash) {
             playerInstance->PrepareToDash(DOWN, 0, renderer, &timeMultiplier);
         } else {
-            playerInstance->Move(MoveOptions::DOWN);
+            playerInstance->Move(MoveOptions::DOWN, isPaused);
         }
     }
     if (state[SDL_SCANCODE_E] && SDL_GetTicks() >= playerInstance->whenNextDashAvailable) {
@@ -188,16 +181,16 @@ void Engine::HandleKeyboardState() {
         }
     }
     if (state[SDL_SCANCODE_LEFT]) {
-        camera->Move(LEFT);
+        camera->Move(LEFT, isPaused);
     }
     if (state[SDL_SCANCODE_RIGHT]) {
-        camera->Move(RIGHT);
+        camera->Move(RIGHT, isPaused);
     }
     if (state[SDL_SCANCODE_UP]) {
-        camera->Move(UP);
+        camera->Move(UP, isPaused);
     }
     if (state[SDL_SCANCODE_DOWN]) {
-        camera->Move(DOWN);
+        camera->Move(DOWN, isPaused);
     }
 
     if (state[SDL_SCANCODE_R]) {
@@ -287,4 +280,4 @@ void Engine::Run() {
 Engine *Engine::instance = new Engine;
 Engine *Engine::GetEngineInstance() { return instance; }
 
-void Engine::UpdateScreenInfo() { SDL_GetRendererOutputSize(renderer, &SCREEN_WIDTH, &SCREEN_HEIGHT); }
+void Engine::UpdateScreenSpecs() { SDL_GetRendererOutputSize(renderer, &SCREEN_WIDTH, &SCREEN_HEIGHT); }

@@ -15,8 +15,6 @@ class Engine {
     // SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
 
-    void UpdateScreenInfo();
-
     const Error Init();
     void Run();
 
@@ -45,7 +43,7 @@ class Engine {
     int SCREEN_HEIGHT = 0;
 
     bool quit = false;
-    bool paused = false;
+    bool isPaused = false;
 
     Font debugFont;
 
@@ -63,6 +61,8 @@ class Engine {
     void HandleMouseState();
     void HandleKeyboard(SDL_KeyboardEvent);
     void HandleMouse(SDL_MouseButtonEvent);
+
+    void UpdateScreenSpecs();
 
     void ShowDebugInfo();
     int GetTextRectangleWidth(size_t strSize);

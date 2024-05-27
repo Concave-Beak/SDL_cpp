@@ -35,12 +35,11 @@ class Player {
 
     Vector2<float> GetPos();  // not used
     Vector2<float> GetVelocity();
-    void HandleVelocity(const float& delta, const float& timeMultiplier);
-    void HandleColisions(const float& delta, const float& timeMultiplier);
+    void HandleVelocity(const float& delta, const float& timeMultiplier, const bool& isPaused);
+    void HandleColisions(const float& delta, const float& timeMultiplier, const bool& isPaused);
 
-    void Move(const MoveOptions);
-    void PrepareToDash(MoveOptions moveOpt, float startTick,
-                       SDL_Renderer* renderer, float* timeMultiplier);
+    void Move(const MoveOptions, const bool& isPaused);
+    void PrepareToDash(MoveOptions moveOpt, float startTick, SDL_Renderer* renderer, float* timeMultiplier);
     void Dash();
 
     Vector2<int> GetHitboxInfo();

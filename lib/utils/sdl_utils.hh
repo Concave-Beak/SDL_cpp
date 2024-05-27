@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
 
@@ -20,10 +21,8 @@
 #define GREEN \
     SDL_Color { 0x00, 0xff, 0x00, 0xff }
 
-#define UNHEX(color)                 \
-    ((color) >> (8 * 0)) & 0xFF,     \
-        ((color) >> (8 * 1)) & 0xFF, \
-        ((color) >> (8 * 2)) & 0xFF, \
+#define UNHEX(color)                                                                       \
+    ((color) >> (8 * 0)) & 0xFF, ((color) >> (8 * 1)) & 0xFF, ((color) >> (8 * 2)) & 0xFF, \
         ((color) >> (8 * 3)) & 0xFF
 
 inline void scc(int code) {
@@ -45,8 +44,7 @@ inline SDL_Surface *SurfaceFromFile(std::string file_path) {
     int width, height, n;
     unsigned char *pixels = stbi_load(file_path.c_str(), &width, &height, &n, STBI_rgb_alpha);
     if (pixels == NULL) {
-        fprintf(stderr, "ERROR: could not load file %s: %s\n",
-                file_path.c_str(), stbi_failure_reason());
+        fprintf(stderr, "ERROR: could not load file %s: %s\n", file_path.c_str(), stbi_failure_reason());
         exit(1);  // TODO: create a default surface for unloaded textures
     }
 
@@ -65,17 +63,12 @@ inline SDL_Surface *SurfaceFromFile(std::string file_path) {
     const int depth = 32;
     const int pitch = 4 * width;
 
-    return (SDL_Surface *)scp(SDL_CreateRGBSurfaceFrom(
-        (void *)pixels, width, height, depth, pitch,
-        rmask, gmask, bmask, amask));
+    return (SDL_Surface *)scp(
+        SDL_CreateRGBSurfaceFrom((void *)pixels, width, height, depth, pitch, rmask, gmask, bmask, amask));
 }
 
 inline void SetTextureColor(SDL_Texture *texture, SDL_Color color) {
-    scc(SDL_SetTextureColorMod(
-        texture,
-        color.r,
-        color.g,
-        color.b));
+    scc(SDL_SetTextureColorMod(texture, color.r, color.g, color.b));
 
     scc(SDL_SetTextureAlphaMod(texture, color.a));
 }

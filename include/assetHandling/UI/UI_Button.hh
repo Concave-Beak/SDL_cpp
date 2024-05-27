@@ -16,50 +16,55 @@ namespace UI {
 class Button {
    public:
     enum ButtonFlags {
-        SWITCH_BUTTON = 0x01,
+        NOT_SET = 0,
+        PUSH_BUTTON,
+        SWITCH_BUTTON,
     };
 
-    Button(ButtonFlags type_, SDL_Rect grid_);
-    ~Button();
-
-    void SetOutlineColor(SDL_Color& color);
     enum TextureField {
         DEFAULT_TEXTURE = 0,
         HOVER_TEXTURE,
         CLICKED_TEXTURE,
     };
-    const Error SetTexture(SDL_Renderer* renderer, const TextureField& textureField, std::string path);
-    void SetFlags(int flags_);
 
-    static const Error DrawButtons(SDL_Renderer* renderer);
+    Button(ButtonFlags type = NOT_SET, SDL_Rect grid = {});
+    ~Button();
 
-    static void HandleButtonClicks(Vector2<int>);
+    void SetOutlineColor(const SDL_Color& color);
+    Error SetTexture(SDL_Renderer* renderer, TextureField textureField, const std::string& path);
+    Error SetTexture(SDL_Texture* texture, TextureField textureField);
+    void SetFlags(ButtonFlags flags);
+
+    static Error Handle(SDL_Event event, SDL_Renderer* renderer);
 
     void ToggleIsShown();
-    inline void SetFunction(std::function<Error()> clickEvent_) { clickEvent = clickEvent_; };
+    void SetFunction(std::function<Error()> clickEvent);
 
    private:
-    static const Error DrawTextureBtn(SDL_Renderer* renderer, const Button* btn);
-
-   private:
-    Uint8 flags;
-
+    ButtonFlags flags = NOT_SET;
     SDL_Rect grid = {};
-
     SDL_Color outlineColor = {};
-
     SDL_Texture* defaultTexture = nullptr;
     SDL_Texture* hoverTexture = nullptr;
     SDL_Texture* clickedTexture = nullptr;
 
     bool isShown = true;
-
     bool isClicked = false;
     bool isHovered = false;
 
-    std::function<Error()> clickEvent;
-};
+    std::function<Error()> clickEvent = nullptr;
 
-inline static std::vector<Button*> buttonVector{};
+    static std::vector<Button*> buttonVector;
+
+   private:
+    static Error DrawButtons(SDL_Renderer* renderer);
+    static void HandleClicks(Vector2<int> mousePos);
+    static void HandleHover(Vector2<int> mousePos, SDL_Renderer* renderer);
+
+    inline static Vector2<int> lastMousepos = {};
+
+    void AddToButtonVector();
+    const Error AssignTexture(SDL_Texture*& oldTexture, SDL_Texture* newTexture);
+};
 
 }  // namespace UI

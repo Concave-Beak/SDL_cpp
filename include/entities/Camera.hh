@@ -11,10 +11,9 @@ class Camera {
     static Camera* GetCameraInstance();
     Vector2<float> GetCameraPos();
 
-    void FollowPlayer(Vector2<float> posPlayer, float delta,
-                      Vector2<int> cameraInfo, Vector2<int> hitboxPlayer,
-                      float timeMultiplier);
-    void Move(MoveOptions);
+    void FollowPlayer(Vector2<float> posPlayer, float delta, Vector2<int> cameraInfo,
+                      Vector2<int> hitboxPlayer, float timeMultiplier, const bool& isPaused);
+    void Move(MoveOptions, const bool& isPaused);
 
     std::array<Vector2<float>, 2> GetPlayerMinMaxOffset();
     void SetPlayerMinMaxOffsetMultiply(const float multiply);
@@ -28,8 +27,7 @@ class Camera {
     Vector2<float> playerOffset = {0, 0};
 
     Vector2<int> maxPlayerOffset = {10, 100};
-    Vector2<float> minPlayerOffset = {
-        -10, 100};  // both may change depending on player's items.
+    Vector2<float> minPlayerOffset = {-10, 100};  // both may change depending on player's items.
     Vector2<int> cameraMovementSpeed = {0, 0};
     // const int zoom = 1; // not used
 

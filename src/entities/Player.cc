@@ -21,7 +21,8 @@ Player* Player::GetPlayerInstace() { return Player::playerInstance; }
 
 Vector2<int> Player::GetHitboxInfo() { return hitbox; }
 
-void Player::HandleVelocity(const float& delta, const float& timeMultiplier) {
+void Player::HandleVelocity(const float& delta, const float& timeMultiplier, const bool& isPaused) {
+    if (isPaused) return;
     Uint32 timeNow = SDL_GetTicks();
 
     {
@@ -51,7 +52,8 @@ void Player::HandleVelocity(const float& delta, const float& timeMultiplier) {
     pos.x += velocity.x * timeMultiplier;
 }
 
-void Player::HandleColisions(const float& delta, const float& timeMultiplier) {
+void Player::HandleColisions(const float& delta, const float& timeMultiplier, const bool& isPaused) {
+    if (isPaused) return;
     (void)timeMultiplier;  // just so the compilers doesnt bitch about it
     colidedUp = false;
     colidedLeft = false;
@@ -134,7 +136,8 @@ void Player::HandleColisions(const float& delta, const float& timeMultiplier) {
     }
 }
 
-void Player::Move(const MoveOptions moveOpt) {
+void Player::Move(const MoveOptions moveOpt, const bool& isPaused) {
+    if (isPaused) return;
     switch (moveOpt) {
         case LEFT: {
             if (!colidedLeft) {
