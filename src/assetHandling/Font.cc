@@ -18,7 +18,7 @@ Font FontLoadFromFile(SDL_Renderer *renderer, const char *path) {
     SDL_FreeSurface(fontSurface);
 
     for (size_t ascii = ASCII_DISPLAY_LOW; ascii <= ASCII_DISPLAY_HIGH; ++ascii) {
-        const int index = ascii - ASCII_DISPLAY_LOW;
+        const int index = int(ascii - ASCII_DISPLAY_LOW);
         const int col = index % FONT_COLS;
         const int row = index / FONT_COLS;
         font.glyphTable[index] = SDL_Rect{

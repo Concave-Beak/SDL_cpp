@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "../../include/assetHandling/UI/UI_Button.hh"
+#include "../../include/entities/NPC.hh"
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
@@ -19,18 +20,20 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
 //------------------------------------------------------------------------------
 
 void Engine::GameLoop() {
-    float beginTick = 0;
-    new LevelItem(Vector2<int>{screenSpecs.x / 2, screenSpecs.y - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);         // Placeholder
-    new LevelItem(Vector2<int>{screenSpecs.x / 2, screenSpecs.y - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);  // Placeholder
-    new LevelItem(Vector2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);    // Placeholder
-    new LevelItem(Vector2<int>{0, screenSpecs.y - 5}, {screenSpecs.x, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);            // Placeholder
+    Uint32 beginTick = 0;
+    new LevelItem(Vector2<int>{screenSpecs.x / 2, screenSpecs.y - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                // Placeholder
+    new LevelItem(Vector2<int>{screenSpecs.x / 2, screenSpecs.y - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);         // Placeholder
+    new LevelItem(Vector2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);           // Placeholder
+    new LevelItem(Vector2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
+    NPC npc(Entity::GENERIC_HUMANOID_ENEMY);
     while (!quit) {
         UpdateScreenSpecs();  // this should only be used after changing the resolution through config
         beginTick = SDL_GetTicks();
-        playerInstance->Handle(timeDelta, timeMultiplier, isPaused);
+        Entity::Handle(timeDelta, timeMultiplier, isPaused);
         lastLoopIteration = SDL_GetTicks();
 
+        NPC::HandleMovement(playerInstance->GetPos());  // Placeholder
         Render(beginTick);
         UpdateTimeDelta();
         ResetTimeMultiplier();
@@ -46,25 +49,24 @@ void Engine::ResetTimeMultiplier() {
 }
 
 void Engine::UpdateTimeDelta() {
-    timeDelta = (SDL_GetTicks() - lastLoopIteration) / 300.0f;  // 300 is just to make delta easier to work with
+    timeDelta = float(SDL_GetTicks() - lastLoopIteration) / 300.0f;  // 300 is just to make delta easier to work with
 }
 
-void Engine::HandleFPS(float loopBegin) {
+void Engine::HandleFPS(Uint32 loopBegin) {
     float timeStepInMS = 1000.0f / fpsMAX;
-    float loopEnd = SDL_GetTicks();
-    float timeDifference = timeStepInMS - (loopEnd - loopBegin);
+    Uint32 loopEnd = SDL_GetTicks();
+    float timeDifference = timeStepInMS - float(loopEnd - loopBegin);
 
     if (configInstance->ShowFPSState() == true) {
         std::stringstream fpsStr;  // fps is in secods, timeDifference is in ms.
         fpsStr << "FPS: " << std::setprecision(4)
                << fpsMAX - (timeDifference / 1000.0f);  // that's why it's divided by 1000
 
-        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vector2<int>{0, 0},
-                        GREEN, 3);
+        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vector2<int>{0, 0}, SDL_Color{GREEN}, 3);
     }
 
     if (timeDifference >= 0) {
-        SDL_Delay(timeStepInMS - (loopEnd - loopBegin));
+        SDL_Delay(Uint32(timeStepInMS - float(loopEnd - loopBegin)));
         return;
     }
 }
@@ -73,19 +75,15 @@ void Engine::ShowDebugInfo() {
     std::stringstream levelItemStr;
     levelItemStr << "LI: " << Level::colisions.size() + Level::textures.size()
                  << "C/T: " << Level::colisions.size() << "/" << Level::textures.size();
-    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(),
-                    Vector2<int>{screenSpecs.x - GetTextRectangleWidth(levelItemStr.str().size()) * 2, 0},
-                    WHITE, 3);
+    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vector2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE}, 3);
 
     std::stringstream playerInfo;
     playerInfo << "XY: " << std::setprecision(4) << playerInstance->GetPos().x << " " << std::setprecision(4)
                << playerInstance->GetPos().y;
-    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(),
-                    Vector2<int>{screenSpecs.x - GetTextRectangleWidth(playerInfo.str().size()) * 2, 100},
-                    WHITE, 3);
+    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(), Vector2<int>{screenSpecs.x - int(GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, SDL_Color{WHITE}, 3);
 }
 
-int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
+size_t Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
 void Engine::HandleEvents() {
     SDL_PollEvent(&event);
@@ -116,20 +114,21 @@ void Engine::HandleKeyboard(SDL_KeyboardEvent kbEvent) {
 }
 
 void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
+    (void)mbEvent;
 }
 
 void Engine::HandleKeyboardState() {
     if (keyboardState[SDL_SCANCODE_A]) {
-        playerInstance->Move(Directions::LEFT, isPaused);
+        playerInstance->entity.Move(Direction::LEFT, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_D]) {
-        playerInstance->Move(Directions::RIGHT, isPaused);
+        playerInstance->entity.Move(Direction::RIGHT, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_W]) {
-        playerInstance->Move(Directions::UP, isPaused);
+        playerInstance->entity.Move(Direction::UP, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_S]) {
-        playerInstance->Move(Directions::DOWN, isPaused);
+        playerInstance->entity.Move(Direction::DOWN, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_LEFT]) {
         cameraInstance->Move(LEFT, isPaused);
@@ -164,19 +163,19 @@ void Engine::HandleMouseState() {
     }
 }
 
-void Engine::Render(float beginTick) {
+void Engine::Render(Uint32 beginTick) {
     Vector2<int> cameraPos = {(int)cameraInstance->pos.x, (int)cameraInstance->pos.y};
     ClearBackground(renderer, 100, 100, 100, 255);
 
     {
         Level::Draw(cameraPos, renderer);
-        playerInstance->Draw(cameraPos, renderer);
+        Entity::Draw(cameraPos, renderer);
         ShowDebugInfo();
         HandleEvents();
         HandleFPS(beginTick);
         UI::Button::Handle(event, renderer);
         cameraInstance->FollowPlayer(playerInstance->GetPos(), timeDelta, screenSpecs,
-                                     playerInstance->GetHitboxInfo(), timeMultiplier, isPaused);
+                                     playerInstance->GetHitbox(), timeMultiplier, isPaused);
 
         SDL_RenderPresent(renderer);
         scc(SDL_RenderClear(renderer));
@@ -189,7 +188,7 @@ const Error Engine::Init() {
     }
     std::cout << "INFO: SDL_Init initialized succesfully\n";
 
-    window = SDL_CreateWindow("SoulBound", 0, 0, screenSpecs.x, screenSpecs.y, SDL_WINDOW_BORDERLESS);
+    window = SDL_CreateWindow("SoulBound", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_CENTERED, screenSpecs.x, screenSpecs.y, SDL_WINDOW_BORDERLESS);
     if (window == NULL) {
         Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }

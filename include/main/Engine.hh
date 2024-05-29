@@ -54,7 +54,7 @@ class Engine {
 
     // Handles fps
     // @param float startTick | The first tick of the loop's iteration
-    void HandleFPS(float startTick);
+    void HandleFPS(Uint32 startTick);
 
     // Event Handling functions
     void HandleEvents();
@@ -70,10 +70,10 @@ class Engine {
     void ShowDebugInfo();
 
     // Used for fonts // TODO:: NEEDS TO BE REDONE
-    int GetTextRectangleWidth(size_t strSize);
+    size_t GetTextRectangleWidth(size_t strSize);
 
     // Everything related to graphics in the main game loop
-    void Render(float beginTick);
+    void Render(Uint32 beginTick);
 };
 
 //------------------------------------------------------------------------------

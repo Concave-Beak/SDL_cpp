@@ -10,8 +10,9 @@ Vector2<float> Camera::pos = {0, 0};
 
 void Camera::FollowPlayer(Vector2<float> posPlayer, float delta, Vector2<int> cameraInfo,
                           Vector2<int> hitboxPlayer, float timeMultiplier, const bool& isPaused) {
-    playerOffset.x = posPlayer.x - pos.x - cameraInfo.x / 2.0f + hitboxPlayer.x / 2.0f;
-    playerOffset.y = posPlayer.y - pos.y - cameraInfo.y / 1.5f + hitboxPlayer.y / 1.5f;
+    if (isPaused) return;
+    playerOffset.x = posPlayer.x - pos.x - float(cameraInfo.x) / 2.0f + float(hitboxPlayer.x) / 2.0f;
+    playerOffset.y = posPlayer.y - pos.y - float(cameraInfo.y) / 1.5f + float(hitboxPlayer.y) / 1.5f;
 
     vel.y *= (1 - delta) * timeMultiplier;  // case beingMoved
     vel.x *= (1 - delta) * timeMultiplier;
@@ -25,34 +26,32 @@ void Camera::FollowPlayer(Vector2<float> posPlayer, float delta, Vector2<int> ca
     isBeingMoved = false;
 }
 
-void Camera::Move(Directions direction, const bool& isPaused) {
+void Camera::Move(Direction direction, const bool& isPaused) {
+    if (isPaused) return;
     cameraMovementSpeed = {maxPlayerOffset.x / 2, maxPlayerOffset.y / 8};  // Values to make it smoother
     isBeingMoved = true;
     switch (direction) {
-        case NONE: {
-            break;
-        }
         case UP: {
-            if (playerOffset.y < maxPlayerOffset.y) {
-                vel.y -= cameraMovementSpeed.y;
+            if (playerOffset.y < float(maxPlayerOffset.y)) {
+                vel.y -= float(cameraMovementSpeed.y);
             }
             break;
         }
         case DOWN: {
-            if (playerOffset.y < maxPlayerOffset.y) {
-                vel.y += cameraMovementSpeed.y;
+            if (playerOffset.y < float(maxPlayerOffset.y)) {
+                vel.y += float(cameraMovementSpeed.y);
             }
             break;
         }
         case LEFT: {
-            if (playerOffset.x > minPlayerOffset.x) {
-                vel.x -= cameraMovementSpeed.x;
+            if (playerOffset.x > float(minPlayerOffset.x)) {
+                vel.x -= float(cameraMovementSpeed.x);
             }
             break;
         }
         case RIGHT: {
-            if (playerOffset.x < maxPlayerOffset.x) {
-                vel.x += cameraMovementSpeed.x;
+            if (playerOffset.x < float(maxPlayerOffset.x)) {
+                vel.x += float(cameraMovementSpeed.x);
             }
             break;
         }
