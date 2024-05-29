@@ -11,9 +11,9 @@ namespace UI {
 
 std::vector<Button*> Button::buttonVector;
 
-Button::Button(ButtonFlags flags, SDL_Rect grid)
-    : flags(flags),
-      grid(grid),
+Button::Button(ButtonFlags flags_, SDL_Rect grid_)
+    : flags(flags_),
+      grid(grid_),
       outlineColor({0, 0, 0, 0}),
       defaultTexture(nullptr),
       hoverTexture(nullptr),
@@ -30,7 +30,7 @@ Button::~Button() {
     if (clickedTexture) SDL_DestroyTexture(clickedTexture);
 }
 
-void Button::SetOutlineColor(const SDL_Color& color) { outlineColor = color; }
+void Button::SetOutlineColor(const SDL_Color& color_) { outlineColor = color_; }
 
 const Error Button::AssignTexture(SDL_Texture*& oldTexture, SDL_Texture* newTexture) {
     if (oldTexture) {
@@ -73,10 +73,10 @@ Error Button::SetTexture(SDL_Texture* newTexture, TextureField textureField) {
     return Error();
 }
 
-void Button::SetFlags(ButtonFlags flags) { this->flags = flags; }
+void Button::SetFlags(ButtonFlags flags_) { this->flags = flags_; }
 
-void Button::SetFunction(std::function<Error()> clickEvent) {
-    this->clickEvent = std::move(clickEvent);
+void Button::SetFunction(std::function<Error()> clickEvent_) {
+    this->clickEvent = std::move(clickEvent_);
 }
 
 void Button::AddToButtonVector() { buttonVector.emplace_back(this); }

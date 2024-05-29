@@ -15,24 +15,25 @@ std::vector<LevelItem> Level::textures = {};
 
 //------------------------------------------------------------------------------
 
-LevelItem::~LevelItem() {
-    if (this->colisionType == NO_COLISION) {
-        for (size_t i = 0; i < Level::colisions.size(); i++) {
-            LevelItem *colItem = &Level::colisions[i];
-            if (colItem == this) {
-                Level::colisions.erase(Level::colisions.begin() + i);
-                break;
-            }
-        }
-    } else {
-        for (size_t i = 0; i < Level::textures.size(); i++) {
-            LevelItem *colItem = &Level::textures[i];
-            if (colItem == this) {
-                Level::textures.erase(Level::textures.begin() + i);
-                break;
-            }
-        }
-    }
+LevelItem::~LevelItem() {  // TODO
+    // if (this->colisionType == NO_COLISION) {
+    //     typedef std::vector<LevelItem>::iterator iterator;  // Define the iterator type
+    //
+    //     for (iterator it = Level::colisions.begin(); it != Level::colisions.end(); ++it) {
+    //         if (&(*it) == item) {
+    //             Level::colisions.erase(it);
+    //             break;
+    //         }
+    //     }
+    // } else {
+    //     for (size_t i = 0; i < Level::textures.size(); i++) {
+    //         LevelItem *colItem = &Level::textures[i];
+    //         if (colItem == this) {
+    //             Level::textures.erase(Level::textures.begin() + i);
+    //             break;
+    //         }
+    //     }
+    // }
 };
 
 LevelItem::LevelItem() {};
@@ -72,8 +73,7 @@ LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType
 
 //------------------------------------------------------------------------------
 
-void Level::GenerateLevel(const Uint8 &levelID) {
-}
+void Level::GenerateLevel(const Uint8 &levelID) { (void)levelID; }
 
 void Level::Draw(const Vector2<int> &cameraPos, SDL_Renderer *renderer) {
     for (LevelItem levelItem : Level::colisions) {

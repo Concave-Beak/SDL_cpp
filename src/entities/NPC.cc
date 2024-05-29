@@ -5,6 +5,7 @@
 std::vector<NPC*> NPC::npcVector = {};
 
 NPC::NPC(Entity::EntityID id) : entity(Entity::GENERIC_HUMANOID_ENEMY, {0.5, 200}, {100, 0}, {70, 70}) {
+    (void)id;
     npcVector.push_back(this);
 }
 
