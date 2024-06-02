@@ -13,7 +13,7 @@ class Entity {
         PLAYER = 0,
         GENERIC_HUMANOID_ENEMY = 100,
     };
-    Entity(EntityID ID_, Vector2<float> accelSpeed_, Vector2<float> spawnPosition, Vector2<int> hitbox_);
+    Entity(EntityID ID_, Vector2<float> spawnPosition, Vector2<int> hitbox_);
     ~Entity();
 
     bool GetColidedInformation(Direction direction);
@@ -24,7 +24,9 @@ class Entity {
 
     Vector2<int> GetHitbox();
 
-    void Move(const Direction& direction, const bool& isPaused);
+    Direction GetFacingDirection();
+
+    void Move(const Direction& direction, const Vector2<float>& accelSpeed, const bool& isPaused);
 
     static void Draw(const Vector2<int>& cameraPos, SDL_Renderer* renderer);
     static void Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
@@ -39,7 +41,6 @@ class Entity {
 
     EntityID ID;
 
-    Vector2<float> accelSpeed = {1, 200};
     Vector2<float> velocity = {0, 0};
     Vector2<float> position = {0, 0};
 

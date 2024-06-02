@@ -8,7 +8,7 @@
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
-Entity::Entity(EntityID entityType_, Vector2<float> accelSpeed_, Vector2<float> spawnPosition, Vector2<int> hitbox_) : ID(entityType_), accelSpeed(accelSpeed_), position(spawnPosition), hitbox(hitbox_) {
+Entity::Entity(EntityID entityType_, Vector2<float> spawnPosition, Vector2<int> hitbox_) : ID(entityType_), position(spawnPosition), hitbox(hitbox_) {
     entityVector.push_back(this);
 }
 
@@ -39,7 +39,9 @@ Vector2<float> Entity::GetPos() { return position; }
 
 Vector2<int> Entity::GetHitbox() { return hitbox; }
 
-void Entity::Move(const Direction& direction, const bool& isPaused) {
+Direction Entity::GetFacingDirection() { return facing; }
+
+void Entity::Move(const Direction& direction, const Vector2<float>& accelSpeed, const bool& isPaused) {
     if (isPaused) return;
     if (GetColidedInformation(direction)) return;
     switch (direction) {
@@ -74,14 +76,14 @@ void Entity::Move(const Direction& direction, const bool& isPaused) {
 void Entity::Draw(const Vector2<int>& cameraPos, SDL_Renderer* renderer) {
     for (Entity* entity : entityVector) {
         SDL_Rect entityModel = {
-            // for now, because I dont have proper models
+            // rectangles for now, because I dont have proper models
             (int)entity->position.x - cameraPos.x,
             (int)entity->position.y - cameraPos.y,
             entity->hitbox.x,
             entity->hitbox.y,
         };
-        SDL_Color color = SDL_Color{RED};
-        if (entity->ID != PLAYER) color = SDL_Color{YELLOW};
+        SDL_Color color = SDL_Color{RED, 0xff};
+        if (entity->ID != PLAYER) color = SDL_Color{YELLOW, 0xff};
         scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a));
         scc(SDL_RenderFillRect(renderer, &entityModel));
     }

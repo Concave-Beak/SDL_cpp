@@ -26,14 +26,15 @@ void Engine::GameLoop() {
     new LevelItem(Vector2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);           // Placeholder
     new LevelItem(Vector2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
-    NPC npc(Entity::GENERIC_HUMANOID_ENEMY);
+    NPC npc(Entity::GENERIC_HUMANOID_ENEMY, {900, 900});
     while (!quit) {
+        ClearBackground(renderer, 100, 100, 100, 255);
         UpdateScreenSpecs();  // this should only be used after changing the resolution through config
         beginTick = SDL_GetTicks();
         Entity::Handle(timeDelta, timeMultiplier, isPaused);
         lastLoopIteration = SDL_GetTicks();
 
-        NPC::HandleMovement(playerInstance->GetPos());  // Placeholder
+        NPC::HandleMovement(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
         Render(beginTick);
         UpdateTimeDelta();
         ResetTimeMultiplier();
@@ -119,16 +120,16 @@ void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
 
 void Engine::HandleKeyboardState() {
     if (keyboardState[SDL_SCANCODE_A]) {
-        playerInstance->entity.Move(Direction::LEFT, isPaused);
+        playerInstance->entity.Move(Direction::LEFT, playerInstance->runningSpeed, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_D]) {
-        playerInstance->entity.Move(Direction::RIGHT, isPaused);
+        playerInstance->entity.Move(Direction::RIGHT, playerInstance->runningSpeed, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_W]) {
-        playerInstance->entity.Move(Direction::UP, isPaused);
+        playerInstance->entity.Move(Direction::UP, playerInstance->runningSpeed, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_S]) {
-        playerInstance->entity.Move(Direction::DOWN, isPaused);
+        playerInstance->entity.Move(Direction::DOWN, playerInstance->runningSpeed, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_LEFT]) {
         cameraInstance->Move(LEFT, isPaused);
@@ -165,7 +166,6 @@ void Engine::HandleMouseState() {
 
 void Engine::Render(Uint32 beginTick) {
     Vector2<int> cameraPos = {(int)cameraInstance->pos.x, (int)cameraInstance->pos.y};
-    ClearBackground(renderer, 100, 100, 100, 255);
 
     {
         Level::Draw(cameraPos, renderer);

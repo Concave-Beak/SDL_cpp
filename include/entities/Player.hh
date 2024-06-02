@@ -16,8 +16,10 @@ class Player {
 
     Vector2<int> GetHitbox();
 
-    Entity entity = Entity(Entity::PLAYER, {1, 200}, {0, 0}, {64, 64});
+    Entity entity = Entity(Entity::PLAYER, {0, 0}, {64, 64});
 
+    Vector2<float> runningSpeed = {1, 200};
+    Vector2<float> walkingSpeed = {0.5, 150};  // TODO: make private
    private:
     static Player* playerInstance;
 };

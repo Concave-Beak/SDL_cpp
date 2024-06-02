@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
@@ -10,19 +11,18 @@
 #include "../../lib/stbi/stb_image.h"
 #include "math_utils.hh"
 
-#define BLACK 0x00, 0x00, 0x00, 0xff
-#define PINK 0xec, 0x00, 0x8c, 0xff
-#define RED 0xff, 0x00, 0x00, 0xff
-#define YELLOW 0xff, 0xff, 0x00, 0xff
-#define WHITE 0xff, 0xff, 0xff, 0xff
-#define GREEN 0x00, 0xff, 0x00, 0xff
+#define BLACK 0x00, 0x00, 0x00
+#define PINK 0xec, 0x00, 0x8c
+#define RED 0xff, 0x00, 0x00
+#define YELLOW 0xff, 0xff, 0x00
+#define WHITE 0xff, 0xff, 0xff
+#define GREEN 0x00, 0xff, 0x00
 
 #define UNHEX(color)                                                                       \
     ((color) >> (8 * 0)) & 0xFF, ((color) >> (8 * 1)) & 0xFF, ((color) >> (8 * 2)) & 0xFF, \
         ((color) >> (8 * 3)) & 0xFF
 
-inline void
-scc(int code) {
+inline void scc(int code) {
     if (code != 0) {
         fprintf(stderr, "SDL ERROR: %s\n", SDL_GetError());
         exit(1);
@@ -84,7 +84,7 @@ inline void DrawTextureNotFound(SDL_Rect textureGrid, const Vector2<int> resolut
                 .w = resolution.x,
                 .h = resolution.y,
             };
-            SDL_Color color = ((x + y) % 2) ? SDL_Color{PINK} : SDL_Color{BLACK};
+            SDL_Color color = ((x + y) % 2) ? SDL_Color{PINK, 0xff} : SDL_Color{BLACK, 0xff};
 
             SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(renderer, &rect);
