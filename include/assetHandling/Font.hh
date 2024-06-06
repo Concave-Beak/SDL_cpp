@@ -28,8 +28,8 @@ struct Font {
 
 Font FontLoadFromFile(SDL_Renderer *renderer, const char *path);
 
-void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vector2<int> pos,
+void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vec2<int> pos,
                      SDL_Color color, float scale);
 
-void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vector2<int> pos, SDL_Color color,
+void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vec2<int> pos, SDL_Color color,
                 float scale);

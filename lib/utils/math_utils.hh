@@ -26,67 +26,76 @@
 #include <SDL2/SDL_render.h>
 #include <sys/types.h>
 
+#include <array>
+#include <vector>
+
 inline float DegreesToRadians(float degrees) { return degrees * 3.14f / 180; }
 
-template <class T>
-struct Vector2 {
-    T x;
-    T y;
+template <class Type>
+using Matrix2D = std::vector<std::vector<Type>>;
 
-    Vector2<T> operator+(const Vector2<T>& other) const {
+template <typename ElementType, size_t NumRows, size_t NumCols>
+using Array2D = std::array<std::array<ElementType, NumCols>, NumRows>;
+
+template <class Type>
+struct Vec2 {
+    Type x;
+    Type y;
+
+    Vec2<Type> operator+(const Vec2<Type>& other) const {
         return {x + other.x, y + other.y};
     }
 
-    Vector2<T> operator*(float scalar) const {
+    Vec2<Type> operator*(float scalar) const {
         return {x * scalar, y * scalar};
     }
-    Vector2<T> operator-(const Vector2<T>& other) const {
-        return Vector2<T>(x - other.x, y - other.y);
+    Vec2<Type> operator-(const Vec2<Type>& other) const {
+        return Vec2<Type>(x - other.x, y - other.y);
     }
-    T cross(const Vector2<T>& other) const {
+    Type cross(const Vec2<Type>& other) const {
         return x * other.y - y * other.x;
     }
-    T dot(const Vector2<T>& other) const {
+    Type dot(const Vec2<Type>& other) const {
         return x * other.x + y * other.y;
     }
     template <typename U>
-    operator Vector2<U>() const {
+    operator Vec2<U>() const {
         return {static_cast<U>(x), static_cast<U>(y)};
     }
 };
 
-template <class T>
+template <class Type>
 struct Triangle {
-    Vector2<T> a;
-    Vector2<T> b;
-    Vector2<T> c;
+    Vec2<Type> a;
+    Vec2<Type> b;
+    Vec2<Type> c;
 
-    void Draw(SDL_Renderer* renderer, Vector2<float> cameraPos, SDL_Color color);
+    void Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color);
 };
 
-template <class T>
-inline bool IsPointInTriangle(const Vector2<T>& p, const Triangle<T>& triangle) {
-    Vector2<T> v0 = triangle.c - triangle.a;
-    Vector2<T> v1 = triangle.b - triangle.a;
-    Vector2<T> v2 = p - triangle.a;
+template <class Type>
+inline bool IsPointInTriangle(const Vec2<Type>& p, const Triangle<Type>& triangle) {
+    Vec2<Type> v0 = triangle.c - triangle.a;
+    Vec2<Type> v1 = triangle.b - triangle.a;
+    Vec2<Type> v2 = p - triangle.a;
 
-    T dot00 = v0.dot(v0);
-    T dot01 = v0.dot(v1);
-    T dot02 = v0.dot(v2);
-    T dot11 = v1.dot(v1);
-    T dot12 = v1.dot(v2);
+    Type dot00 = v0.dot(v0);
+    Type dot01 = v0.dot(v1);
+    Type dot02 = v0.dot(v2);
+    Type dot11 = v1.dot(v1);
+    Type dot12 = v1.dot(v2);
 
     // Compute barycentric coordinates
-    T invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-    T u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    T v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+    Type invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+    Type u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    Type v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
     // Check if point is in triangle
     return (u >= 0) && (v >= 0) && (u + v <= 1);
 }
 
-template <class T>
-inline void Triangle<T>::Draw(SDL_Renderer* renderer, Vector2<float> cameraPos, SDL_Color color) {
+template <class Type>
+inline void Triangle<Type>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) {
     SDL_Vertex vertices[3];
 
     vertices[0].position.x = a.x - cameraPos.x;

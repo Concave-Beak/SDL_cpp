@@ -37,7 +37,7 @@ LevelItem::~LevelItem() {  // TODO
 };
 
 LevelItem::LevelItem() {};
-LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
+LevelItem::LevelItem(Vec2<int> ppos, Vec2<int> size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
     this->wireframe = {ppos.x, ppos.y, size.x, size.y};
     switch (ptextID) {
         case VOID: {  // this is where the textures should be applied
@@ -75,7 +75,7 @@ LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType
 
 void Level::GenerateLevel(const Uint8 &levelID) { (void)levelID; }
 
-void Level::Draw(const Vector2<int> &cameraPos, SDL_Renderer *renderer) {
+void Level::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
     for (LevelItem levelItem : Level::colisions) {
         SDL_Color color = levelItem.color;
         SDL_Rect levelItemWireframe = {

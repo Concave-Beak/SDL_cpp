@@ -21,6 +21,7 @@ log_file_path = ".logs/debug.log" # Log File Path: specify path for debug log fi
 show_fps = true
 show_debug_info = true
 no_video = true # Only for backend debuging purpose
+draw_vision_cones = false # NOT USED
 
 [Controls] # NOT USED
 mouse_sensitivity = 5.0      # Mouse Sensitivity (0.1 - 10)

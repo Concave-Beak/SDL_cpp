@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstdio>
 
+#include "../../lib/utils/math_utils.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
 //------------------------------------------------------------------------------
@@ -31,7 +32,7 @@ Font FontLoadFromFile(SDL_Renderer *renderer, const char *path) {
     return font;
 }
 
-void RenderChar(SDL_Renderer *renderer, const Font *font, char c, Vector2<int> pos, float scale) {
+void RenderChar(SDL_Renderer *renderer, const Font *font, char c, Vec2<int> pos, float scale) {
     const SDL_Rect dst = {
         .x = (int)floorf(float(pos.x)),
         .y = (int)floorf(float(pos.y)),
@@ -45,18 +46,18 @@ void RenderChar(SDL_Renderer *renderer, const Font *font, char c, Vector2<int> p
     scc(SDL_RenderCopy(renderer, font->spritesheet, &font->glyphTable[index], &dst));
 }
 
-void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vector2<int> pos,
+void RenderTextSized(SDL_Renderer *renderer, Font *font, const char *text, size_t text_size, Vec2<int> pos,
                      SDL_Color color, float scale) {
     SetTextureColor(font->spritesheet, color);
 
-    Vector2<int> pen = pos;
+    Vec2<int> pen = pos;
     for (size_t i = 0; i < text_size; ++i) {
         RenderChar(renderer, font, text[i], pen, scale);
         pen.x += int(FONT_CHAR_WIDTH * scale);
     }
 }
 
-void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vector2<int> pos, SDL_Color color,
+void RenderText(SDL_Renderer *renderer, Font *font, const char *text, Vec2<int> pos, SDL_Color color,
                 float scale) {
     RenderTextSized(renderer, font, text, strlen(text), pos, color, scale);
 }

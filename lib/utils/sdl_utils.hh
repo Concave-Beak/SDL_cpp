@@ -75,7 +75,7 @@ inline void SetTextureColor(SDL_Texture *texture, SDL_Color color) {
 // @param textureGrid The texture size to be drawn
 // @param resolution The amout of pixels each color should be drawn
 // @param renderer The renderer
-inline void DrawTextureNotFound(SDL_Rect textureGrid, const Vector2<int> resolution, SDL_Renderer *renderer) {
+inline void DrawTextureNotFound(SDL_Rect textureGrid, const Vec2<int> resolution, SDL_Renderer *renderer) {
     for (int y = 0; y < textureGrid.h / resolution.y; ++y) {
         for (int x = 0; x < textureGrid.w / resolution.x; ++x) {
             SDL_Rect rect{

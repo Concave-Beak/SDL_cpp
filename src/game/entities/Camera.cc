@@ -1,4 +1,4 @@
-#include "../../include/entities/Camera.hh"
+#include "../../../include/game/entities/Camera.hh"
 
 //------------------------------------------------------------------------------
 
@@ -6,10 +6,8 @@ Camera* Camera::instance = new Camera;
 
 Camera* Camera::GetCameraInstance() { return instance; }
 
-Vector2<float> Camera::pos = {0, 0};
-
-void Camera::FollowPlayer(Vector2<float> posPlayer, float delta, Vector2<int> cameraInfo,
-                          Vector2<int> hitboxPlayer, float timeMultiplier, const bool& isPaused) {
+void Camera::FollowPlayer(Vec2<float> posPlayer, float delta, Vec2<int> cameraInfo,
+                          Vec2<int> hitboxPlayer, float timeMultiplier, const bool& isPaused) {
     if (isPaused) return;
     playerOffset.x = posPlayer.x - pos.x - float(cameraInfo.x) / 2.0f + float(hitboxPlayer.x) / 2.0f;
     playerOffset.y = posPlayer.y - pos.y - float(cameraInfo.y) / 1.5f + float(hitboxPlayer.y) / 1.5f;
@@ -58,4 +56,4 @@ void Camera::Move(Direction direction, const bool& isPaused) {
     }
 }
 
-Vector2<float> Camera::GetCameraPos() { return pos; }
+Vec2<float> Camera::GetCameraPos() { return pos; }

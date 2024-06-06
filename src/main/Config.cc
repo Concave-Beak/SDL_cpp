@@ -76,7 +76,7 @@ const Error Config::ReadConfig() {
     return Error{};
 }
 
-const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution_) {
+const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vec2<int*> screenResolution_) {
     ReadConfig();
     (void)renderer;
 

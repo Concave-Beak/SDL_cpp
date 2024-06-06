@@ -23,7 +23,7 @@ enum TextureID {
 };
 
 struct LevelItem {
-    Vector2<int> pos;
+    Vec2<int> pos;
     ColisionType colisionType;
     SDL_Color color;
     SDL_Rect wireframe;
@@ -32,7 +32,7 @@ struct LevelItem {
     SDL_Texture *texture;  // there should also be a footstep sound depending on the surface
     float attritionCoefficient;
 
-    LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType, SDL_Color pcolor,
+    LevelItem(Vec2<int> ppos, Vec2<int> size, ColisionType pcolType, SDL_Color pcolor,
               TextureID ptextID);
     LevelItem();
     ~LevelItem();
@@ -49,7 +49,7 @@ class Level {
     ~Level() {};
 
     void GenerateLevel(const Uint8 &levelID);
-    static void Draw(const Vector2<int> &cameraPos, SDL_Renderer *renderer);
+    static void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer);
 
    private:
 };

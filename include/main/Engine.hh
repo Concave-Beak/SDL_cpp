@@ -4,8 +4,8 @@
 
 #include "../../lib/utils/error_handling.hh"
 #include "../assetHandling/Font.hh"
-#include "../entities/Camera.hh"
-#include "../entities/Player.hh"
+#include "../game/entities/Camera.hh"
+#include "../game/entities/Player.hh"
 #include "./Config.hh"
 
 //------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ class Engine {
     float timeMultiplier = 1;
     Uint32 lastLoopIteration = 0;
 
-    Vector2<int> screenSpecs = {0, 0};
+    Vec2<int> screenSpecs = {0, 0};
 
     bool quit = false;
     bool isPaused = false;

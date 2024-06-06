@@ -5,8 +5,8 @@
 
 #include <sstream>
 
+#include "../..//include/game/entities/NPC.hh"
 #include "../../include/assetHandling/UI/UI_Button.hh"
-#include "../../include/entities/NPC.hh"
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
@@ -14,19 +14,19 @@
 
 void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
-    SDL_RenderFillRect(renderer, NULL);
+    SDL_RenderClear(renderer);
 }
 
 //------------------------------------------------------------------------------
 
 void Engine::GameLoop() {
     Uint32 beginTick = 0;
-    new LevelItem(Vector2<int>{screenSpecs.x / 2, screenSpecs.y - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                // Placeholder
-    new LevelItem(Vector2<int>{screenSpecs.x / 2, screenSpecs.y - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);         // Placeholder
-    new LevelItem(Vector2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);           // Placeholder
-    new LevelItem(Vector2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);         // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);           // Placeholder
+    new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
-    NPC npc(Entity::GENERIC_HUMANOID_ENEMY, {900, 900});
+    NPC npc(Entity::GENERIC_HUMANOID_ENEMY, {1200, 900});
     while (!quit) {
         ClearBackground(renderer, 100, 100, 100, 255);
         UpdateScreenSpecs();  // this should only be used after changing the resolution through config
@@ -35,6 +35,7 @@ void Engine::GameLoop() {
         lastLoopIteration = SDL_GetTicks();
 
         NPC::HandleMovement(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
+        Attack::CheckAndDestroyExpiredAttacks();
         Render(beginTick);
         UpdateTimeDelta();
         ResetTimeMultiplier();
@@ -63,7 +64,7 @@ void Engine::HandleFPS(Uint32 loopBegin) {
         fpsStr << "FPS: " << std::setprecision(4)
                << fpsMAX - (timeDifference / 1000.0f);  // that's why it's divided by 1000
 
-        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vector2<int>{0, 0}, SDL_Color{GREEN}, 3);
+        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vec2<int>{0, 0}, SDL_Color{GREEN, 0xff}, 3);
     }
 
     if (timeDifference >= 0) {
@@ -76,12 +77,12 @@ void Engine::ShowDebugInfo() {
     std::stringstream levelItemStr;
     levelItemStr << "LI: " << Level::colisions.size() + Level::textures.size()
                  << "C/T: " << Level::colisions.size() << "/" << Level::textures.size();
-    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vector2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE}, 3);
+    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE, 0xff}, 3);
 
     std::stringstream playerInfo;
     playerInfo << "XY: " << std::setprecision(4) << playerInstance->GetPos().x << " " << std::setprecision(4)
                << playerInstance->GetPos().y;
-    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(), Vector2<int>{screenSpecs.x - int(GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, SDL_Color{WHITE}, 3);
+    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, SDL_Color{WHITE, 0xff}, 3);
 }
 
 size_t Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
@@ -107,41 +108,44 @@ void Engine::HandleEvents() {
 }
 
 void Engine::HandleKeyboard(SDL_KeyboardEvent kbEvent) {
-    // if (kbEvent.keysym.sym == SDLK_o) {
-    //     config->ToggleMenuVisibility();
-    // }
-    if (kbEvent.keysym.sym == SDLK_ESCAPE) {
+    if (kbEvent.keysym.sym == SDLK_1) {
+        playerInstance->SwitchWeapon(Player::LEFT_HAND);
+    }
+    if (kbEvent.keysym.sym == SDLK_2) {
+        playerInstance->SwitchWeapon(Player::RIGHT_HAND);
     }
 }
 
 void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
-    (void)mbEvent;
+    if (mbEvent.type == SDL_MOUSEBUTTONDOWN) {
+        playerInstance->Attack();
+    }
 }
 
 void Engine::HandleKeyboardState() {
     if (keyboardState[SDL_SCANCODE_A]) {
-        playerInstance->entity.Move(Direction::LEFT, playerInstance->runningSpeed, isPaused);
+        playerInstance->entity.Move(Direction::LEFT, playerInstance->GetRunningSpeed(), isPaused);
     }
     if (keyboardState[SDL_SCANCODE_D]) {
-        playerInstance->entity.Move(Direction::RIGHT, playerInstance->runningSpeed, isPaused);
+        playerInstance->entity.Move(Direction::RIGHT, playerInstance->GetRunningSpeed(), isPaused);
     }
     if (keyboardState[SDL_SCANCODE_W]) {
-        playerInstance->entity.Move(Direction::UP, playerInstance->runningSpeed, isPaused);
+        playerInstance->entity.Move(Direction::UP, playerInstance->GetRunningSpeed(), isPaused);
     }
     if (keyboardState[SDL_SCANCODE_S]) {
-        playerInstance->entity.Move(Direction::DOWN, playerInstance->runningSpeed, isPaused);
+        playerInstance->entity.Move(Direction::DOWN, playerInstance->GetRunningSpeed(), isPaused);
     }
     if (keyboardState[SDL_SCANCODE_LEFT]) {
-        cameraInstance->Move(LEFT, isPaused);
+        cameraInstance->Move(Direction::LEFT, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_RIGHT]) {
-        cameraInstance->Move(RIGHT, isPaused);
+        cameraInstance->Move(Direction::RIGHT, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_UP]) {
-        cameraInstance->Move(UP, isPaused);
+        cameraInstance->Move(Direction::UP, isPaused);
     }
     if (keyboardState[SDL_SCANCODE_DOWN]) {
-        cameraInstance->Move(DOWN, isPaused);
+        cameraInstance->Move(Direction::DOWN, isPaused);
     }
 
     if (keyboardState[SDL_SCANCODE_R]) {
@@ -165,11 +169,12 @@ void Engine::HandleMouseState() {
 }
 
 void Engine::Render(Uint32 beginTick) {
-    Vector2<int> cameraPos = {(int)cameraInstance->pos.x, (int)cameraInstance->pos.y};
+    Vec2<int> cameraPos = cameraInstance->GetCameraPos();
 
     {
         Level::Draw(cameraPos, renderer);
         Entity::Draw(cameraPos, renderer);
+        Attack::Draw(cameraPos, renderer);
         ShowDebugInfo();
         HandleEvents();
         HandleFPS(beginTick);
@@ -178,7 +183,6 @@ void Engine::Render(Uint32 beginTick) {
                                      playerInstance->GetHitbox(), timeMultiplier, isPaused);
 
         SDL_RenderPresent(renderer);
-        scc(SDL_RenderClear(renderer));
     }
 }
 
@@ -205,7 +209,7 @@ const Error Engine::Init() {
     std::cout << "INFO: Loaded Debug Font\n";
 
     {
-        configInstance->ApplyConfig(window, renderer, Vector2<int *>{&screenSpecs.x, &screenSpecs.y});
+        configInstance->ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y});
         std::cout << "INFO: Config read succesfully\n";
     }
     return Error{};
