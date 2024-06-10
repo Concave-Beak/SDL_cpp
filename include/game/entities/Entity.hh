@@ -6,6 +6,7 @@
 
 #include "../../../lib/utils/engine_utils.hh"
 #include "../../../lib/utils/math_utils.hh"
+#include "../../main/Level.hh"
 
 class Entity {
    public:
@@ -17,7 +18,7 @@ class Entity {
     Entity(EntityID ID_, Vec2<float> spawnPosition, Vec2<int> hitbox_);
     ~Entity();
 
-    bool GetColidedInformation(Direction direction);
+    bool GetCollidedInformation(Direction direction);
 
     Vec2<float> GetVelocityNow();
     Vec2<float> GetPos();
@@ -32,10 +33,10 @@ class Entity {
     static void Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
 
    private:
-    bool colidedDown = false;
-    bool colidedLeft = false;
-    bool colidedRight = false;
-    bool colidedUp = false;
+    bool collidedDown = false;
+    bool collidedLeft = false;
+    bool collidedRight = false;
+    bool collidedUp = false;
 
     bool isAbovePlatform = true;
 
@@ -54,12 +55,17 @@ class Entity {
     float surfaceAttrition = 0;
 
    private:
+    void ResetCollisionState();
+
+    static SDL_Rect GetEntityRect(const Entity& entity);
+
     static std::vector<Entity*> entityVector;
 
     static void HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
-    static void HandleColisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
 
-    friend class Attack;
+    static void HandleCollisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
+    static void HandleVerticalCollision(Entity* entity, const SDL_Rect& entityRect, const LevelItem& levelItem, const float& timeDelta, const float& timeMultiplier);
+    static void HandleHorizontalCollision(Entity* entity, const SDL_Rect& entityRect, const LevelItem& levelItem, const float& timeDelta, const float& timeMultiplier);
 };
 
 //------------------------------------------------------------------------------

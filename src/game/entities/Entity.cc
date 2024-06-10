@@ -4,7 +4,6 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 
-#include <iostream>
 #include <vector>
 
 #include "../../../include/main/Level.hh"
@@ -18,19 +17,19 @@ Entity::~Entity() {}
 
 std::vector<Entity*> Entity::entityVector = {};
 
-bool Entity::GetColidedInformation(Direction direction) {
+bool Entity::GetCollidedInformation(Direction direction) {
     switch (direction) {
         case Direction::UP: {
-            return colidedUp;
+            return collidedUp;
         }
         case Direction::LEFT: {
-            return colidedUp;
+            return collidedUp;
         }
         case Direction::RIGHT: {
-            return colidedUp;
+            return collidedUp;
         }
         case Direction::DOWN: {
-            return colidedUp;
+            return collidedUp;
         }
     }
     return false;
@@ -45,7 +44,7 @@ Direction Entity::GetFacingDirection() { return facing; }
 
 void Entity::Move(const Direction& direction, const Vec2<float>& accelSpeed, const bool& isPaused) {
     if (isPaused) return;
-    if (GetColidedInformation(direction)) return;
+    if (GetCollidedInformation(direction)) return;
     switch (direction) {
         case Direction::LEFT: {
             velocityNow.x -= accelSpeed.x;
@@ -58,13 +57,13 @@ void Entity::Move(const Direction& direction, const Vec2<float>& accelSpeed, con
             break;
         }
         case Direction::UP: {
-            if (!colidedDown) break;
+            if (!collidedDown) break;
             velocityNow.y -= accelSpeed.y;
             break;
         }
         case Direction::DOWN: {
             positionNow.y += 6;       // 6 is the safest i've found given the height
-            colidedDown = false;      // of the plaform in Engine.cc. This needs to be done
+            collidedDown = false;     // of the plaform in Engine.cc. This needs to be done
             isAbovePlatform = false;  // to place the player bellow the platform's top
                                       // TODO: change how this works
             break;
@@ -93,7 +92,7 @@ void Entity::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
 
 void Entity::Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
     HandleVelocity(timeDelta, timeMultiplier, isPaused);
-    HandleColisions(timeDelta, timeMultiplier, isPaused);
+    HandleCollisions(timeDelta, timeMultiplier, isPaused);
 }
 
 void Entity::HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
@@ -116,109 +115,93 @@ void Entity::HandleVelocity(const float& timeDelta, const float& timeMultiplier,
             }
         }
 
-        if (entity->colidedDown == false) {
+        if (entity->collidedDown == false) {
             entity->velocityNow.y += timeDelta * GRAVITY * timeMultiplier;
             entity->positionNow.y += entity->velocityNow.y * timeDelta * timeMultiplier;
         }
 
-        if (!entity->colidedDown) entity->surfaceAttrition = 0.8f;  // resets attrition
+        if (!entity->collidedDown) entity->surfaceAttrition = 0.8f;  // resets attrition
 
         entity->velocityNow.x -= timeDelta * entity->surfaceAttrition * entity->velocityNow.x * timeMultiplier;
         entity->positionNow.x += entity->velocityNow.x * timeMultiplier;
     }
 }
 
-void Entity::HandleColisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
+void Entity::ResetCollisionState() {
+    collidedUp = false;
+    collidedLeft = false;
+    collidedRight = false;
+    collidedDown = false;
+    isAbovePlatform = false;
+}
+
+SDL_Rect Entity::GetEntityRect(const Entity& entity) {
+    return SDL_Rect{
+        .x = int(entity.positionNow.x),
+        .y = int(entity.positionNow.y),
+        .w = entity.hitbox.x,
+        .h = entity.hitbox.y,
+    };
+}
+
+void Entity::HandleVerticalCollision(Entity* entity, const SDL_Rect& entityRect,
+                                     const LevelItem& levelItem,
+                                     const float& timeDelta, const float& timeMultiplier) {
+    float levelItemTop = float(levelItem.pos.y), levelItemBottom = float(levelItem.pos.y + levelItem.wireframe.h);
+
+    bool hitFeet = CheckSideCollision(entityRect, levelItem.wireframe, Direction::DOWN, entity->velocityNow, timeDelta, timeMultiplier);
+    if (hitFeet) {
+        entity->collidedDown = true;
+        entity->surfaceAttrition = levelItem.attritionCoefficient;
+        entity->positionNow.y = levelItemTop - float(entity->hitbox.y);
+        entity->velocityNow.y = 0;
+        if (levelItem.collisionType == PLATFORM) entity->isAbovePlatform = true;
+    }
+
+    if (levelItem.collisionType == CollisionType::PLATFORM) return;
+
+    bool hitHead = CheckSideCollision(entityRect, levelItem.wireframe, Direction::UP, entity->velocityNow, timeDelta, timeMultiplier);
+    if (hitHead) {
+        entity->collidedUp = true;
+        entity->positionNow.y = levelItemBottom;
+        entity->velocityNow.y = -entity->velocityNow.y * 0.2f;
+    }
+}
+
+void Entity::HandleHorizontalCollision(Entity* entity, const SDL_Rect& entityRect,
+                                       const LevelItem& levelItem,
+                                       const float& timeDelta, const float& timeMultiplier) {
+    if (levelItem.collisionType == PLATFORM) return;
+
+    float levelItemLeft = float(levelItem.pos.x);
+    float levelItemRight = float(levelItem.pos.x + levelItem.wireframe.w);
+
+    bool hitRight = CheckSideCollision(entityRect, levelItem.wireframe, Direction::RIGHT, entity->velocityNow, timeDelta, timeMultiplier);
+    if (hitRight) {
+        entity->collidedRight = true;
+        entity->velocityNow.x = -entity->velocityNow.x * 0.2f;
+        entity->positionNow.x = levelItemLeft - float(entity->hitbox.x);
+    }
+
+    bool hitLeft = CheckSideCollision(entityRect, levelItem.wireframe, Direction::LEFT, entity->velocityNow, timeDelta, timeMultiplier);
+    if (hitLeft) {
+        entity->collidedLeft = true;
+        entity->velocityNow.x = -entity->velocityNow.x * 0.2f;
+        entity->positionNow.x = levelItemRight;
+    }
+}
+
+void Entity::HandleCollisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
     if (isPaused) return;
-    (void)timeMultiplier;  // just so the compilers doesnt bitch about it
+
     for (Entity* entity : entityVector) {
-        entity->colidedUp = false;
-        entity->colidedLeft = false;
-        entity->colidedRight = false;
-        entity->colidedDown = false;
+        entity->ResetCollisionState();
 
-        entity->isAbovePlatform = false;
-
-        float headOfPlayer = entity->positionNow.y,
-              leftOfPlayer = entity->positionNow.x,
-              rightOfPlayer = entity->positionNow.x + float(entity->hitbox.x),
-              feetOfPLayer = entity->positionNow.y + float(entity->hitbox.y);
-
-        bool isHorizontallyOverlaped, hitFeet, hitHead,
-            isVerticallyOverlaped, hitRight, hitLeft;
-
-        float colItemTop,
-            colItemLeft,
-            colItemRight,
-            colItemBottom;
-
-        for (LevelItem colisionItem : Level::colisions) {
-            {
-                colItemTop = float(colisionItem.pos.y);
-                colItemBottom = float(colisionItem.pos.y + colisionItem.wireframe.h);
-                colItemLeft = float(colisionItem.pos.x);
-                colItemRight = float(colisionItem.pos.x + colisionItem.wireframe.w);
-            }
-
-            {
-                isHorizontallyOverlaped = (rightOfPlayer > colItemLeft &&
-                                           rightOfPlayer < colItemRight) ||
-                                          (leftOfPlayer > colItemLeft &&
-                                           leftOfPlayer < colItemRight);
-
-                hitFeet = feetOfPLayer + timeDelta * entity->velocityNow.y * timeMultiplier >= colItemTop &&  // 0.8 is the maximum that i've
-                          feetOfPLayer <= colItemBottom - float(colisionItem.wireframe.h) * 0.8f &&           // found not to break colision,
-                          isHorizontallyOverlaped;                                                            // this makes it so the player only
-                                                                                                              // goes up if above 20% o the
-                                                                                                              // colItem's height
-
-                hitHead = headOfPlayer + timeDelta * entity->velocityNow.y * timeMultiplier <= colItemBottom &&
-                          headOfPlayer >= colItemTop + float(colisionItem.wireframe.h) * 0.9f &&
-                          isHorizontallyOverlaped;
-            }
-
-            if (hitFeet) {
-                entity->colidedDown = true;
-                entity->surfaceAttrition = colisionItem.attritionCoefficient;
-                entity->positionNow.y = colItemTop - float(entity->hitbox.y);
-                entity->velocityNow.y = 0;
-                if (colisionItem.colisionType == PLATFORM) entity->isAbovePlatform = true;
-            }
-
-            if (colisionItem.colisionType != PLATFORM) {
-                if (hitHead) {
-                    entity->colidedUp = true;
-                    entity->positionNow.y = colItemBottom;
-                    entity->velocityNow.y = -entity->velocityNow.y * 0.2f;
-                }
-                {  // this needs to be recalculated after changing the players pos
-                   // in hitFeet and/or hitHead
-                    headOfPlayer = entity->positionNow.y, leftOfPlayer = entity->positionNow.x, rightOfPlayer = entity->positionNow.x + float(entity->hitbox.x),
-                    feetOfPLayer = entity->positionNow.y + float(entity->hitbox.y);
-
-                    isVerticallyOverlaped = ((headOfPlayer > colItemTop && headOfPlayer < colItemBottom) ||
-                                             (feetOfPLayer > colItemTop && feetOfPLayer < colItemBottom));
-
-                    hitRight = rightOfPlayer - entity->velocityNow.x * timeDelta * entity->surfaceAttrition * timeMultiplier >= colItemLeft &&
-                               rightOfPlayer <= colItemRight &&
-                               isVerticallyOverlaped;
-
-                    hitLeft = leftOfPlayer - entity->velocityNow.x * timeDelta * entity->surfaceAttrition * timeMultiplier <= colItemRight &&
-                              leftOfPlayer >= colItemLeft &&
-                              isVerticallyOverlaped;
-                }
-
-                if (hitRight) {
-                    entity->colidedRight = true;
-                    entity->velocityNow.x = -entity->velocityNow.x * 0.2f;
-                    entity->positionNow.x = colItemLeft - float(entity->hitbox.x);
-                }
-                if (hitLeft) {
-                    entity->colidedLeft = true;
-                    entity->velocityNow.x = -entity->velocityNow.x * 0.2f;
-                    entity->positionNow.x = colItemRight;
-                }
-            }
+        for (LevelItem levelItem : Level::collisions) {
+            SDL_Rect entityRect = GetEntityRect(*entity);
+            HandleVerticalCollision(entity, entityRect, levelItem, timeDelta, timeMultiplier);
+            entityRect = GetEntityRect(*entity);
+            HandleHorizontalCollision(entity, entityRect, levelItem, timeDelta, timeMultiplier);
         }
     }
 }

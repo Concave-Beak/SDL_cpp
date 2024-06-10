@@ -21,10 +21,11 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
 
 void Engine::GameLoop() {
     Uint32 beginTick = 0;
-    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                // Placeholder
-    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 430}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);         // Placeholder
-    new LevelItem(Vec2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);           // Placeholder
-    new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                 // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 430}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);         // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);           // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 3 + 100, screenSpecs.y - 100}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);     // Placeholder
+    new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
     NPC npc(Entity::GENERIC_HUMANOID_ENEMY, {1200, 900});
     while (!quit) {
@@ -75,8 +76,8 @@ void Engine::HandleFPS(Uint32 loopBegin) {
 
 void Engine::ShowDebugInfo() {
     std::stringstream levelItemStr;
-    levelItemStr << "LI: " << Level::colisions.size() + Level::textures.size()
-                 << "C/T: " << Level::colisions.size() << "/" << Level::textures.size();
+    levelItemStr << "LI: " << Level::collisions.size() + Level::textures.size()
+                 << "C/T: " << Level::collisions.size() << "/" << Level::textures.size();
     RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE, 0xff}, 3);
 
     std::stringstream playerInfo;

@@ -10,7 +10,7 @@
 #include "../../lib/utils/math_utils.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
-std::vector<LevelItem> Level::colisions;
+std::vector<LevelItem> Level::collisions;
 std::vector<LevelItem> Level::textures = {};
 
 //------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ LevelItem::~LevelItem() {  // TODO
 };
 
 LevelItem::LevelItem() {};
-LevelItem::LevelItem(Vec2<int> ppos, Vec2<int> size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
+LevelItem::LevelItem(Vec2<int> ppos, Vec2<int> size, CollisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), collisionType(pcolType), color(pcolor), textureID(ptextID) {
     this->wireframe = {ppos.x, ppos.y, size.x, size.y};
     switch (ptextID) {
         case VOID: {  // this is where the textures should be applied
@@ -62,10 +62,10 @@ LevelItem::LevelItem(Vec2<int> ppos, Vec2<int> size, ColisionType pcolType, SDL_
         }
     }
 
-    if (pcolType != NO_COLISION) {
-        Level::colisions.push_back(*this);  // This is used when checking
-                                            // for colisions, because I dont
-                                            // want to iterate through every LevelItem
+    if (pcolType != NO_COLLISION) {
+        Level::collisions.push_back(*this);  // This is used when checking
+                                             // for colisions, because I dont
+                                             // want to iterate through every LevelItem
     } else {
         Level::textures.push_back(*this);
     }
@@ -76,7 +76,7 @@ LevelItem::LevelItem(Vec2<int> ppos, Vec2<int> size, ColisionType pcolType, SDL_
 void Level::GenerateLevel(const Uint8 &levelID) { (void)levelID; }
 
 void Level::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
-    for (LevelItem levelItem : Level::colisions) {
+    for (LevelItem levelItem : Level::collisions) {
         SDL_Color color = levelItem.color;
         SDL_Rect levelItemWireframe = {
             levelItem.wireframe.x - (int)cameraPos.x,

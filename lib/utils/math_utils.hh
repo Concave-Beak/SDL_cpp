@@ -29,6 +29,8 @@
 #include <array>
 #include <vector>
 
+#include "./engine_utils.hh"
+
 inline float DegreesToRadians(float degrees) { return degrees * 3.14f / 180; }
 
 template <class Type>
@@ -121,4 +123,58 @@ inline void Triangle<Type>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, 
     int indices[3] = {0, 1, 2};
 
     SDL_RenderGeometry(renderer, nullptr, vertices, 3, indices, 3);
+}
+
+// CheckSideColision | returns true if the "side" given has collided
+//
+// @param SDL_Rect rect        | The rectangle that moves to the collidable surface
+// @param SDL_Rect surface     | The collidable surface
+// @param Direction side       | The side that will be checked
+// @param Vec2<float> velocity | The velocity that the entity/model/rect is moving
+// @param float timeDelta      | The time delta
+// @param float timeMultiplier | The time multiplier
+inline bool CheckSideCollision(const SDL_Rect& rect, const SDL_Rect& surface, const Direction& side, const Vec2<float>& velocity, const float& timeDelta, const float& timeMultiplier) {
+    int rTop = rect.y, rBottom = rect.y + rect.h,
+        rLeft = rect.x, rRight = rect.x + rect.w;
+
+    int sTop = surface.y, sBottom = surface.y + surface.h,
+        sLeft = surface.x, sRight = surface.x + surface.w;
+
+    bool hasCollided = false;
+
+    bool isOverlapping = rRight > sLeft && rLeft < sRight;
+    if (side == Direction::LEFT || side == Direction::RIGHT) {
+        isOverlapping = rBottom > sTop && rTop < sBottom;
+    }
+    switch (side) {
+        case Direction::UP: {
+            hasCollided = rTop + timeDelta * velocity.y * timeMultiplier <= sBottom &&
+                          rTop >= sBottom;
+            break;
+        }
+        case Direction::DOWN: {
+            hasCollided = rBottom + timeDelta * velocity.y * timeMultiplier >= sTop &&
+                          rBottom <= sTop;
+            break;
+        }
+        case Direction::LEFT: {
+            hasCollided = rLeft + timeDelta * velocity.x * timeMultiplier <= sRight &&
+                          rLeft >= sLeft;
+            break;
+        }
+        case Direction::RIGHT: {
+            hasCollided = rRight + timeDelta * velocity.x * timeMultiplier >= sLeft &&
+                          rRight <= sRight;
+            break;
+        }
+    }
+    return (hasCollided && isOverlapping);
+}
+
+template <class Type>
+inline bool IsPointInRectangle(const Vec2<float>& point, const SDL_Rect& rect) {
+    return point.x >= rect.x &&
+           point.x <= rect.x + rect.w &&
+           point.y >= rect.y &&
+           point.y <= rect.y + rect.h;
 }
