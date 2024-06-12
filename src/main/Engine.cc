@@ -5,6 +5,7 @@
 
 #include <sstream>
 
+#include "../..//include/game/entities/Attack.hh"
 #include "../..//include/game/entities/NPC.hh"
 #include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../include/main/Level.hh"
@@ -29,17 +30,17 @@ void Engine::GameLoop() {
 
     NPC npc(Entity::GENERIC_HUMANOID_ENEMY, {1200, 900});
     while (!quit) {
-        ClearBackground(renderer, 100, 100, 100, 255);
-        UpdateScreenSpecs();  // this should only be used after changing the resolution through config
         beginTick = SDL_GetTicks();
-        Entity::Handle(timeDelta, timeMultiplier, isPaused);
-        lastLoopIteration = SDL_GetTicks();
+        ClearBackground(renderer, 100, 100, 100, 255);
+        UpdateScreenSpecs();
+        Entity::Handle(timeDelta, timeMultiplier, isPaused, cameraInstance->GetCameraPos(), renderer);
 
-        NPC::HandleMovement(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
+        NPC::Handle(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
         Attack::CheckAndDestroyExpiredAttacks();
         Render(beginTick);
         UpdateTimeDelta();
         ResetTimeMultiplier();
+        lastLoopIteration = SDL_GetTicks();
     }
 }
 
@@ -125,16 +126,16 @@ void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
 
 void Engine::HandleKeyboardState() {
     if (keyboardState[SDL_SCANCODE_A]) {
-        playerInstance->entity.Move(Direction::LEFT, playerInstance->GetRunningSpeed(), isPaused);
+        playerInstance->Move(Direction::LEFT, playerInstance->GetRunningSpeed(), isPaused);
     }
     if (keyboardState[SDL_SCANCODE_D]) {
-        playerInstance->entity.Move(Direction::RIGHT, playerInstance->GetRunningSpeed(), isPaused);
+        playerInstance->Move(Direction::RIGHT, playerInstance->GetRunningSpeed(), isPaused);
     }
     if (keyboardState[SDL_SCANCODE_W]) {
-        playerInstance->entity.Move(Direction::UP, playerInstance->GetRunningSpeed(), isPaused);
+        playerInstance->Move(Direction::UP, playerInstance->GetRunningSpeed(), isPaused);
     }
     if (keyboardState[SDL_SCANCODE_S]) {
-        playerInstance->entity.Move(Direction::DOWN, playerInstance->GetRunningSpeed(), isPaused);
+        playerInstance->Move(Direction::DOWN, playerInstance->GetRunningSpeed(), isPaused);
     }
     if (keyboardState[SDL_SCANCODE_LEFT]) {
         cameraInstance->Move(Direction::LEFT, isPaused);
@@ -174,8 +175,6 @@ void Engine::Render(Uint32 beginTick) {
 
     {
         Level::Draw(cameraPos, renderer);
-        Entity::Draw(cameraPos, renderer);
-        Attack::Draw(cameraPos, renderer);
         ShowDebugInfo();
         HandleEvents();
         HandleFPS(beginTick);

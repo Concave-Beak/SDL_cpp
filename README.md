@@ -15,8 +15,9 @@ make
 
 ## TODO
 
-- Create a pause tech
 - Player and texture assets
 - Improve code performance
 - Create enemies and AI
 - Error handling
+- Better fps handling
+- Improve Config

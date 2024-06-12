@@ -9,10 +9,9 @@
 
 //------------------------------------------------------------------------------
 
-class Player {
+class Player : public Entity {
    public:
     static Player* GetPlayerInstace();
-    Entity entity = Entity(Entity::PLAYER, {0, 0}, {64, 64});
 
     Vec2<float> GetPos();
 
@@ -46,6 +45,9 @@ class Player {
         },
     };
     Item currentItemHolding = inventory[0][0];
+
+   private:
+    void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) override;
 };
 
 //------------------------------------------------------------------------------

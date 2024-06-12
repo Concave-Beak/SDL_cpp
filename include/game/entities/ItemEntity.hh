@@ -5,7 +5,7 @@
 #include "../items/Item.hh"
 #include "./Entity.hh"
 
-class ItemEntity {
+class ItemEntity : protected Entity {
    public:
     ItemEntity(Item item_);
     void PickUp();
@@ -13,7 +13,6 @@ class ItemEntity {
    private:
     SDL_Texture *texture = nullptr;
     Item item;
-    Entity entity;
 
     float physicsWeight = 0;
 };

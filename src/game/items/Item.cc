@@ -1,6 +1,6 @@
 #include "../../../include/game/items/Item.hh"
 
-#include "../../../include/game/entities/Entity.hh"
+#include "../../../include/game/entities/Attack.hh"
 #include "../../../include/game/entities/ItemEntity.hh"
 
 Item::Item(ItemID itemID_) : ID(itemID_) {
@@ -33,9 +33,9 @@ void Item::Drop(Matrix2D<Item>* inventory) {
     ItemEntity(*this);
 }
 
-void Item::Attack(const Vec2<float>& spawnPos) {
+void Item::Attack(Entity* entityOrigin, const Vec2<float>& spawnPos) {
     Attack::AttackType atkType = Attack::SWORD_SLASH;
     if (this->itemTtype == ItemType::SHORT_BOW) atkType = Attack::ARROW;
 
-    new class Attack(this->damage, spawnPos, atkType, 1000);
+    new class Attack(entityOrigin, this->damage, spawnPos, atkType, 1000);
 }

@@ -6,9 +6,9 @@
 #include "../items/Item.hh"
 #include "./Entity.hh"
 
-class NPC {
+class NPC : protected Entity {
    public:
-    NPC(Entity::EntityID id, Vec2<float> startPos_);
+    NPC(Entity::EntityType type, Vec2<float> startPos_);
     ~NPC();
 
     Vec2<float> GetPos();
@@ -16,11 +16,7 @@ class NPC {
 
     Vec2<int> GetHitbox();
 
-    Entity entity;
-
-    static void HandleMovement(SDL_Renderer* renderer, Vec2<float> playerPos, Vec2<float> cameraPos, Vec2<int> playerHitbox);
-    static void FollowPlayer(Vec2<float> playerPos, NPC* npc);
-    static void ResetVisionCone(NPC* npc);
+    static void Handle(SDL_Renderer* renderer, Vec2<float> playerPos, Vec2<float> cameraPos, Vec2<int> playerHitbox);
 
    private:
     Vec2<float> spawnPos = {};
@@ -53,5 +49,12 @@ class NPC {
         },
     };
 
+   private:
     static std::vector<NPC*> npcVector;
+
+    static void HandleMovement(NPC* npc, SDL_Renderer* renderer, Vec2<float> playerPos, Vec2<float> cameraPos, Vec2<int> playerHitbox);
+    static void FollowPlayer(Vec2<float> playerPos, NPC* npc);
+    static void ResetVisionCone(NPC* npc);
+
+    void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) override;
 };

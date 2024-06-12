@@ -6,6 +6,7 @@ struct Inventory;
 #include <SDL2/SDL_stdinc.h>
 
 #include "../../../lib/utils/math_utils.hh"
+#include "../entities/Entity.hh"
 
 class Item {
    public:
@@ -17,7 +18,7 @@ class Item {
     ~Item();
 
     void Drop(Matrix2D<Item>* inventory);
-    void Attack(const Vec2<float>& spawnPos);
+    void Attack(Entity* entityOrigin, const Vec2<float>& spawnPos);
 
    private:
     ItemID ID;
