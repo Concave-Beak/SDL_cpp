@@ -34,6 +34,10 @@ class Entity {
 
     void Init(EntityType Type);
 
+    SDL_Rect GetEntityRect();
+
+    void Damage(int damage);
+
    protected:
     Entity();
     virtual ~Entity();
@@ -57,10 +61,12 @@ class Entity {
 
     float surfaceAttrition = 0;
 
+    float healthMax = 10;
+    float heathNow = 10;
+    bool isDead = false;
+
    protected:
     void ResetCollisionState();
-
-    SDL_Rect GetEntityRect();
 
     Entity* GetEntity();
 

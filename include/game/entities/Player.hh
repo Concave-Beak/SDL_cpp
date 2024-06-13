@@ -34,9 +34,6 @@ class Player : public Entity {
     Vec2<float> runningSpeed = {1, 200};
     Vec2<float> walkingSpeed = {0.5, 150};  // TODO: make private
 
-    Uint32 healthMax = 0;
-    Uint32 healthNow = healthMax;
-
     Vec2<Uint8> inventorySize;
     Matrix2D<Item> inventory = Matrix2D<Item>{
         {

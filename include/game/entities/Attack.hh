@@ -28,6 +28,9 @@ class Attack : public Entity {
     Uint32 lifeEndTick;
 
     bool isEffectedByGravity = false;
+    int timesHit = 0;
+    int maxHits = 1;  // maximum amount of times it can hit before being deleted
+    bool isMarkedForDeletion = false;
 
     inline static std::vector<Attack*> attackVector = {};
 
@@ -35,8 +38,11 @@ class Attack : public Entity {
     void HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) override;
 
     void HandleCollisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) override;
-    void HandleVerticalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
-                                 const float& timeDelta, const float& timeMultiplier) override;
-    void HandleHorizontalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
-                                   const float& timeDelta, const float& timeMultiplier) override;
+    void HandleSurfaceCollision(const std::array<Vec2<int>, 4>& verticiesAttackRect, const SDL_Rect& entityRect);
+    void HandleEntityCollision(const std::array<Vec2<int>, 4>& verticiesAttackRect, Entity* entity);
+
+    // Delete by searching the attackVector
+    void Delete();
+    // or by passing the iterator
+    void Delete(std::vector<Attack*>::iterator attackIt);
 };

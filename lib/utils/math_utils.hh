@@ -172,7 +172,7 @@ inline bool CheckSideCollision(const SDL_Rect& rect, const SDL_Rect& surface, co
 }
 
 template <class Type>
-inline bool IsPointInRectangle(const Vec2<float>& point, const SDL_Rect& rect) {
+inline bool IsPointInRectangle(const Vec2<Type>& point, const SDL_Rect& rect) {
     return point.x >= rect.x &&
            point.x <= rect.x + rect.w &&
            point.y >= rect.y &&

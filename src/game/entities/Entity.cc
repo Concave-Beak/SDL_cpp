@@ -209,4 +209,9 @@ void Entity::HandleCollisions(const float& timeDelta, const float& timeMultiplie
     }
 }
 
+void Entity::Damage(int damage) {
+    this->heathNow -= damage;
+    if (heathNow <= 0) isDead = true;
+}
+
 //------------------------------------------------------------------------------

@@ -2,6 +2,9 @@
 
 #include <SDL2/SDL_timer.h>
 
+#include <array>
+#include <iostream>
+
 #include "../../../lib/utils/sdl_utils.hh"
 
 Attack::Attack(Entity* entityOrigin_, Uint32 damage_, Vec2<float> spawnPos_, AttackType atkType_, Uint32 lifeTime)
@@ -44,19 +47,8 @@ void Attack::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
 void Attack::CheckAndDestroyExpiredAttacks() {
     Uint32 currentTicks = SDL_GetTicks();
     for (std::vector<Attack*>::iterator attackIt = attackVector.begin(); attackIt != attackVector.end();) {
-        if ((*attackIt)->lifeEndTick <= currentTicks) {
-            Attack* attackToDelete = *attackIt;
-
-            attackIt = attackVector.erase(attackIt);
-
-            delete attackToDelete;
-
-            for (std::vector<Entity*>::iterator entityIt = entityVector.begin(); entityIt != entityVector.end(); ++entityIt) {
-                if (*entityIt == static_cast<Entity*>(attackToDelete)) {
-                    entityVector.erase(entityIt);
-                    break;
-                }
-            }
+        if ((*attackIt)->lifeEndTick <= currentTicks || (*attackIt)->isMarkedForDeletion) {
+            (*attackIt)->Delete(attackIt);
         } else {
             ++attackIt;
         }
@@ -66,11 +58,11 @@ void Attack::CheckAndDestroyExpiredAttacks() {
 void Attack::HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
     if (isPaused) return;
 
-    if (this->velocityNow.y > MAX_PROJECTYLE_SPEED_Y) {
-        this->velocityNow.y = MAX_PROJECTYLE_SPEED_Y;
+    if (this->velocityNow.y > MAX_PROJECTILE_SPEED_Y) {
+        this->velocityNow.y = MAX_PROJECTILE_SPEED_Y;
     }
-    if (this->velocityNow.y < -MAX_PROJECTYLE_SPEED_Y) {
-        this->velocityNow.y = -MAX_PROJECTYLE_SPEED_Y;
+    if (this->velocityNow.y < -MAX_PROJECTILE_SPEED_Y) {
+        this->velocityNow.y = -MAX_PROJECTILE_SPEED_Y;
     }
 
     if (this->velocityNow.x > MAX_PROJECTILE_SPEED_X) {
@@ -97,67 +89,87 @@ void Attack::HandleVelocity(const float& timeDelta, const float& timeMultiplier,
     this->positionNow.x += this->velocityNow.x * timeMultiplier;
 }
 
-void Attack::HandleVerticalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
-                                     const float& timeDelta, const float& timeMultiplier) {
-    float levelItemTop = float(levelItem.pos.y),
-          levelItemBottom = float(levelItem.pos.y + levelItem.wireframe.h);
+void Attack::HandleEntityCollision(const std::array<Vec2<int>, 4>& verticiesAttackRect, Entity* entity) {
+    if (this->maxHits <= this->timesHit) this->isMarkedForDeletion = true;
 
-    bool hitFeet = CheckSideCollision(entityRect, levelItem.wireframe,
-                                      Direction::DOWN, this->velocityNow, timeDelta, timeMultiplier);
-    if (hitFeet) {
-        this->collidedDown = true;
-        this->surfaceAttrition = levelItem.attritionCoefficient;
-        this->positionNow.y = levelItemTop - float(this->hitbox.y);
-        this->velocityNow.y = 0;
-        if (levelItem.collisionType == PLATFORM) this->isAbovePlatform = true;
-    }
-
-    if (levelItem.collisionType == CollisionType::PLATFORM) return;
-
-    bool hitHead = CheckSideCollision(entityRect, levelItem.wireframe,
-                                      Direction::UP, this->velocityNow, timeDelta, timeMultiplier);
-    if (hitHead) {
-        this->collidedUp = true;
-        this->positionNow.y = levelItemBottom;
-        this->velocityNow.y = -this->velocityNow.y * SURFACE_BOUNCE;
+    for (const Vec2<int>& point : verticiesAttackRect) {
+        if (IsPointInRectangle(point, entity->GetEntityRect())) {
+            this->isMarkedForDeletion = true;  // TODO: for now
+            entity->Damage(this->damage);
+            return;
+        }
     }
 }
 
-void Attack::HandleHorizontalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
-                                       const float& timeDelta, const float& timeMultiplier) {
-    if (levelItem.collisionType == PLATFORM) return;
-
-    float levelItemLeft = float(levelItem.pos.x),
-          levelItemRight = float(levelItem.pos.x + levelItem.wireframe.w);
-
-    bool hitRight = CheckSideCollision(entityRect, levelItem.wireframe,
-                                       Direction::RIGHT, this->velocityNow, timeDelta, timeMultiplier);
-    if (hitRight) {
-        this->collidedRight = true;
-        this->velocityNow.x = -this->velocityNow.x * SURFACE_BOUNCE;
-        this->positionNow.x = levelItemLeft - float(this->hitbox.x);
-    }
-
-    bool hitLeft = CheckSideCollision(entityRect, levelItem.wireframe,
-                                      Direction::LEFT, this->velocityNow, timeDelta, timeMultiplier);
-    if (hitLeft) {
-        this->collidedLeft = true;
-        this->velocityNow.x = -this->velocityNow.x * SURFACE_BOUNCE;
-        this->positionNow.x = levelItemRight;
+void Attack::HandleSurfaceCollision(const std::array<Vec2<int>, 4>& verticiesAttackRect, const SDL_Rect& surfaceRect) {
+    for (const Vec2<int>& point : verticiesAttackRect) {
+        if (IsPointInRectangle(point, surfaceRect)) {
+            this->isMarkedForDeletion = true;
+            return;
+        }
     }
 }
 
 void Attack::HandleCollisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
-    if (isPaused)
-        return;
-
+    if (isPaused) return;
     this->ResetCollisionState();
 
+    SDL_Rect attackRect = this->GetEntityRect();
     SDL_Rect entityRect;
+
+    std::array<Vec2<int>, 4> verticiesAttackRect = {
+        Vec2<int>{attackRect.x, attackRect.y},
+        Vec2<int>{attackRect.x + attackRect.w, attackRect.y},
+        Vec2<int>{attackRect.x, attackRect.y + attackRect.h},
+        Vec2<int>{attackRect.x + attackRect.w, attackRect.y + attackRect.h},
+    };
+
+    for (Entity* entity : Entity::entityVector) {
+        if (entity == this->entityOrigin || entity == this->GetEntity()) continue;  // NOTE: I might change this depending if I want attacks/projectiles to hit each other
+
+        this->HandleEntityCollision(verticiesAttackRect, entity);
+        if (this->isMarkedForDeletion) return;
+    }
+
     for (LevelItem levelItem : Level::collisions) {
-        entityRect = this->GetEntityRect();
-        this->HandleVerticalCollision(entityRect, levelItem, timeDelta, timeMultiplier);
-        entityRect = this->GetEntityRect();
-        this->HandleHorizontalCollision(entityRect, levelItem, timeDelta, timeMultiplier);
+        this->HandleSurfaceCollision(verticiesAttackRect, levelItem.wireframe);
+        if (this->isMarkedForDeletion) return;
+    }
+}
+
+void Attack::Delete() {
+    for (std::vector<Attack*>::iterator attackIt = attackVector.begin(); attackIt != attackVector.end();) {
+        if (this == *attackIt) {
+            Attack* attackToDelete = *attackIt;
+
+            attackIt = attackVector.erase(attackIt);
+
+            delete attackToDelete;
+
+            for (std::vector<Entity*>::iterator entityIt = entityVector.begin(); entityIt != entityVector.end(); ++entityIt) {
+                if (*entityIt == static_cast<Entity*>(attackToDelete)) {
+                    entityVector.erase(entityIt);
+                    break;
+                }
+            }
+            break;
+        } else {
+            ++attackIt;
+        }
+    }
+}
+
+void Attack::Delete(std::vector<Attack*>::iterator attackIt) {
+    Attack* attackToDelete = *attackIt;
+
+    attackIt = attackVector.erase(attackIt);
+
+    delete attackToDelete;
+
+    for (std::vector<Entity*>::iterator entityIt = entityVector.begin(); entityIt != entityVector.end(); ++entityIt) {
+        if (*entityIt == static_cast<Entity*>(attackToDelete)) {
+            entityVector.erase(entityIt);
+            break;
+        }
     }
 }

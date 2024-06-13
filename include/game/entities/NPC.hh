@@ -39,9 +39,6 @@ class NPC : protected Entity {
     };
     AggressionType aggressionType;
 
-    Uint32 healthMax;
-    Uint32 healthNow;
-
     Matrix2D<Item> inventory = Matrix2D<Item>{
         {
             Item(Item::SHORTSWORD),
