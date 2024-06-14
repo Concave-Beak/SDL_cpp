@@ -2,7 +2,10 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_mouse.h>
+#include <SDL2/SDL_video.h>
 
+#include <iostream>
 #include <sstream>
 
 #include "../..//include/game/entities/Attack.hh"
@@ -34,7 +37,7 @@ void Engine::GameLoop() {
         ClearBackground(renderer, 100, 100, 100, 255);
         UpdateScreenSpecs();
         Entity::Handle(timeDelta, timeMultiplier, isPaused, cameraInstance->GetCameraPos(), renderer);
-
+        Player::Handle(mousePos);
         NPC::Handle(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
         Attack::CheckAndDestroyExpiredAttacks();
         Render(beginTick);
@@ -90,19 +93,20 @@ void Engine::ShowDebugInfo() {
 size_t Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
 void Engine::HandleEvents() {
-    SDL_PollEvent(&event);
-    switch (event.type) {
-        case SDL_QUIT: {
-            quit = true;
-            break;
-        }
-        case SDL_KEYDOWN: {
-            HandleKeyboard(event.key);
-            break;
-        }
-        case SDL_MOUSEBUTTONDOWN: {
-            HandleMouse(event.button);
-            break;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+            case SDL_QUIT: {
+                quit = true;
+                break;
+            }
+            case SDL_KEYDOWN: {
+                HandleKeyboard(event.key);
+                break;
+            }
+            case SDL_MOUSEBUTTONDOWN: {
+                HandleMouse(event.button);
+                break;
+            }
         }
     }
     HandleKeyboardState();
@@ -156,13 +160,11 @@ void Engine::HandleKeyboardState() {
     }
     if (keyboardState[SDL_SCANCODE_Q]) {
         quit = true;
-        return;
     }
 }
 
 void Engine::HandleMouseState() {
-    int x, y;
-    Uint32 buttons = SDL_GetMouseState(&x, &y);
+    Uint32 buttons = SDL_GetMouseState(&mousePos.x, &mousePos.y);
 
     if (buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) {
     }
@@ -181,9 +183,20 @@ void Engine::Render(Uint32 beginTick) {
         UI::Button::Handle(event, renderer);
         cameraInstance->FollowPlayer(playerInstance->GetPos(), timeDelta, screenSpecs,
                                      playerInstance->GetHitbox(), timeMultiplier, isPaused);
-
+        DrawMouse(cameraPos);
         SDL_RenderPresent(renderer);
     }
+}
+
+void Engine::DrawMouse(Vec2<int> cameraPos) {
+    SDL_Rect attackModel = {
+        mousePos.x - 10,
+        mousePos.y - 10,
+        20,
+        20,
+    };
+    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff));
+    scc(SDL_RenderFillRect(renderer, &attackModel));
 }
 
 const Error Engine::Init() {
@@ -212,6 +225,10 @@ const Error Engine::Init() {
         configInstance->ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y});
         std::cout << "INFO: Config read succesfully\n";
     }
+
+    SDL_SetWindowGrab(window, SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+
     return Error{};
 }
 

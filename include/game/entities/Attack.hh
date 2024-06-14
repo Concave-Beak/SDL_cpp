@@ -11,7 +11,7 @@ class Attack : public Entity {
         SWORD_SLASH = 0,
         ARROW,
     };
-    Attack(Entity* entityOrigin, Uint32 damage_, Vec2<float> spawnPos_, AttackType atkType_, Uint32 lifeTime);
+    Attack(Entity* entityOrigin, Uint32 damage_, Vec2<float> spawnPos_, AttackType atkType_, float angle, Uint32 lifeTime);
     ~Attack();
 
     static void Handle();
@@ -20,6 +20,8 @@ class Attack : public Entity {
 
    private:
     Entity* entityOrigin = nullptr;
+
+    Vec2<float> accelSpeed = {400, 400};
 
     float damage;
 
@@ -45,4 +47,6 @@ class Attack : public Entity {
     void Delete();
     // or by passing the iterator
     void Delete(std::vector<Attack*>::iterator attackIt);
+
+    void GetProjectileVelocity(Vec2<float> accelSpeed, float angle);
 };

@@ -18,7 +18,7 @@ class Item {
     ~Item();
 
     void Drop(Matrix2D<Item>* inventory);
-    void Attack(Entity* entityOrigin, const Vec2<float>& spawnPos);
+    void Attack(Entity* entityOrigin, const Vec2<float>& spawnPos, float angle);
 
    private:
     ItemID ID;

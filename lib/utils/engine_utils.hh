@@ -2,15 +2,15 @@
 
 #define ENTITY_MAX 1024
 
-#define GRAVITY 200.0f
+#define GRAVITY 120.0f
 
-#define MAX_X_SPEED 10
+#define MAX_X_SPEED 400
 #define MAX_Y_SPEED 400
 
-#define MAX_PROJECTILE_SPEED_X 80
+#define MAX_PROJECTILE_SPEED_X 400
 #define MAX_PROJECTILE_SPEED_Y 400
 
-#define AIR_ATTRITION 0.8f
+#define AIR_ATTRITION 1.5f
 #define SURFACE_BOUNCE 0.2f
 
 enum Direction {

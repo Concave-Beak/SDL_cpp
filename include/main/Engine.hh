@@ -37,6 +37,7 @@ class Engine {
     Uint32 lastLoopIteration = 0;
 
     Vec2<int> screenSpecs = {0, 0};
+    Vec2<int> mousePos = {0, 0};
 
     bool quit = false;
     bool isPaused = false;
@@ -74,6 +75,8 @@ class Engine {
 
     // Everything related to graphics in the main game loop
     void Render(Uint32 beginTick);
+
+    void DrawMouse(Vec2<int> cameraPos);
 };
 
 //------------------------------------------------------------------------------

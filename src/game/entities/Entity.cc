@@ -4,6 +4,7 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 
+#include <iostream>
 #include <vector>
 
 #include "../../../include/main/Level.hh"
@@ -115,15 +116,15 @@ void Entity::HandleVelocity(const float& timeDelta, const float& timeMultiplier,
         this->velocityNow.x = -MAX_X_SPEED;
     }
 
-    if (this->collidedDown == false) {
+    if (!this->collidedDown) {
         this->velocityNow.y += timeDelta * GRAVITY * timeMultiplier;
         this->positionNow.y += this->velocityNow.y * timeDelta * timeMultiplier;
     }
 
     if (!this->collidedDown) this->surfaceAttrition = AIR_ATTRITION;  // resets attrition
 
-    this->velocityNow.x -= timeDelta * this->surfaceAttrition * this->velocityNow.x * timeMultiplier;
-    this->positionNow.x += this->velocityNow.x * timeMultiplier;
+    this->velocityNow.x -= timeDelta * this->surfaceAttrition * timeMultiplier * this->velocityNow.x;
+    this->positionNow.x += this->velocityNow.x * timeMultiplier * timeDelta;
 }
 
 void Entity::ResetCollisionState() {

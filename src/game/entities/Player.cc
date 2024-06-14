@@ -28,11 +28,12 @@ void Player::SwitchWeapon(WeaponHand weaponHand) {
 }
 
 void Player::Attack() {
-    Vec2<float> attackSpawnPos = {Player::GetPos().x + Player::GetHitbox().x, Player::GetPos().y + Player::GetHitbox().y / 2.0f};
-    if (Entity::GetFacingDirection() == LEFT) {
-        attackSpawnPos = {Player::GetPos().x, Player::GetPos().y + Player::GetHitbox().y / 2.0f};
-    }
-    currentItemHolding.Attack(this->GetEntity(), attackSpawnPos);
+    Vec2<float> attackSpawnPos = {Player::GetPos().x, Player::GetPos().y};
+    currentItemHolding.Attack(this->GetEntity(), positionNow, angleFacing);
+}
+
+void Player::Handle(const Vec2<int>& mousePos_) {
+    playerInstance->mousePos = mousePos_;
 }
 
 void Player::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
@@ -45,4 +46,34 @@ void Player::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
     };
     scc(SDL_SetRenderDrawColor(renderer, RED, 0xff));
     scc(SDL_RenderFillRect(renderer, &playerModel));
+    DrawLineOfSight(mousePos, cameraPos, renderer);
+}
+
+void Player::SetFacingAngle(const Vec2<int>& mousePos, const Vec2<int>& cameraPos) {
+    int dx = mousePos.x - (this->positionNow.x - cameraPos.x);
+    int dy = mousePos.y - (this->positionNow.y - cameraPos.y);
+    this->angleFacing = atan2(dy, dx);
+}
+
+void Player::DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
+    float lineLength = 80;
+    SetFacingAngle(mousePos, cameraPos);
+
+    Vec2<int> lineBegin = {
+        int(this->positionNow.x - cameraPos.x),
+        int(this->positionNow.y - cameraPos.y),
+    };
+
+    Vec2<int> lineEnd = GetSightLineEnd(mousePos, cameraPos, lineLength);
+
+    SDL_SetRenderDrawColor(renderer, WHITE, 0xff);
+    SDL_RenderDrawLine(renderer,
+                       lineBegin.x, lineBegin.y,
+                       lineEnd.x, lineEnd.y);
+}
+
+Vec2<int> Player::GetSightLineEnd(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, float lineLength) {
+    return Vec2<int>{
+        int((this->positionNow.x - cameraPos.x) + lineLength * cos(this->angleFacing)),
+        int((this->positionNow.y - cameraPos.y) + lineLength * sin(this->angleFacing))};
 }

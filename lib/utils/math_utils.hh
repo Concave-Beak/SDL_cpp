@@ -27,6 +27,7 @@
 #include <sys/types.h>
 
 #include <array>
+#include <ostream>
 #include <vector>
 
 #include "./engine_utils.hh"
@@ -63,6 +64,10 @@ struct Vec2 {
     template <typename U>
     operator Vec2<U>() const {
         return {static_cast<U>(x), static_cast<U>(y)};
+    }
+    friend std::ostream& operator<<(std::ostream& os, const Vec2<Type>& vec) {
+        os << "(" << vec.x << ", " << vec.y << ")";
+        return os;
     }
 };
 

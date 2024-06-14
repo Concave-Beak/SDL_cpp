@@ -28,11 +28,16 @@ class Player : public Entity {
     void SwitchWeapon(WeaponHand weaponHand);
     void Attack();
 
+    static void Handle(const Vec2<int>& mousePos);
+
    private:
     static Player* playerInstance;
 
-    Vec2<float> runningSpeed = {1, 200};
-    Vec2<float> walkingSpeed = {0.5, 150};  // TODO: make private
+    Vec2<int> mousePos = {0, 0};
+    float angleFacing = 0;
+
+    Vec2<float> runningSpeed = {20, 125};
+    Vec2<float> walkingSpeed = {10, 75};
 
     Vec2<Uint8> inventorySize;
     Matrix2D<Item> inventory = Matrix2D<Item>{
@@ -45,6 +50,11 @@ class Player : public Entity {
 
    private:
     void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) override;
+
+    void DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, SDL_Renderer* renderer);
+
+    void SetFacingAngle(const Vec2<int>& mousePos, const Vec2<int>& cameraPos);
+    Vec2<int> GetSightLineEnd(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, float lineLength);
 };
 
 //------------------------------------------------------------------------------

@@ -3,35 +3,19 @@
 #include <SDL2/SDL_timer.h>
 
 #include <array>
-#include <iostream>
 
 #include "../../../lib/utils/sdl_utils.hh"
 
-Attack::Attack(Entity* entityOrigin_, Uint32 damage_, Vec2<float> spawnPos_, AttackType atkType_, Uint32 lifeTime)
+Attack::Attack(Entity* entityOrigin_, Uint32 damage_, Vec2<float> spawnPos_, AttackType atkType_, float angle, Uint32 lifeTime)
     : entityOrigin(entityOrigin_), damage(damage_), atkType(atkType_), lifeEndTick(SDL_GetTicks() + lifeTime) {
     this->positionNow = spawnPos_;
-    // switch (atkType_) {
-    //     case AttackType::ARROW: {
-    //         this->hitbox = {50, 10};
-    //         break;
-    //     }
-    //     case AttackType::SWORD_SLASH: {
-    //         this->hitbox = {30, 20};
-    //         break;
-    //     }
-    //     default: {
-    //         this->hitbox = {30, 10};
-    //         break;
-    //     }
-    // }
-    this->velocityNow = {80, 0};
-    this->hitbox = {30, 10};
+    GetProjectileVelocity(accelSpeed, angle);
+    this->hitbox = {10, 10};
     this->Init(Entity::ARROW);
     attackVector.push_back(this);
 }
 
-Attack::~Attack() {
-}
+Attack::~Attack() {}
 
 void Attack::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
     SDL_Rect attackModel = {
@@ -77,16 +61,15 @@ void Attack::HandleVelocity(const float& timeDelta, const float& timeMultiplier,
         gravity = GRAVITY;
     }
 
-    if (this->collidedDown == false) {
+    if (!this->collidedDown) {
         this->velocityNow.y += timeDelta * gravity * timeMultiplier;
         this->positionNow.y += this->velocityNow.y * timeDelta * timeMultiplier;
     }
 
-    if (!this->collidedDown)
-        this->surfaceAttrition = AIR_ATTRITION;  // resets attrition
+    if (!this->collidedDown) this->surfaceAttrition = AIR_ATTRITION;  // resets attrition
 
-    this->velocityNow.x -= timeDelta * this->surfaceAttrition * this->velocityNow.x * timeMultiplier;
-    this->positionNow.x += this->velocityNow.x * timeMultiplier;
+    // this->velocityNow.x -= timeDelta * this->surfaceAttrition * timeMultiplier * this->velocityNow.x;
+    this->positionNow.x += this->velocityNow.x * timeMultiplier * timeDelta;
 }
 
 void Attack::HandleEntityCollision(const std::array<Vec2<int>, 4>& verticiesAttackRect, Entity* entity) {
@@ -172,4 +155,9 @@ void Attack::Delete(std::vector<Attack*>::iterator attackIt) {
             break;
         }
     }
+}
+
+void Attack::GetProjectileVelocity(Vec2<float> accelSpeed, float angle) {
+    this->velocityNow.x = accelSpeed.x * cos(angle);
+    this->velocityNow.y = accelSpeed.y * sin(angle);
 }
