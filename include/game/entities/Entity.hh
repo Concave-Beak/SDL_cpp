@@ -55,7 +55,7 @@ class Entity {
     Vec2<float> velocityNow = {0, 0};
     Vec2<float> positionNow = {0, 0};
 
-    Direction facing = RIGHT;
+    Direction facing = Direction::RIGHT;
 
     Vec2<Uint8> hitbox = {64, 64};
 

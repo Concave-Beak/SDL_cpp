@@ -95,10 +95,11 @@ void Attack::HandleSurfaceCollision(const std::array<Vec2<int>, 4>& verticiesAtt
 
 void Attack::HandleCollisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused) {
     if (isPaused) return;
+    (void)timeDelta;
+    (void)timeMultiplier;
     this->ResetCollisionState();
 
     SDL_Rect attackRect = this->GetEntityRect();
-    SDL_Rect entityRect;
 
     std::array<Vec2<int>, 4> verticiesAttackRect = {
         Vec2<int>{attackRect.x, attackRect.y},

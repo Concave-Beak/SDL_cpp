@@ -4,7 +4,6 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 
-#include <iostream>
 #include <vector>
 
 #include "../../../include/main/Level.hh"
@@ -53,12 +52,12 @@ void Entity::Move(const Direction& direction, const Vec2<float>& accelSpeed, con
     switch (direction) {
         case Direction::LEFT: {
             velocityNow.x -= accelSpeed.x;
-            facing = LEFT;
+            facing = Direction::LEFT;
             break;
         }
         case Direction::RIGHT: {
             velocityNow.x += accelSpeed.x;
-            facing = RIGHT;
+            facing = Direction::RIGHT;
             break;
         }
         case Direction::UP: {
@@ -67,6 +66,7 @@ void Entity::Move(const Direction& direction, const Vec2<float>& accelSpeed, con
             break;
         }
         case Direction::DOWN: {
+            if (!isAbovePlatform) return;
             positionNow.y += 6;       // 6 is the safest i've found given the height
             collidedDown = false;     // of the plaform in Engine.cc. This needs to be done
             isAbovePlatform = false;  // to place the player bellow the platform's top

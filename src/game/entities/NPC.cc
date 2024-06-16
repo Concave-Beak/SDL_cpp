@@ -14,8 +14,8 @@ std::vector<NPC *> NPC::npcVector = {};
 
 NPC::NPC(Entity::EntityType type_, Vec2<float> spawnPos_) : spawnPos(spawnPos_) {
     this->isWandering = true;  // Placeholder
-    this->runningSpeed = {0.8f, 200};
-    this->walkingSpeed = {0.2f, 150};
+    this->runningSpeed = {10, 200};
+    this->walkingSpeed = {5, 150};
     this->visionConeAngle = 20;
     this->visionConeRange = 1000;
     Entity::Init(type_);
@@ -52,9 +52,9 @@ void NPC::ResetVisionCone(NPC *npc) {
 }
 
 void NPC::FollowPlayer(Vec2<float> playerPos, NPC *npc) {
-    Direction dir = RIGHT;
+    Direction dir = Direction::RIGHT;
     if (playerPos.x < npc->Entity::GetPos().x) {
-        dir = LEFT;
+        dir = Direction::LEFT;
     }
     npc->Entity::Move(dir, npc->runningSpeed, false);
 }

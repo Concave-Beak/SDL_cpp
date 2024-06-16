@@ -38,6 +38,7 @@ void Engine::GameLoop() {
         UpdateScreenSpecs();
         Entity::Handle(timeDelta, timeMultiplier, isPaused, cameraInstance->GetCameraPos(), renderer);
         Player::Handle(mousePos);
+        actionHandler->Handle();
         NPC::Handle(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
         Attack::CheckAndDestroyExpiredAttacks();
         Render(beginTick);
@@ -92,103 +93,23 @@ void Engine::ShowDebugInfo() {
 
 size_t Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
-void Engine::HandleEvents() {
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-            case SDL_QUIT: {
-                quit = true;
-                break;
-            }
-            case SDL_KEYDOWN: {
-                HandleKeyboard(event.key);
-                break;
-            }
-            case SDL_MOUSEBUTTONDOWN: {
-                HandleMouse(event.button);
-                break;
-            }
-        }
-    }
-    HandleKeyboardState();
-    HandleMouseState();
-}
-
-void Engine::HandleKeyboard(SDL_KeyboardEvent kbEvent) {
-    if (kbEvent.keysym.sym == SDLK_1) {
-        playerInstance->SwitchWeapon(Player::LEFT_HAND);
-    }
-    if (kbEvent.keysym.sym == SDLK_2) {
-        playerInstance->SwitchWeapon(Player::RIGHT_HAND);
-    }
-}
-
-void Engine::HandleMouse(SDL_MouseButtonEvent mbEvent) {
-    if (mbEvent.type == SDL_MOUSEBUTTONDOWN) {
-        playerInstance->Attack();
-    }
-}
-
-void Engine::HandleKeyboardState() {
-    if (keyboardState[SDL_SCANCODE_A]) {
-        playerInstance->Move(Direction::LEFT, playerInstance->GetRunningSpeed(), isPaused);
-    }
-    if (keyboardState[SDL_SCANCODE_D]) {
-        playerInstance->Move(Direction::RIGHT, playerInstance->GetRunningSpeed(), isPaused);
-    }
-    if (keyboardState[SDL_SCANCODE_W]) {
-        playerInstance->Move(Direction::UP, playerInstance->GetRunningSpeed(), isPaused);
-    }
-    if (keyboardState[SDL_SCANCODE_S]) {
-        playerInstance->Move(Direction::DOWN, playerInstance->GetRunningSpeed(), isPaused);
-    }
-    if (keyboardState[SDL_SCANCODE_LEFT]) {
-        cameraInstance->Move(Direction::LEFT, isPaused);
-    }
-    if (keyboardState[SDL_SCANCODE_RIGHT]) {
-        cameraInstance->Move(Direction::RIGHT, isPaused);
-    }
-    if (keyboardState[SDL_SCANCODE_UP]) {
-        cameraInstance->Move(Direction::UP, isPaused);
-    }
-    if (keyboardState[SDL_SCANCODE_DOWN]) {
-        cameraInstance->Move(Direction::DOWN, isPaused);
-    }
-
-    if (keyboardState[SDL_SCANCODE_R]) {
-        // playerInstance->pos = {0, 0};
-        // playerInstance->velocity = {0, 0};
-    }
-    if (keyboardState[SDL_SCANCODE_Q]) {
-        quit = true;
-    }
-}
-
-void Engine::HandleMouseState() {
-    Uint32 buttons = SDL_GetMouseState(&mousePos.x, &mousePos.y);
-
-    if (buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-    }
-    if (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
-    }
-}
-
 void Engine::Render(Uint32 beginTick) {
     Vec2<int> cameraPos = cameraInstance->GetCameraPos();
 
     {
         Level::Draw(cameraPos, renderer);
         ShowDebugInfo();
-        HandleEvents();
+        // HandleEvents();
         HandleFPS(beginTick);
         UI::Button::Handle(event, renderer);
         cameraInstance->FollowPlayer(playerInstance->GetPos(), timeDelta, screenSpecs,
                                      playerInstance->GetHitbox(), timeMultiplier, isPaused);
-        DrawMouse(cameraPos);
+        DrawMouse();
         SDL_RenderPresent(renderer);
     }
 }
 
-void Engine::DrawMouse(Vec2<int> cameraPos) {
+void Engine::DrawMouse() {
     SDL_Rect attackModel = {
         mousePos.x - 10,
         mousePos.y - 10,
@@ -222,7 +143,7 @@ const Error Engine::Init() {
     std::cout << "INFO: Loaded Debug Font\n";
 
     {
-        configInstance->ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y});
+        configInstance->ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y}, actionHandler);
         std::cout << "INFO: Config read succesfully\n";
     }
 

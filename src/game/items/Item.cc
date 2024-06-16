@@ -30,6 +30,7 @@ Item::~Item() {}
 
 // TODO
 void Item::Drop(Matrix2D<Item>* inventory) {
+    (void)inventory;
     ItemEntity(*this);
 }
 

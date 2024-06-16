@@ -11,8 +11,8 @@
 
 Player* Player::playerInstance = new Player;
 
-Vec2<float> Player::GetPos() { return Entity::GetPos(); }
-Vec2<float> Player::GetVelocityNow() { return Entity::GetVelocityNow(); }
+// Vec2<float> Player::GetPos() { return Entity::GetPos(); }
+// Vec2<float> Player::GetVelocityNow() { return Entity::GetVelocityNow(); }
 
 Player* Player::GetPlayerInstace() { return Player::playerInstance; }
 Vec2<float> Player::GetRunningSpeed() { return runningSpeed; }
@@ -28,7 +28,7 @@ void Player::SwitchWeapon(WeaponHand weaponHand) {
 }
 
 void Player::Attack() {
-    Vec2<float> attackSpawnPos = {Player::GetPos().x, Player::GetPos().y};
+    // Vec2<float> attackSpawnPos = {Player::GetPos().x, Player::GetPos().y};
     currentItemHolding.Attack(this->GetEntity(), positionNow, angleFacing);
 }
 
@@ -64,7 +64,7 @@ void Player::DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraP
         int(this->positionNow.y - cameraPos.y),
     };
 
-    Vec2<int> lineEnd = GetSightLineEnd(mousePos, cameraPos, lineLength);
+    Vec2<int> lineEnd = GetSightLineEnd(cameraPos, lineLength);
 
     SDL_SetRenderDrawColor(renderer, WHITE, 0xff);
     SDL_RenderDrawLine(renderer,
@@ -72,7 +72,7 @@ void Player::DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraP
                        lineEnd.x, lineEnd.y);
 }
 
-Vec2<int> Player::GetSightLineEnd(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, float lineLength) {
+Vec2<int> Player::GetSightLineEnd(const Vec2<int>& cameraPos, float lineLength) {
     return Vec2<int>{
         int((this->positionNow.x - cameraPos.x) + lineLength * cos(this->angleFacing)),
         int((this->positionNow.y - cameraPos.y) + lineLength * sin(this->angleFacing))};

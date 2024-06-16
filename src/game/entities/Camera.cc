@@ -29,25 +29,25 @@ void Camera::Move(Direction direction, const bool& isPaused) {
     cameraMovementSpeed = {maxPlayerOffset.x / 2, maxPlayerOffset.y / 8};  // Values to make it smoother
     isBeingMoved = true;
     switch (direction) {
-        case UP: {
+        case Direction::UP: {
             if (playerOffset.y < float(maxPlayerOffset.y)) {
                 vel.y -= float(cameraMovementSpeed.y);
             }
             break;
         }
-        case DOWN: {
+        case Direction::DOWN: {
             if (playerOffset.y < float(maxPlayerOffset.y)) {
                 vel.y += float(cameraMovementSpeed.y);
             }
             break;
         }
-        case LEFT: {
+        case Direction::LEFT: {
             if (playerOffset.x > float(minPlayerOffset.x)) {
                 vel.x -= float(cameraMovementSpeed.x);
             }
             break;
         }
-        case RIGHT: {
+        case Direction::RIGHT: {
             if (playerOffset.x < float(maxPlayerOffset.x)) {
                 vel.x += float(cameraMovementSpeed.x);
             }

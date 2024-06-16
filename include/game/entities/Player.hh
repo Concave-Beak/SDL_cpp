@@ -13,9 +13,9 @@ class Player : public Entity {
    public:
     static Player* GetPlayerInstace();
 
-    Vec2<float> GetPos();
+    // Vec2<float> GetPos();
 
-    Vec2<float> GetVelocityNow();
+    // Vec2<float> GetVelocityNow();
     Vec2<float> GetRunningSpeed();
     Vec2<float> GetWalkingSpeed();
 
@@ -54,7 +54,7 @@ class Player : public Entity {
     void DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, SDL_Renderer* renderer);
 
     void SetFacingAngle(const Vec2<int>& mousePos, const Vec2<int>& cameraPos);
-    Vec2<int> GetSightLineEnd(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, float lineLength);
+    Vec2<int> GetSightLineEnd(const Vec2<int>& cameraPos, float lineLength);
 };
 
 //------------------------------------------------------------------------------

@@ -2,11 +2,15 @@
 
 #include <SDL2/SDL.h>
 
+#include <functional>
+#include <unordered_map>
+
 #include "../../lib/utils/error_handling.hh"
 #include "../assetHandling/Font.hh"
 #include "../game/entities/Camera.hh"
 #include "../game/entities/Player.hh"
 #include "./Config.hh"
+#include "Action.hh"
 
 //------------------------------------------------------------------------------
 
@@ -23,6 +27,7 @@ class Engine {
     Player* playerInstance = Player::GetPlayerInstace();
     Config* configInstance = Config::GetConfig();
     Camera* cameraInstance = Camera::GetCameraInstance();
+    ActionHandler* actionHandler = ActionHandler::GetActionHandler(&event, playerInstance, &mousePos, &quit);
 
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;
@@ -44,6 +49,8 @@ class Engine {
 
     Font debugFont;
 
+    static std::unordered_map<SDL_Keycode, std::function<void>> keymaps;
+
    private:
     void GameLoop();
 
@@ -57,13 +64,6 @@ class Engine {
     // @param float startTick | The first tick of the loop's iteration
     void HandleFPS(Uint32 startTick);
 
-    // Event Handling functions
-    void HandleEvents();
-    void HandleKeyboardState();
-    void HandleMouseState();
-    void HandleKeyboard(SDL_KeyboardEvent);
-    void HandleMouse(SDL_MouseButtonEvent);
-
     // Updates screen Specifics to match real window size
     void UpdateScreenSpecs();
 
@@ -76,7 +76,7 @@ class Engine {
     // Everything related to graphics in the main game loop
     void Render(Uint32 beginTick);
 
-    void DrawMouse(Vec2<int> cameraPos);
+    void DrawMouse();
 };
 
 //------------------------------------------------------------------------------
