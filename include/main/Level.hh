@@ -8,9 +8,9 @@
 
 //------------------------------------------------------------------------------
 
-enum ColisionType {
-    NO_COLISION = 0,
-    FULL_COLISION,
+enum CollisionType {
+    NO_COLLISION = 0,
+    FULL_COLLISION,
     PLATFORM,
 };
 
@@ -23,8 +23,8 @@ enum TextureID {
 };
 
 struct LevelItem {
-    Vector2<int> pos;
-    ColisionType colisionType;
+    Vec2<int> pos;
+    CollisionType collisionType;
     SDL_Color color;
     SDL_Rect wireframe;
 
@@ -32,7 +32,8 @@ struct LevelItem {
     SDL_Texture *texture;  // there should also be a footstep sound depending on the surface
     float attritionCoefficient;
 
-    LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID);
+    LevelItem(Vec2<int> ppos, Vec2<int> size, CollisionType pcolType, SDL_Color pcolor,
+              TextureID ptextID);
     LevelItem();
     ~LevelItem();
 };
@@ -41,13 +42,14 @@ struct LevelItem {
 
 class Level {
    public:
-    static std::vector<LevelItem> colisions;
+    static std::vector<LevelItem> collisions;
     static std::vector<LevelItem> textures;
 
-    Level(){};
-    ~Level(){};
+    Level() {};
+    ~Level() {};
 
     void GenerateLevel(const Uint8 &levelID);
+    static void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer);
 
    private:
 };

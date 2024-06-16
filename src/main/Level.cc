@@ -8,34 +8,36 @@
 #include <vector>
 
 #include "../../lib/utils/math_utils.hh"
+#include "../../lib/utils/sdl_utils.hh"
 
-std::vector<LevelItem> Level::colisions;
+std::vector<LevelItem> Level::collisions;
 std::vector<LevelItem> Level::textures = {};
 
 //------------------------------------------------------------------------------
 
-LevelItem::~LevelItem() {
-    if (this->colisionType == NO_COLISION) {
-        for (size_t i = 0; i < Level::colisions.size(); i++) {
-            LevelItem *colItem = &Level::colisions[i];
-            if (colItem == this) {
-                Level::colisions.erase(Level::colisions.begin() + i);
-                break;
-            }
-        }
-    } else {
-        for (size_t i = 0; i < Level::textures.size(); i++) {
-            LevelItem *colItem = &Level::textures[i];
-            if (colItem == this) {
-                Level::textures.erase(Level::textures.begin() + i);
-                break;
-            }
-        }
-    }
+LevelItem::~LevelItem() {  // TODO
+    // if (this->colisionType == NO_COLISION) {
+    //     typedef std::vector<LevelItem>::iterator iterator;  // Define the iterator type
+    //
+    //     for (iterator it = Level::colisions.begin(); it != Level::colisions.end(); ++it) {
+    //         if (&(*it) == item) {
+    //             Level::colisions.erase(it);
+    //             break;
+    //         }
+    //     }
+    // } else {
+    //     for (size_t i = 0; i < Level::textures.size(); i++) {
+    //         LevelItem *colItem = &Level::textures[i];
+    //         if (colItem == this) {
+    //             Level::textures.erase(Level::textures.begin() + i);
+    //             break;
+    //         }
+    //     }
+    // }
 };
 
-LevelItem::LevelItem(){};
-LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), colisionType(pcolType), color(pcolor), textureID(ptextID) {
+LevelItem::LevelItem() {};
+LevelItem::LevelItem(Vec2<int> ppos, Vec2<int> size, CollisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), collisionType(pcolType), color(pcolor), textureID(ptextID) {
     this->wireframe = {ppos.x, ppos.y, size.x, size.y};
     switch (ptextID) {
         case VOID: {  // this is where the textures should be applied
@@ -60,10 +62,10 @@ LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType
         }
     }
 
-    if (pcolType != NO_COLISION) {
-        Level::colisions.push_back(*this);  // This is used when checking
-                                            // for colisions, because I dont
-                                            // want to iterate through every LevelItem
+    if (pcolType != NO_COLLISION) {
+        Level::collisions.push_back(*this);  // This is used when checking
+                                             // for colisions, because I dont
+                                             // want to iterate through every LevelItem
     } else {
         Level::textures.push_back(*this);
     }
@@ -71,7 +73,20 @@ LevelItem::LevelItem(Vector2<int> ppos, Vector2<int> size, ColisionType pcolType
 
 //------------------------------------------------------------------------------
 
-void Level::GenerateLevel(const Uint8 &levelID) {
+void Level::GenerateLevel(const Uint8 &levelID) { (void)levelID; }
+
+void Level::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
+    for (LevelItem levelItem : Level::collisions) {
+        SDL_Color color = levelItem.color;
+        SDL_Rect levelItemWireframe = {
+            levelItem.wireframe.x - (int)cameraPos.x,
+            levelItem.wireframe.y - (int)cameraPos.y,
+            levelItem.wireframe.w,
+            levelItem.wireframe.h,
+        };
+        scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a));
+        scc(SDL_RenderFillRect(renderer, &levelItemWireframe));
+    }
 }
 
 //------------------------------------------------------------------------------

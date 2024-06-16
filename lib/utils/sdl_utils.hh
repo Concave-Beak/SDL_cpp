@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
 
@@ -7,11 +9,17 @@
 #include <string>
 
 #include "../../lib/stbi/stb_image.h"
+#include "math_utils.hh"
 
-#define UNHEX(color)                 \
-    ((color) >> (8 * 0)) & 0xFF,     \
-        ((color) >> (8 * 1)) & 0xFF, \
-        ((color) >> (8 * 2)) & 0xFF, \
+#define BLACK 0x00, 0x00, 0x00
+#define PINK 0xec, 0x00, 0x8c
+#define RED 0xff, 0x00, 0x00
+#define YELLOW 0xff, 0xff, 0x00
+#define WHITE 0xff, 0xff, 0xff
+#define GREEN 0x00, 0xff, 0x00
+
+#define UNHEX(color)                                                                       \
+    ((color) >> (8 * 0)) & 0xFF, ((color) >> (8 * 1)) & 0xFF, ((color) >> (8 * 2)) & 0xFF, \
         ((color) >> (8 * 3)) & 0xFF
 
 inline void scc(int code) {
@@ -33,8 +41,7 @@ inline SDL_Surface *SurfaceFromFile(std::string file_path) {
     int width, height, n;
     unsigned char *pixels = stbi_load(file_path.c_str(), &width, &height, &n, STBI_rgb_alpha);
     if (pixels == NULL) {
-        fprintf(stderr, "ERROR: could not load file %s: %s\n",
-                file_path.c_str(), stbi_failure_reason());
+        fprintf(stderr, "ERROR: could not load file %s: %s\n", file_path.c_str(), stbi_failure_reason());
         exit(1);  // TODO: create a default surface for unloaded textures
     }
 
@@ -53,25 +60,34 @@ inline SDL_Surface *SurfaceFromFile(std::string file_path) {
     const int depth = 32;
     const int pitch = 4 * width;
 
-    return (SDL_Surface *)scp(SDL_CreateRGBSurfaceFrom(
-        (void *)pixels, width, height, depth, pitch,
-        rmask, gmask, bmask, amask));
+    return (SDL_Surface *)scp(
+        SDL_CreateRGBSurfaceFrom((void *)pixels, width, height, depth, pitch, rmask, gmask, bmask, amask));
 }
 
 inline void SetTextureColor(SDL_Texture *texture, SDL_Color color) {
-    scc(SDL_SetTextureColorMod(
-        texture,
-        color.r,
-        color.g,
-        color.b));
+    scc(SDL_SetTextureColorMod(texture, color.r, color.g, color.b));
 
     scc(SDL_SetTextureAlphaMod(texture, color.a));
 }
 
-#define RED \
-    SDL_Color { 0xff, 0x00, 0x00, 0xff }
-#define WHITE \
-    SDL_Color { 0xff, 0xff, 0xff, 0xff }
+// Draws that classic pink and black default texture in source games
+//
+// @param textureGrid The texture size to be drawn
+// @param resolution The amout of pixels each color should be drawn
+// @param renderer The renderer
+inline void DrawTextureNotFound(SDL_Rect textureGrid, const Vec2<int> resolution, SDL_Renderer *renderer) {
+    for (int y = 0; y < textureGrid.h / resolution.y; ++y) {
+        for (int x = 0; x < textureGrid.w / resolution.x; ++x) {
+            SDL_Rect rect{
+                .x = textureGrid.x + x * resolution.x,
+                .y = textureGrid.y + y * resolution.y,
+                .w = resolution.x,
+                .h = resolution.y,
+            };
+            SDL_Color color = ((x + y) % 2) ? SDL_Color{PINK, 0xff} : SDL_Color{BLACK, 0xff};
 
-#define GREEN \
-    SDL_Color { 0x00, 0xff, 0x00, 0xff }
+            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
+}

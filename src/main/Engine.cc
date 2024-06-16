@@ -1,418 +1,169 @@
 #include "../../include/main/Engine.hh"
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_video.h>
 
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <iomanip>
+#include <iostream>
 #include <sstream>
 
+#include "../..//include/game/entities/Attack.hh"
+#include "../..//include/game/entities/NPC.hh"
+#include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
 //------------------------------------------------------------------------------
 
-void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b,
-                     uint8_t a) {
+void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
-    SDL_RenderFillRect(renderer, NULL);
+    SDL_RenderClear(renderer);
 }
 
 //------------------------------------------------------------------------------
 
-void Engine::Loop() {
-    float beginTick = 0;
-    Vector2<float> *posPlayer = &playerInstance->pos;
-    Vector2<float> *velPlayer = &playerInstance->velocity;
-    Vector2<int> playerColisionboxInfo = playerInstance->GetHitboxInfo();
-    Level level;
-    level.GenerateLevel(0);
+void Engine::GameLoop() {
+    Uint32 beginTick = 0;
+    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                 // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 430}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);         // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);           // Placeholder
+    new LevelItem(Vec2<int>{screenSpecs.x / 3 + 100, screenSpecs.y - 100}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);     // Placeholder
+    new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
+    NPC npc(Entity::GENERIC_HUMANOID_ENEMY, {1200, 900});
     while (!quit) {
         beginTick = SDL_GetTicks();
-        HandlePlayerVelocity(posPlayer, velPlayer, playerColisionboxInfo);
-        {  // Rendering
-            ClearBackground(renderer, 100, 100, 100, 255);
-            if (debugMode) {
-                ShowDebugInfo();
-            }
-
-            Render();
-            HandleEvent(&event);
-            HandleFPS(beginTick);
-            SDL_RenderPresent(renderer);
-            SDL_RenderClear(renderer);
-        }
-        // reset timeMultiplier
-        if (timeMultiplier < 1 && !playerInstance->isPreparingToDash) {
-            timeMultiplier += (1 - timeMultiplier) / 50;
-        }
+        ClearBackground(renderer, 100, 100, 100, 255);
+        UpdateScreenSpecs();
+        Entity::Handle(timeDelta, timeMultiplier, isPaused, cameraInstance->GetCameraPos(), renderer);
+        Player::Handle(mousePos);
+        actionHandler->Handle();
+        NPC::Handle(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
+        Attack::CheckAndDestroyExpiredAttacks();
+        Render(beginTick);
+        UpdateTimeDelta();
+        ResetTimeMultiplier();
+        lastLoopIteration = SDL_GetTicks();
     }
 }
 
-void Engine::HandlePlayerVelocity(Vector2<float> *posPlayer,
-                                  Vector2<float> *velPlayer,
-                                  Vector2<int> playerColisionboxInfo) {
-    Uint32 timeNow = SDL_GetTicks();
+void Engine::ResetTimeMultiplier() {
+    if (isPaused) return;
 
-    float delta = (timeNow - lastUpdate) /
-                  300.0f;  // 300 is just to make delta easier to work with
-
-    float attritionCoefficient = 0;
-
-    {
-        if (velPlayer->y > MAX_Y_SPEED) {
-            velPlayer->y = MAX_Y_SPEED;
-        }
-        if (velPlayer->y < MIN_Y_SPEED) {
-            velPlayer->y = MIN_Y_SPEED;
-        }
-
-        if (velPlayer->x > MAX_X_SPEED) {
-            velPlayer->x = MAX_X_SPEED;
-        }
-        if (velPlayer->x < MIN_X_SPEED) {
-            velPlayer->x = MIN_X_SPEED;
-        }
-    }
-
-    if (playerInstance->colidedDown == false) {
-        velPlayer->y += delta * GRAVITY * timeMultiplier;
-        posPlayer->y += velPlayer->y * delta * timeMultiplier;
-    }
-
-    if (!playerInstance->colidedDown) attritionCoefficient = 0.8;
-
-    HandlePlayerColisions(posPlayer, velPlayer, playerColisionboxInfo, delta,
-                          &attritionCoefficient, timeMultiplier);
-
-    velPlayer->x -=
-        delta * attritionCoefficient * velPlayer->x * timeMultiplier;
-    posPlayer->x += velPlayer->x * timeMultiplier;
-
-    camera->FollowPlayer(*posPlayer, delta, {SCREEN_WIDTH, SCREEN_HEIGHT},
-                         playerColisionboxInfo, timeMultiplier);
-
-    lastUpdate = SDL_GetTicks();
-}
-
-void Engine::HandlePlayerColisions(Vector2<float> *posPlayer,
-                                   Vector2<float> *velPlayer,
-                                   const Vector2<int> colisionBoxPlayer,
-                                   const float delta,
-                                   float *attritionCoefficient,
-                                   const float &timeMultipler) {
-    (void)timeMultipler;  // just so the compilers doesnt bitch about it
-    playerInstance->colidedUp = false;
-    playerInstance->colidedLeft = false;
-    playerInstance->colidedRight = false;
-    playerInstance->colidedDown = false;
-
-    playerInstance->isAbovePlatform = false;
-
-    float headOfPlayer = posPlayer->y, leftOfPlayer = posPlayer->x,
-          rightOfPlayer = posPlayer->x + colisionBoxPlayer.x,
-          feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;
-
-    bool isHorizontallyOverlaped, hitFeet, hitHead, isVerticallyOverlaped,
-        hitRight, hitLeft;
-
-    float colItemTop, colItemLeft, colItemRight, colItemBottom;
-
-    for (LevelItem colisionItem : Level::colisions) {
-        {
-            colItemTop = colisionItem.pos.y;
-            colItemBottom = colisionItem.pos.y + colisionItem.wireframe.h;
-            colItemLeft = colisionItem.pos.x;
-            colItemRight = colisionItem.pos.x + colisionItem.wireframe.w;
-        }
-
-        {
-            isHorizontallyOverlaped =
-                (rightOfPlayer > colItemLeft && rightOfPlayer < colItemRight) ||
-                (leftOfPlayer > colItemLeft && leftOfPlayer < colItemRight);
-
-            hitFeet =
-                feetOfPLayer + delta * velPlayer->y * timeMultiplier >=
-                    colItemTop &&
-                feetOfPLayer <=
-                    colItemBottom - colisionItem.wireframe.h *
-                                        0.8 &&  // 0.8 is the maximum that i've
-                                                // found not to break colision,
-                isHorizontallyOverlaped;  // this makes it so the player only
-                                          // goes up if above 20% o the
-                                          // colItem's height
-
-            hitHead =
-                headOfPlayer + delta * velPlayer->y * timeMultiplier <=
-                    colItemBottom &&
-                headOfPlayer >= colItemTop + colisionItem.wireframe.h * 0.9 &&
-                isHorizontallyOverlaped;
-        }
-
-        if (hitFeet) {
-            playerInstance->colidedDown = true;
-            *attritionCoefficient = colisionItem.attritionCoefficient;
-            posPlayer->y = colItemTop - colisionBoxPlayer.y;
-            velPlayer->y = 0;
-            if (colisionItem.colisionType == PLATFORM)
-                playerInstance->isAbovePlatform = true;
-        }
-
-        if (colisionItem.colisionType != PLATFORM) {
-            if (hitHead) {
-                playerInstance->colidedUp = true;
-                posPlayer->y = colItemBottom;
-                velPlayer->y = -velPlayer->y * 0.2f;
-            }
-            {  // this needs to be recalculated after changing the players pos
-               // in hitFeet and/or hitHead
-                headOfPlayer = posPlayer->y, leftOfPlayer = posPlayer->x,
-                rightOfPlayer = posPlayer->x + colisionBoxPlayer.x,
-                feetOfPLayer = posPlayer->y + colisionBoxPlayer.y;
-
-                isVerticallyOverlaped = ((headOfPlayer > colItemTop &&
-                                          headOfPlayer < colItemBottom) ||
-                                         (feetOfPLayer > colItemTop &&
-                                          feetOfPLayer < colItemBottom));
-
-                hitRight = rightOfPlayer -
-                                   velPlayer->x * delta *
-                                       *(attritionCoefficient)*timeMultiplier >=
-                               colItemLeft &&
-                           rightOfPlayer <= colItemRight &&
-                           isVerticallyOverlaped;
-
-                hitLeft =
-                    leftOfPlayer - velPlayer->x * delta *
-                                       *(attritionCoefficient)*timeMultiplier <=
-                        colItemRight &&
-                    leftOfPlayer >= colItemLeft && isVerticallyOverlaped;
-            }
-
-            if (hitRight) {
-                playerInstance->colidedRight = true;
-                velPlayer->x = -velPlayer->x * 0.2;
-                posPlayer->x = colItemLeft - colisionBoxPlayer.x;
-            }
-            if (hitLeft) {
-                playerInstance->colidedLeft = true;
-                velPlayer->x = -velPlayer->x * 0.2;
-                posPlayer->x = colItemRight;
-            }
-        }
+    if (timeMultiplier < 1) {
+        timeMultiplier += (1 - timeMultiplier) / 50;
     }
 }
 
-void Engine::HandleFPS(float loopBegin) {
-    float timeStepInMS = 1000.0f / fpsCap;
-    float loopEnd = SDL_GetTicks();
-    float timeDifference = timeStepInMS - (loopEnd - loopBegin);
+void Engine::UpdateTimeDelta() {
+    timeDelta = float(SDL_GetTicks() - lastLoopIteration) / 300.0f;  // 300 is just to make delta easier to work with
+}
 
-    if (config->ShowFPSState() == true) {
+void Engine::HandleFPS(Uint32 loopBegin) {
+    float timeStepInMS = 1000.0f / fpsMAX;
+    Uint32 loopEnd = SDL_GetTicks();
+    float timeDifference = timeStepInMS - float(loopEnd - loopBegin);
+
+    if (configInstance->ShowFPSState() == true) {
         std::stringstream fpsStr;  // fps is in secods, timeDifference is in ms.
         fpsStr << "FPS: " << std::setprecision(4)
-               << fpsCap - (timeDifference /
-                            1000.0f);  // that's why it's divided by 1000
+               << fpsMAX - (timeDifference / 1000.0f);  // that's why it's divided by 1000
 
-        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(),
-                        fpsStr.str().size(), Vector2<float>{0, 0}, GREEN, 3);
+        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vec2<int>{0, 0}, SDL_Color{GREEN, 0xff}, 3);
     }
 
     if (timeDifference >= 0) {
-        SDL_Delay(timeStepInMS - (loopEnd - loopBegin));
+        SDL_Delay(Uint32(timeStepInMS - float(loopEnd - loopBegin)));
         return;
     }
 }
 
 void Engine::ShowDebugInfo() {
     std::stringstream levelItemStr;
-    levelItemStr << "LI: " << Level::colisions.size() + Level::textures.size()
-                 << "C/T: " << Level::colisions.size() << "/"
-                 << Level::textures.size();
-    RenderTextSized(
-        renderer, &debugFont, levelItemStr.str().c_str(),
-        levelItemStr.str().size(),
-        Vector2<float>{
-            float(SCREEN_WIDTH -
-                  GetTextRectangleWidth(levelItemStr.str().size()) * 2),
-            0},
-        WHITE, 3);
+    levelItemStr << "LI: " << Level::collisions.size() + Level::textures.size()
+                 << "C/T: " << Level::collisions.size() << "/" << Level::textures.size();
+    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE, 0xff}, 3);
 
     std::stringstream playerInfo;
-    playerInfo << "XY: " << std::setprecision(4) << playerInstance->pos.x << " "
-               << std::setprecision(4) << playerInstance->pos.y;
-    RenderTextSized(
-        renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(),
-        Vector2<float>{
-            float(SCREEN_WIDTH -
-                  GetTextRectangleWidth(playerInfo.str().size()) * 2),
-            100},
-        WHITE, 3);
+    playerInfo << "XY: " << std::setprecision(4) << playerInstance->GetPos().x << " " << std::setprecision(4)
+               << playerInstance->GetPos().y;
+    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, SDL_Color{WHITE, 0xff}, 3);
 }
 
-int Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }
+size_t Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
-void Engine::HandleEvent(SDL_Event *event) {
-    SDL_PollEvent(event);
-    switch (event->type) {
-        case SDL_QUIT: {
-            quit = true;
-            break;
-        }
-        case SDL_KEYDOWN: {
-            keyStates[event->key.keysym.sym] = true;
-            break;
-        }
-        case SDL_KEYUP: {
-            keyStates[event->key.keysym.sym] = false;
-            break;
-        }
-    }
-    if (keyStates[SDLK_a]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(LEFT, 0, renderer, &timeMultiplier);
-        } else {
-            playerInstance->Move(MoveOptions::LEFT);
-        }
-    }
-    if (keyStates[SDLK_d]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(RIGHT, 0, renderer, &timeMultiplier);
-        } else {
-            playerInstance->Move(MoveOptions::RIGHT);
-        }
-    }
-    if (keyStates[SDLK_w]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(UP, 0, renderer, &timeMultiplier);
-        } else {
-            playerInstance->Move(MoveOptions::UP);
-        }
-    }
-    if (keyStates[SDLK_s]) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(DOWN, 0, renderer, &timeMultiplier);
-        } else {
-            playerInstance->Move(MoveOptions::DOWN);
-        }
-    }
-    if (keyStates[SDLK_e] &&
-        SDL_GetTicks() >= playerInstance->whenNextDashAvailable) {
-        if (!playerInstance->isPreparingToDash) {
-            playerInstance->PrepareToDash(NONE, 0, renderer, &timeMultiplier);
-            playerInstance->DashEnd = SDL_GetTicks() + 2000;
-            playerInstance->isPreparingToDash = true;
-        }
-        if (SDL_GetTicks() >= playerInstance->DashEnd) {
-            playerInstance->Dash();
-            playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
-        }
-    }
-    if (keyStates[SDLK_e] == false) {
-        if (playerInstance->isPreparingToDash) {
-            playerInstance->Dash();
-            playerInstance->isPreparingToDash = false;
-            playerInstance->whenNextDashAvailable = SDL_GetTicks() + 5000;
-        }
-    }
-    if (keyStates[SDLK_LEFT]) {
-        camera->Move(LEFT);
-    }
-    if (keyStates[SDLK_RIGHT]) {
-        camera->Move(RIGHT);
-    }
-    if (keyStates[SDLK_UP]) {
-        camera->Move(UP);
-    }
-    if (keyStates[SDLK_DOWN]) {
-        camera->Move(DOWN);
-    }
+void Engine::Render(Uint32 beginTick) {
+    Vec2<int> cameraPos = cameraInstance->GetCameraPos();
 
-    if (keyStates[SDLK_r]) {
-        playerInstance->pos = {0, 0};
-    }
-    if (keyStates[SDLK_q]) {
-        quit = true;
-        return;
+    {
+        Level::Draw(cameraPos, renderer);
+        ShowDebugInfo();
+        // HandleEvents();
+        HandleFPS(beginTick);
+        UI::Button::Handle(event, renderer);
+        cameraInstance->FollowPlayer(playerInstance->GetPos(), timeDelta, screenSpecs,
+                                     playerInstance->GetHitbox(), timeMultiplier, isPaused);
+        DrawMouse();
+        SDL_RenderPresent(renderer);
     }
 }
 
-void Engine::Render() {
-    Vector2<float> cameraPos = camera->pos;
-
-    for (LevelItem levelItem : Level::colisions) {
-        SDL_Color color = levelItem.color;
-        SDL_Rect levelItemWireframe = {
-            levelItem.wireframe.x - (int)cameraPos.x,
-            levelItem.wireframe.y - (int)cameraPos.y,
-            levelItem.wireframe.w,
-            levelItem.wireframe.h,
-        };
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_RenderFillRect(renderer, &levelItemWireframe);
-    }
-
-    SDL_Rect playerModel = {
-        (int)playerInstance->pos.x - (int)cameraPos.x,
-        (int)playerInstance->pos.y - (int)cameraPos.y,
-        playerInstance->hitbox.x,
-        playerInstance->hitbox.y,
+void Engine::DrawMouse() {
+    SDL_Rect attackModel = {
+        mousePos.x - 10,
+        mousePos.y - 10,
+        20,
+        20,
     };
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
-    SDL_RenderFillRect(renderer, &playerModel);
+    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff));
+    scc(SDL_RenderFillRect(renderer, &attackModel));
 }
 
-void Engine::Init() {
+const Error Engine::Init() {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n",
-                SDL_GetError());
-        exit(EXIT_FAILURE);
+        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }
-    printf("INFO: SDL_Init initialized succesfully\n");
+    std::cout << "INFO: SDL_Init initialized succesfully\n";
 
-    window = SDL_CreateWindow("Game", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
-                              SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("SoulBound", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_CENTERED, screenSpecs.x, screenSpecs.y, SDL_WINDOW_BORDERLESS);
     if (window == NULL) {
-        fprintf(stderr, "SDL could not create window! SDL_Error: %s\n",
-                SDL_GetError());
-        exit(EXIT_FAILURE);
+        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }
-    printf("INFO: Window initialized succesfully\n");
+    std::cout << "INFO: Window initialized succesfully\n";
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
-        fprintf(stderr, "SDL could not create renderer! SDL_Error: %s\n",
-                SDL_GetError());
-        exit(EXIT_FAILURE);
+        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
     }
-    printf("INFO: Renderer initialized succesfully\n");
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    std::cout << "INFO: Renderer initialized succesfully\n";
 
-    if (debugMode) {
-        printf("INFO: Starting in debug mode\n");
+    debugFont = FontLoadFromFile(renderer, "./assets/fonts/charmap-oldschool_white.png");
+    std::cout << "INFO: Loaded Debug Font\n";
+
+    {
+        configInstance->ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y}, actionHandler);
+        std::cout << "INFO: Config read succesfully\n";
     }
 
-    debugFont = FontLoadFromFile(renderer,
-                                 "./assets/fonts/charmap-oldschool_white.png");
-    printf("INFO: Loaded Debug Font\n");
+    SDL_SetWindowGrab(window, SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+
+    return Error{};
 }
 
-int Engine::Run() {
-    printf("Starting the game loop...\n");
-    Loop();
+void Engine::Run() {
+    std::cout << "Starting the game loop...\n";
+    GameLoop();
 
-    printf("Game closed");
+    std::cout << "Game closed\n";
     SDL_DestroyWindow(window);
     SDL_Quit();
-    return 0;
+    return;
 }
 
 Engine *Engine::instance = new Engine;
 Engine *Engine::GetEngineInstance() { return instance; }
 
-void Engine::UpdateScreenInfo() {
-    SDL_GetRendererOutputSize(renderer, &SCREEN_WIDTH, &SCREEN_HEIGHT);
-}
+void Engine::UpdateScreenSpecs() { SDL_GetRendererOutputSize(renderer, &screenSpecs.x, &screenSpecs.y); }

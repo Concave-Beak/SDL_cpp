@@ -1,77 +1,82 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_stdinc.h>
-#include <sys/wait.h>
 
+#include <functional>
 #include <unordered_map>
 
-#include "../assetHandeling/Font.hh"
-#include "../entities/Camera.hh"
-#include "../entities/Player.hh"
+#include "../../lib/utils/error_handling.hh"
+#include "../assetHandling/Font.hh"
+#include "../game/entities/Camera.hh"
+#include "../game/entities/Player.hh"
 #include "./Config.hh"
+#include "Action.hh"
 
 //------------------------------------------------------------------------------
 
 class Engine {
    public:
-    bool debugMode = false;  // will change
-
-    // SDL_Window* GetWindow();  // not implemented
     static Engine* GetEngineInstance();
 
-    void UpdateScreenInfo();
-
-    void Init();
-    int Run();
-
-    // float GetTimeMultiplier(); // not used
+    const Error Init();
+    void Run();
 
    private:
     static Engine* instance;
 
     Player* playerInstance = Player::GetPlayerInstace();
-    Config* config = Config::GetConfig();
-    Camera* camera = Camera::GetCameraInstance();
+    Config* configInstance = Config::GetConfig();
+    Camera* cameraInstance = Camera::GetCameraInstance();
+    ActionHandler* actionHandler = ActionHandler::GetActionHandler(&event, playerInstance, &mousePos, &quit);
 
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;
     SDL_Event event = SDL_Event{};
 
-    std::unordered_map<SDL_Keycode, bool> keyStates;
+    const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
 
-    const Uint16 fpsCap = 60;
+    const Uint16 fpsMAX = 60;
     const Uint8 minFPS = 10;
+    float timeDelta = 0;
     float timeMultiplier = 1;
-    Uint32 lastUpdate = 0;
+    Uint32 lastLoopIteration = 0;
+
+    Vec2<int> screenSpecs = {0, 0};
+    Vec2<int> mousePos = {0, 0};
 
     bool quit = false;
-    bool paused = false;
-
-    int SCREEN_WIDTH = 1024;
-    int SCREEN_HEIGHT = 768;
+    bool isPaused = false;
 
     Font debugFont;
 
+    static std::unordered_map<SDL_Keycode, std::function<void>> keymaps;
+
    private:
-    void Loop();
+    void GameLoop();
 
-    void HandleFPS(float startTick);
-    void HandleEvent(SDL_Event* event);
+    void UpdateTimeDelta();
 
-    void HandlePlayerVelocity(Vector2<float>* playerPos,
-                              Vector2<float>* playerVel,
-                              Vector2<int> playerHitboxInfo);
-    void HandlePlayerColisions(Vector2<float>* playerPos,
-                               Vector2<float>* playerVel,
-                               Vector2<int> playerColisionboxInfo, float delta,
-                               float* attritionCoefficient,
-                               const float& timeMultiplier);
+    // If time multiplier gets changed, it will slowly make it go back to `1` for
+    // a smooth increase in time
+    void ResetTimeMultiplier();
 
+    // Handles fps
+    // @param float startTick | The first tick of the loop's iteration
+    void HandleFPS(Uint32 startTick);
+
+    // Updates screen Specifics to match real window size
+    void UpdateScreenSpecs();
+
+    // Shows debug info to the user // TODO:: needs to be improved
     void ShowDebugInfo();
-    int GetTextRectangleWidth(size_t strSize);
 
-    void Render();
+    // Used for fonts // TODO:: NEEDS TO BE REDONE
+    size_t GetTextRectangleWidth(size_t strSize);
+
+    // Everything related to graphics in the main game loop
+    void Render(Uint32 beginTick);
+
+    void DrawMouse();
 };
 
 //------------------------------------------------------------------------------

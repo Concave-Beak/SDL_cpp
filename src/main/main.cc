@@ -6,13 +6,12 @@
 
 #include "../../include/main/Engine.hh"
 
-int main(int argc, char** argv) {
+int main() {
     Engine* instance = Engine::GetEngineInstance();
-    if (argc > 1) {
-        if (strcmp(argv[1], "--debug") == 0 || strcmp(argv[1], "-d") == 0) {
-            instance->debugMode = true;
-        }
+    Error err = instance->Init();
+
+    if (!err) {
+        std::cout << "INFO: Game initialized successfully\n";
     }
-    instance->Init();
-    return instance->Run();
+    instance->Run();
 }
