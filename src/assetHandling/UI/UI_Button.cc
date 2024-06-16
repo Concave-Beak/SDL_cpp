@@ -11,9 +11,9 @@ namespace UI {
 
 std::vector<Button*> Button::buttonVector;
 
-Button::Button(ButtonFlags flags, SDL_Rect grid)
-    : flags(flags),
-      grid(grid),
+Button::Button(ButtonFlags flags_, SDL_Rect grid_)
+    : flags(flags_),
+      grid(grid_),
       outlineColor({0, 0, 0, 0}),
       defaultTexture(nullptr),
       hoverTexture(nullptr),
@@ -30,7 +30,7 @@ Button::~Button() {
     if (clickedTexture) SDL_DestroyTexture(clickedTexture);
 }
 
-void Button::SetOutlineColor(const SDL_Color& color) { outlineColor = color; }
+void Button::SetOutlineColor(const SDL_Color& color_) { outlineColor = color_; }
 
 const Error Button::AssignTexture(SDL_Texture*& oldTexture, SDL_Texture* newTexture) {
     if (oldTexture) {
@@ -73,10 +73,10 @@ Error Button::SetTexture(SDL_Texture* newTexture, TextureField textureField) {
     return Error();
 }
 
-void Button::SetFlags(ButtonFlags flags) { this->flags = flags; }
+void Button::SetFlags(ButtonFlags flags_) { this->flags = flags_; }
 
-void Button::SetFunction(std::function<Error()> clickEvent) {
-    this->clickEvent = std::move(clickEvent);
+void Button::SetFunction(std::function<Error()> clickEvent_) {
+    this->clickEvent = std::move(clickEvent_);
 }
 
 void Button::AddToButtonVector() { buttonVector.emplace_back(this); }
@@ -90,7 +90,7 @@ Error Button::Handle(SDL_Event event, SDL_Renderer* renderer) {
     }
 
     if (event.type == SDL_MOUSEBUTTONDOWN) {
-        HandleClicks(Vector2<int>{event.button.x, event.button.y});
+        HandleClicks(Vec2<int>{event.button.x, event.button.y});
     }
 
     if (event.type == SDL_MOUSEMOTION) {
@@ -120,7 +120,7 @@ Error Button::DrawButtons(SDL_Renderer* renderer) {
     return Error();
 }
 
-void Button::HandleClicks(Vector2<int> mousePos) {
+void Button::HandleClicks(Vec2<int> mousePos) {
     SDL_Point mousePoint{.x = mousePos.x, .y = mousePos.y};
     for (const auto& btn : buttonVector) {
         if (btn->isShown && SDL_PointInRect(&mousePoint, &btn->grid)) {
@@ -134,14 +134,14 @@ void Button::HandleClicks(Vector2<int> mousePos) {
         }
     }
 }
-void Button::HandleHover(Vector2<int> mousePos, SDL_Renderer* renderer) {
+void Button::HandleHover(Vec2<int> mousePos, SDL_Renderer* renderer) {
     SDL_Point mousePoint{.x = mousePos.x, .y = mousePos.y};
     for (const auto& btn : buttonVector) {
         if (btn->isShown && SDL_PointInRect(&mousePoint, &btn->grid)) {
             if (btn->hoverTexture) {
                 scc(SDL_RenderCopy(renderer, btn->hoverTexture, nullptr, &btn->grid));
             } else {
-                DrawTextureNotFound(btn->grid, Vector2<int>{16, 16}, renderer);
+                DrawTextureNotFound(btn->grid, Vec2<int>{16, 16}, renderer);
             }
             btn->isHovered = true;
             break;  // Button handled, exit loop

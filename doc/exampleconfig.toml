@@ -1,11 +1,11 @@
 # Example config file
 
 [Graphics]
-window_mode = "windowed" # Window Mode Options: fullscreen / windowed
+window_mode = "fullscreen" # Window Mode Options: fullscreen / windowed
 fullscreen_mode = "fs-windowed" # Fullscreen Mode: fs-default / fs-desktop / fs-windowed 
 resolution = [
-    1024, # width
-    768,  # heigt
+    1920, # width
+    1080,  # heigt
 ]
 graphics_quality = "high" # Graphics Quality Options: low / medium / high / ultra # NOT USED
 anti_aliasing = "FXAA" # Anti-aliasing Options: none / FXAA / MSAA / SMAA # NOT USED
@@ -17,20 +17,30 @@ voice_volume = 70         # Voiceover Volume: specify volume level (0-100)
 
 [Debug]
 debug_enabled = true              # Needs to be true for the options below, this option itself does nothing, only enables or disables the below
-log_file_path = ".logs/debug.log" # Log File Path: specify path for debug log file not relative to the game's path
+log_file_path = ".logs/debug.log" # Log File Path: specify the path for the debug log file not relative to the game's path
 show_fps = true
 show_debug_info = true
-no_video = true # Only for backend debuging purpose
+no_video = true # Only for backend debugging purposes
+draw_vision_cones = false # NOT USED
 
 [Controls] # NOT USED
 mouse_sensitivity = 5.0      # Mouse Sensitivity (0.1 - 10)
-invert_x_axis = false        # invert-x-axis 
-invert_y_axis = false        # invert-y-axis 
+invert_x_axis = false        # invert x-axis 
+invert_y_axis = false        # invert y-axis 
 controller_sensitivity = 7.5 # Controller Sensitivity (0.1 - 10)
 dodge_with_mouse = false
 
-[Keybindings] # NOT USED
+[Keybindings] 
 move_up = "W"
 move_down = "S"
 move_left = "A"
 move_right = "D"
+
+attack1 = "MOUSE1"
+attack2 = "MOUSE2"
+
+switch_weapons = "Q"
+open_inventory = "E" # NOT USED
+
+quit_game = "ESC"
+```

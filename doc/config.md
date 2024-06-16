@@ -1,21 +1,22 @@
 # Configuring your game
 
 ## Config File
-Config files are written when you click "apply" on the config menu. All of the
-config files are located on /home/user/.config/SoulBound/config.toml check the
-the index below for every field:
+The config file is located on /home/user/.config/SoulBound/config.toml check the
+the index below for every configurable field:
 
-- [Quick considerations](###Quick-Considerations)
-- [Example Config](###Example-Config)
-- [Graphics](###Graphics)
-- [Audio](###Audio) // NOT USED
-- [Debug](###Debug)
-- [Controls](###Controls) // NOT USED
-- [Keybindings](###Keybindings) // NOT USED
+- [Quick considerations](#Quick-Considerations)
+- [Example Config](#Example-Config)
+- [Graphics](#Graphics)
+- [Audio](#Audio) **# NOT USED**
+- [Debug](#Debug)
+- [Controls](#Controls) **# NOT USED**
+- [Keybindings](#Keybindings) 
 
 ### Quick considerations 
 Config values are case-sensitive. Ex: fullscreen and Fullscreen are not the same.\
 If a value is not written in the config file, the game uses default values.
+
+Also, as this is a work in progress, not all configurable items are complete.
 
 ### Example Config
 
@@ -23,13 +24,13 @@ If a value is not written in the config file, the game uses default values.
 # Example config file
 
 [Graphics]
-window_mode = "fullscreen" # Window Mode Options: fullscreen/windowed
+window_mode = "fullscreen" # Window Mode Options: fullscreen / windowed
 fullscreen_mode = "fs-windowed" # Fullscreen Mode: fs-default / fs-desktop / fs-windowed 
 resolution = [
-    1024, # width
-    768,  # heigt
+    1920, # width
+    1080,  # heigt
 ]
-graphics_quality = "high" # Graphics Quality Options: low/medium/high/ultra # NOT USED
+graphics_quality = "high" # Graphics Quality Options: low / medium / high / ultra # NOT USED
 anti_aliasing = "FXAA" # Anti-aliasing Options: none / FXAA / MSAA / SMAA # NOT USED
 
 [Audio] # NOT USED
@@ -42,18 +43,29 @@ debug_enabled = true              # Needs to be true for the options below, this
 log_file_path = ".logs/debug.log" # Log File Path: specify the path for the debug log file not relative to the game's path
 show_fps = true
 show_debug_info = true
+no_video = true # Only for backend debugging purposes
+draw_vision_cones = false # NOT USED
 
 [Controls] # NOT USED
 mouse_sensitivity = 5.0      # Mouse Sensitivity (0.1 - 10)
 invert_x_axis = false        # invert x-axis 
 invert_y_axis = false        # invert y-axis 
 controller_sensitivity = 7.5 # Controller Sensitivity (0.1 - 10)
+dodge_with_mouse = false
 
-[Keybindings] # NOT USED
+[Keybindings] 
 move_up = "W"
 move_down = "S"
 move_left = "A"
 move_right = "D"
+
+attack1 = "MOUSE1"
+attack2 = "MOUSE2"
+
+switch_weapons = "Q"
+open_inventory = "E" # NOT USED
+
+quit_game = "ESC"
 ```
 
 ---
@@ -98,8 +110,34 @@ show_debug_info = true
 
 `debug_enabled` enables the debug options, if set to false none of the other debug options will be available. Boolean
 
-`log_file_path` sets the path for log files. String. NOT USED
+`log_file_path` sets the path for log files. String. **NOT USED**
 
 `show_fps` enable fps to be displayed
 
 `show_debug_info` enables debug info to be shown
+
+### Keybindings
+
+#### Actions
+`move_up` - Move up\
+`move_down` - Move down\
+`move_left` - Move left\
+`move_right` - move right
+
+`attack1` - Primary attack\
+`attack2` - Secondary attack **# NOT USED**
+
+`switch_weapons` - Switch weapons in weapon slot **# NOT USED**\
+`open_inventory` - Open's inventory **# NOT USED**
+
+`quit_game` - Quits the game
+
+### Keys
+
+Keys are also case-sensitive and written in all caps.
+
+Valid Keys:
+- `A-Z`
+- `ESC` - Escape key
+- `MOUSE1` - Left mouse button
+- `MOUSE2` - Right mouse button

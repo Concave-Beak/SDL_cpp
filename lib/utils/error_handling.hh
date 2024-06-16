@@ -34,15 +34,15 @@ enum Severity {
 };
 
 inline static std::unordered_map<ErrorCode, std::string> mapErrorMessage = {
-    {FAILED_TO_OPEN_FILE, "ERROR: Failed to open file: "},
-    {COULDNT_PARSE_CONFIG_FILE, "ERROR: Could not parse config file: "},
-    {INVALID_CONFIG_TOKEN, "ERROR: Invalid token: "},
+    {ErrorCode::FAILED_TO_OPEN_FILE, "ERROR: Failed to open file: "},
+    {ErrorCode::COULDNT_PARSE_CONFIG_FILE, "ERROR: Could not parse config file: "},
+    {ErrorCode::INVALID_CONFIG_TOKEN, "ERROR: Invalid token: "},
 };
 
 class Error {
    public:
-    operator bool() const { return code != NON; }
-    bool IsNull() const { return code == NON; }  // TODO: Use this instead
+    operator bool() const { return code != ErrorCode::NON; }
+    bool IsNull() const { return code == ErrorCode::NON; }  // TODO: Use this instead
 
    public:
     Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_);
@@ -62,7 +62,7 @@ class Error {
     void CreateLog(std::string path);
 
    private:
-    ErrorCode code = NON;
+    ErrorCode code = ErrorCode::NON;
     std::string info = "";
     Severity severity = LOW;
     std::string defaultMessage = "";
@@ -107,7 +107,7 @@ inline void Error::CreateLog(std::string path) {
     std::ofstream logFile(path, std::ios::app);
 
     if (!logFile.is_open()) {
-        Crash(Error{COULDNT_PARSE_CONFIG_FILE, path, MEDIUM});
+        Crash(Error{ErrorCode::COULDNT_PARSE_CONFIG_FILE, path, MEDIUM});
         return;
     }
     {

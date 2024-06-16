@@ -2,11 +2,15 @@
 
 #include <SDL2/SDL.h>
 
+#include <functional>
+#include <unordered_map>
+
 #include "../../lib/utils/error_handling.hh"
 #include "../assetHandling/Font.hh"
-#include "../entities/Camera.hh"
-#include "../entities/Player.hh"
+#include "../game/entities/Camera.hh"
+#include "../game/entities/Player.hh"
 #include "./Config.hh"
+#include "Action.hh"
 
 //------------------------------------------------------------------------------
 
@@ -23,6 +27,7 @@ class Engine {
     Player* playerInstance = Player::GetPlayerInstace();
     Config* configInstance = Config::GetConfig();
     Camera* cameraInstance = Camera::GetCameraInstance();
+    ActionHandler* actionHandler = ActionHandler::GetActionHandler(&event, playerInstance, &mousePos, &quit);
 
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;
@@ -36,12 +41,15 @@ class Engine {
     float timeMultiplier = 1;
     Uint32 lastLoopIteration = 0;
 
-    Vector2<int> screenSpecs = {0, 0};
+    Vec2<int> screenSpecs = {0, 0};
+    Vec2<int> mousePos = {0, 0};
 
     bool quit = false;
     bool isPaused = false;
 
     Font debugFont;
+
+    static std::unordered_map<SDL_Keycode, std::function<void>> keymaps;
 
    private:
     void GameLoop();
@@ -54,14 +62,7 @@ class Engine {
 
     // Handles fps
     // @param float startTick | The first tick of the loop's iteration
-    void HandleFPS(float startTick);
-
-    // Event Handling functions
-    void HandleEvents();
-    void HandleKeyboardState();
-    void HandleMouseState();
-    void HandleKeyboard(SDL_KeyboardEvent);
-    void HandleMouse(SDL_MouseButtonEvent);
+    void HandleFPS(Uint32 startTick);
 
     // Updates screen Specifics to match real window size
     void UpdateScreenSpecs();
@@ -70,10 +71,12 @@ class Engine {
     void ShowDebugInfo();
 
     // Used for fonts // TODO:: NEEDS TO BE REDONE
-    int GetTextRectangleWidth(size_t strSize);
+    size_t GetTextRectangleWidth(size_t strSize);
 
     // Everything related to graphics in the main game loop
-    void Render(float beginTick);
+    void Render(Uint32 beginTick);
+
+    void DrawMouse();
 };
 
 //------------------------------------------------------------------------------

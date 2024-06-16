@@ -8,20 +8,66 @@
 #include <cstdio>
 #include <string>
 
+#include "../../lib/tomlplusplus/tomlplusplus.hh"
 #include "../../lib/utils/engine_utils.hh"
 
-#define TOML_EXCEPTIONS 0  // to remove try/catch statmement
-#include "../../lib/tomlplusplus/tomlplusplus.hh"
-
 //------------------------------------------------------------------------------
+
+std::unordered_map<std::string, Key> Config::str2Keybinding = {
+    {"A", {SDL_SCANCODE_A, 0}},
+    {"B", {SDL_SCANCODE_B, 0}},
+    {"C", {SDL_SCANCODE_C, 0}},
+    {"D", {SDL_SCANCODE_D, 0}},
+    {"E", {SDL_SCANCODE_E, 0}},
+    {"F", {SDL_SCANCODE_F, 0}},
+    {"G", {SDL_SCANCODE_G, 0}},
+    {"H", {SDL_SCANCODE_H, 0}},
+    {"I", {SDL_SCANCODE_I, 0}},
+    {"J", {SDL_SCANCODE_J, 0}},
+    {"K", {SDL_SCANCODE_K, 0}},
+    {"L", {SDL_SCANCODE_L, 0}},
+    {"M", {SDL_SCANCODE_M, 0}},
+    {"N", {SDL_SCANCODE_N, 0}},
+    {"O", {SDL_SCANCODE_O, 0}},
+    {"P", {SDL_SCANCODE_P, 0}},
+    {"Q", {SDL_SCANCODE_Q, 0}},
+    {"R", {SDL_SCANCODE_R, 0}},
+    {"S", {SDL_SCANCODE_S, 0}},
+    {"T", {SDL_SCANCODE_T, 0}},
+    {"U", {SDL_SCANCODE_U, 0}},
+    {"V", {SDL_SCANCODE_V, 0}},
+    {"W", {SDL_SCANCODE_W, 0}},
+    {"X", {SDL_SCANCODE_X, 0}},
+    {"Y", {SDL_SCANCODE_Y, 0}},
+    {"Z", {SDL_SCANCODE_Z, 0}},
+    {"ESC", {SDL_SCANCODE_ESCAPE}},
+
+    {"MOUSE1", {SDL_SCANCODE_UNKNOWN, SDL_BUTTON_LEFT}},
+    {"MOUSE2", {SDL_SCANCODE_UNKNOWN, SDL_BUTTON_RIGHT}},
+};
+
+std::unordered_map<std::string, Action::ActionType> Config::actionTypeMap = {
+    {"move_up", Action::ActionType::MOVE_UP},
+    {"move_down", Action::ActionType::MOVE_DOWN},
+    {"move_left", Action::ActionType::MOVE_LEFT},
+    {"move_right", Action::ActionType::MOVE_RIGHT},
+
+    {"attack1", Action::ActionType::ATTACK1},
+    {"attack2", Action::ActionType::ATTACK2},
+
+    {"switch_weapons", Action::ActionType::SWITCH_WEAPONS},
+    {"open_inventory", Action::ActionType::OPEN_INVENTORY},
+
+    {"quit_game", Action::ActionType::QUIT_GAME},
+};
 
 bool Config::ShowFPSState() { return showFPS; }
 
 Config* Config::config = new Config{};
 Config* Config::GetConfig() { return config; };
 
-const Error Config::ReadConfig() {
-    std::string path = "./doc/exampleconfig.toml";
+const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
+    std::string path = GetAbsolutePath("~/.config/Soulbound/config.toml");
 
     toml::parse_result result;
 
@@ -31,53 +77,25 @@ const Error Config::ReadConfig() {
     }
     toml::table table = std::move(result.table());
 
-    {
-        debugMode = false, showFPS = false, showDebugInfo = false;
-        toml::node_view<toml::node> debug = table["Debug"];
-
-        if (debug["debug_enabled"] == true) {
-            debugMode = true;
-        }
-        if (debug["log_file_path"] && debugMode) {
-            logPath = *debug["log_file_path"].value<std::string>();  // NOTE: Not used, need to do later
-        }
-        if (debug["show_fps"] == true && debugMode) {
-            showFPS = true;
-        }
-        if (debug["show_debug_info"] == true && debugMode) {
-            showDebugInfo = true;
-        }
+    Error err = ReadDebug(table["Debug"]);
+    if (!err.IsNull()) {
+        return err;
     }
-    {
-        fullscreen = false, fullscreenMode = FullscreenMode::FULLSCREEN_WINDOWED;
-        toml::node_view<toml::node> graphics = table["Graphics"];
 
-        // Window Mode
-        if (graphics["window_mode"].value<std::string>() == "fullscreen") {
-            fullscreen = true;
-        }
-
-        if (graphics["fullscreen_mode"].value<std::string>() == "fs-default") {
-            fullscreenMode = FullscreenMode::FULLSCREEN_DEFAULT;
-        }
-        if (graphics["fullscreen_mode"].value<std::string>() == "fs-desktop") {
-            fullscreenMode = FullscreenMode::FULLSCREEN_DESKTOP;
-        }
-        if (graphics["fullscreen_mode"].value<std::string>() == "fs-windowed") {
-            fullscreenMode = FullscreenMode::FULLSCREEN_WINDOWED;
-        }
-
-        // Resolution
-        if (graphics["resolution"]) {
-            screenResolution.x = *graphics["resolution"][0].value<int>();
-            screenResolution.y = *graphics["resolution"][1].value<int>();
-        }
+    err = ReadGraphics(table["Graphics"]);
+    if (!err.IsNull()) {
+        return err;
     }
+    err = ReadKeybindings(table["Keybindings"], actionHandler);
+    if (!err.IsNull()) {
+        return err;
+    }
+
     return Error{};
 }
 
-const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vector2<int*> screenResolution_) {
-    ReadConfig();
+const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vec2<int*> screenResolution_, ActionHandler* actionHandler) {
+    ReadFullConfig(actionHandler);
     (void)renderer;
 
     *screenResolution_.x = screenResolution.x;
@@ -89,10 +107,10 @@ const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vect
     }
 
     if (fullscreen) {
-        if (fullscreenMode == FULLSCREEN_DEFAULT) {
+        if (fullscreenMode == FullscreenMode::FULLSCREEN_DEFAULT) {
             SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
         }
-        if (fullscreenMode == FULLSCREEN_DESKTOP) {
+        if (fullscreenMode == FullscreenMode::FULLSCREEN_DESKTOP) {
             SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         }
 
@@ -112,3 +130,59 @@ const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vect
 }
 
 void Config::ToggleMenuVisibility() { isConfigMenuVisible = !isConfigMenuVisible; }
+
+const Error Config::ReadDebug(toml::node_view<toml::node> debugNode) {
+    debugMode = false, showFPS = false, showDebugInfo = false;
+
+    if (debugNode["debug_enabled"] == true) {
+        debugMode = true;
+    }
+    if (debugNode["log_file_path"] && debugMode) {
+        logPath = *debugNode["log_file_path"].value<std::string>();  // NOTE: Not used, need to do later
+    }
+    if (debugNode["show_fps"] == true && debugMode) {
+        showFPS = true;
+    }
+    if (debugNode["show_debug_info"] == true && debugMode) {
+        showDebugInfo = true;
+    }
+    return Error{};
+}
+
+const Error Config::ReadGraphics(toml::node_view<toml::node> graphicsNode) {
+    fullscreen = false, fullscreenMode = FullscreenMode::FULLSCREEN_WINDOWED;
+
+    // Window Mode
+    if (graphicsNode["window_mode"].value<std::string>() == "fullscreen") {
+        fullscreen = true;
+    }
+
+    if (graphicsNode["fullscreen_mode"].value<std::string>() == "fs-default") {
+        fullscreenMode = FullscreenMode::FULLSCREEN_DEFAULT;
+    }
+    if (graphicsNode["fullscreen_mode"].value<std::string>() == "fs-desktop") {
+        fullscreenMode = FullscreenMode::FULLSCREEN_DESKTOP;
+    }
+    if (graphicsNode["fullscreen_mode"].value<std::string>() == "fs-windowed") {
+        fullscreenMode = FullscreenMode::FULLSCREEN_WINDOWED;
+    }
+
+    // Resolution
+    if (graphicsNode["resolution"]) {
+        screenResolution.x = *graphicsNode["resolution"][0].value<int>();
+        screenResolution.y = *graphicsNode["resolution"][1].value<int>();
+    }
+    return Error{};
+}
+
+const Error Config::ReadKeybindings(toml::node_view<toml::node> keybindingNode, ActionHandler* actionHandler) {
+    for (std::unordered_map<std::string, Action::ActionType>::iterator it = actionTypeMap.begin(); it != actionTypeMap.end(); ++it) {
+        std::string stringKeybinding = *keybindingNode[it->first].value<std::string>();
+
+        if (str2Keybinding.find(stringKeybinding) != str2Keybinding.end()) {
+            Action action(it->second);
+            actionHandler->SetAction(action, str2Keybinding[stringKeybinding]);
+        }
+    }
+    return Error{};
+}

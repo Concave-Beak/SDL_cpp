@@ -58,10 +58,10 @@ class Button {
 
    private:
     static Error DrawButtons(SDL_Renderer* renderer);
-    static void HandleClicks(Vector2<int> mousePos);
-    static void HandleHover(Vector2<int> mousePos, SDL_Renderer* renderer);
+    static void HandleClicks(Vec2<int> mousePos);
+    static void HandleHover(Vec2<int> mousePos, SDL_Renderer* renderer);
 
-    inline static Vector2<int> lastMousepos = {};
+    inline static Vec2<int> lastMousepos = {};
 
     void AddToButtonVector();
     const Error AssignTexture(SDL_Texture*& oldTexture, SDL_Texture* newTexture);
