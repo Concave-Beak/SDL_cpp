@@ -87,8 +87,8 @@ void Entity::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
         this->hitbox.x,
         this->hitbox.y,
     };
-    scc(SDL_SetRenderDrawColor(renderer, PINK, 0xff));
-    scc(SDL_RenderFillRect(renderer, &entityModel));
+    scc(SDL_SetRenderDrawColor(renderer, PINK, 0xff)).Handle();
+    scc(SDL_RenderFillRect(renderer, &entityModel)).Handle();
 }
 
 void Entity::Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused, const Vec2<int>& cameraPos, SDL_Renderer* renderer) {

@@ -84,8 +84,8 @@ void Level::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
             levelItem.wireframe.w,
             levelItem.wireframe.h,
         };
-        scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a));
-        scc(SDL_RenderFillRect(renderer, &levelItemWireframe));
+        scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a)).Handle();
+        scc(SDL_RenderFillRect(renderer, &levelItemWireframe)).Handle();
     }
 }
 

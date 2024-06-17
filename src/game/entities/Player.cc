@@ -44,8 +44,8 @@ void Player::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
         this->hitbox.x,
         this->hitbox.y,
     };
-    scc(SDL_SetRenderDrawColor(renderer, RED, 0xff));
-    scc(SDL_RenderFillRect(renderer, &playerModel));
+    scc(SDL_SetRenderDrawColor(renderer, RED, 0xff)).Handle();
+    scc(SDL_RenderFillRect(renderer, &playerModel)).Handle();
     DrawLineOfSight(mousePos, cameraPos, renderer);
 }
 

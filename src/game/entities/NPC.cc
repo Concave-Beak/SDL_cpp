@@ -87,9 +87,9 @@ void NPC::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
         this->hitbox.y,
     };
     if (this->isDead) {
-        scc(SDL_SetRenderDrawColor(renderer, WHITE, 0xff));
+        scc(SDL_SetRenderDrawColor(renderer, WHITE, 0xff)).Handle();
     } else {
-        scc(SDL_SetRenderDrawColor(renderer, YELLOW, 0xff));
+        scc(SDL_SetRenderDrawColor(renderer, YELLOW, 0xff)).Handle();
     }
-    scc(SDL_RenderFillRect(renderer, &npcModel));
+    scc(SDL_RenderFillRect(renderer, &npcModel)).Handle();
 }

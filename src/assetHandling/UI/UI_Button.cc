@@ -34,17 +34,17 @@ void Button::SetOutlineColor(const SDL_Color& color_) { outlineColor = color_; }
 
 const Error Button::AssignTexture(SDL_Texture*& oldTexture, SDL_Texture* newTexture) {
     if (oldTexture) {
-        return Error{TEXTURE_ALREADY_SET, "Texture field is already set", LOW};
+        return Error(Error::ErrorCode::TEXTURE_ALREADY_SET, "Texture field is already set", Error::Severity::LOW);
     }
     oldTexture = newTexture;
-    return Error{};
+    return Error();
 }
 
-Error Button::SetTexture(SDL_Renderer* renderer, TextureField textureField, const std::string& path) {
+const Error Button::SetTexture(SDL_Renderer* renderer, TextureField textureField, const std::string& path) {
     SDL_Surface* buttonSurface = SurfaceFromFile(path);
-    SDL_Texture* newButtonTexture = static_cast<SDL_Texture*>(scp(SDL_CreateTextureFromSurface(renderer, buttonSurface)));
+    SDL_Texture* newButtonTexture = static_cast<SDL_Texture*>(scp(SDL_CreateTextureFromSurface(renderer, buttonSurface)).Handle().result);
     if (!newButtonTexture) {
-        return Error{COULDNT_LOAD_TEXTURE, path, MEDIUM};
+        return Error(Error::ErrorCode::COULDNT_LOAD_TEXTURE, path, Error::Severity::MEDIUM);
     }
 
     switch (textureField) {
@@ -55,11 +55,12 @@ Error Button::SetTexture(SDL_Renderer* renderer, TextureField textureField, cons
         case CLICKED_TEXTURE:
             return AssignTexture(clickedTexture, newButtonTexture);
         default:
-            return Error{};
+            return Error();
     }
+    return Error();
 }
 
-Error Button::SetTexture(SDL_Texture* newTexture, TextureField textureField) {
+const Error Button::SetTexture(SDL_Texture* newTexture, TextureField textureField) {
     switch (textureField) {
         case DEFAULT_TEXTURE:
             return AssignTexture(defaultTexture, newTexture);
@@ -75,22 +76,22 @@ Error Button::SetTexture(SDL_Texture* newTexture, TextureField textureField) {
 
 void Button::SetFlags(ButtonFlags flags_) { this->flags = flags_; }
 
-void Button::SetFunction(std::function<Error()> clickEvent_) {
+void Button::SetFunction(std::function<const Error()> clickEvent_) {
     this->clickEvent = std::move(clickEvent_);
 }
 
 void Button::AddToButtonVector() { buttonVector.emplace_back(this); }
 
-Error Button::Handle(SDL_Event event, SDL_Renderer* renderer) {
+const Error Button::Handle(SDL_Event event, SDL_Renderer* renderer) {
     SDL_PollEvent(&event);  // TODO: Remove this
 
     Error err = DrawButtons(renderer);
-    if (!err.IsNull()) {
+    if (!err.IsEmpty()) {
         return err;
     }
 
     if (event.type == SDL_MOUSEBUTTONDOWN) {
-        HandleClicks(Vec2<int>{event.button.x, event.button.y});
+        return HandleClicks(Vec2<int>{event.button.x, event.button.y});
     }
 
     if (event.type == SDL_MOUSEMOTION) {
@@ -101,7 +102,7 @@ Error Button::Handle(SDL_Event event, SDL_Renderer* renderer) {
     return err;
 }
 
-Error Button::DrawButtons(SDL_Renderer* renderer) {
+const Error Button::DrawButtons(SDL_Renderer* renderer) {
     for (const auto& btn : buttonVector) {
         if (!btn->isShown || btn->isHovered) continue;
 
@@ -111,16 +112,16 @@ Error Button::DrawButtons(SDL_Renderer* renderer) {
         }
 
         if (textureToRender) {
-            scc(SDL_RenderCopy(renderer, textureToRender, nullptr, &btn->grid));
+            scc(SDL_RenderCopy(renderer, textureToRender, nullptr, &btn->grid)).Handle();
         } else {
             DrawTextureNotFound(btn->grid, {16, 16}, renderer);
-            return Error(TEXTURE_IS_NULL, "Could not draw button\n", MEDIUM);
+            return Error(Error::ErrorCode::TEXTURE_IS_NULL, "Could not draw button\n", Error::Severity::MEDIUM);
         }
     }
     return Error();
 }
 
-void Button::HandleClicks(Vec2<int> mousePos) {
+const Error Button::HandleClicks(Vec2<int> mousePos) {
     SDL_Point mousePoint{.x = mousePos.x, .y = mousePos.y};
     for (const auto& btn : buttonVector) {
         if (btn->isShown && SDL_PointInRect(&mousePoint, &btn->grid)) {
@@ -128,18 +129,20 @@ void Button::HandleClicks(Vec2<int> mousePos) {
                 btn->isClicked = !btn->isClicked;
             }
             if (btn->clickEvent) {
-                btn->clickEvent();
+                return btn->clickEvent();
             }
             break;  // Button handled, exit loop
         }
     }
+    return Error();
 }
+
 void Button::HandleHover(Vec2<int> mousePos, SDL_Renderer* renderer) {
     SDL_Point mousePoint{.x = mousePos.x, .y = mousePos.y};
     for (const auto& btn : buttonVector) {
         if (btn->isShown && SDL_PointInRect(&mousePoint, &btn->grid)) {
             if (btn->hoverTexture) {
-                scc(SDL_RenderCopy(renderer, btn->hoverTexture, nullptr, &btn->grid));
+                scc(SDL_RenderCopy(renderer, btn->hoverTexture, nullptr, &btn->grid)).Handle();
             } else {
                 DrawTextureNotFound(btn->grid, Vec2<int>{16, 16}, renderer);
             }

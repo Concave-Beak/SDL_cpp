@@ -24,8 +24,8 @@ void Attack::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
         this->hitbox.x,
         this->hitbox.y,
     };
-    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff));
-    scc(SDL_RenderFillRect(renderer, &attackModel));
+    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff)).Handle();
+    scc(SDL_RenderFillRect(renderer, &attackModel)).Handle();
 }
 
 void Attack::CheckAndDestroyExpiredAttacks() {

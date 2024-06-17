@@ -5,7 +5,6 @@
 #include <functional>
 #include <unordered_map>
 
-#include "../../lib/utils/error_handling.hh"
 #include "../assetHandling/Font.hh"
 #include "../game/entities/Camera.hh"
 #include "../game/entities/Player.hh"
@@ -18,7 +17,7 @@ class Engine {
    public:
     static Engine* GetEngineInstance();
 
-    const Error Init();
+    void Init();
     void Run();
 
    private:
@@ -47,7 +46,7 @@ class Engine {
     bool quit = false;
     bool isPaused = false;
 
-    Font debugFont;
+    Font debugFont = Font();
 
     static std::unordered_map<SDL_Keycode, std::function<void>> keymaps;
 

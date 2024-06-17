@@ -66,6 +66,8 @@ bool Config::ShowFPSState() { return showFPS; }
 Config* Config::config = new Config{};
 Config* Config::GetConfig() { return config; };
 
+std::string Config::GetLogPath() { return logPath; }
+
 const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
     std::string path = GetAbsolutePath("~/.config/Soulbound/config.toml");
 
@@ -73,21 +75,21 @@ const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
 
     result = toml::parse_file(path);
     if (!result) {
-        return Error(COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", MEDIUM);
+        return Error(Error::ErrorCode::COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", Error::Severity::MEDIUM);
     }
     toml::table table = std::move(result.table());
 
     Error err = ReadDebug(table["Debug"]);
-    if (!err.IsNull()) {
+    if (!err.IsEmpty()) {
         return err;
     }
 
     err = ReadGraphics(table["Graphics"]);
-    if (!err.IsNull()) {
+    if (!err.IsEmpty()) {
         return err;
     }
     err = ReadKeybindings(table["Keybindings"], actionHandler);
-    if (!err.IsNull()) {
+    if (!err.IsEmpty()) {
         return err;
     }
 
@@ -95,15 +97,16 @@ const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
 }
 
 const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vec2<int*> screenResolution_, ActionHandler* actionHandler) {
-    ReadFullConfig(actionHandler);
-    (void)renderer;
+    Error err = ReadFullConfig(actionHandler);
+    if (!err.IsEmpty()) return err;
+    (void)renderer;  // TODO
 
     *screenResolution_.x = screenResolution.x;
     *screenResolution_.y = screenResolution.y;
     SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
 
     if (window == NULL || renderer == NULL) {
-        return Error(BAD_PARAMS, "Window or renderer are null", LOW);
+        return Error(Error::ErrorCode::BAD_PARAMS, "Window or renderer are null", Error::Severity::LOW);
     }
 
     if (fullscreen) {
@@ -116,8 +119,8 @@ const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vec2
 
         SDL_DisplayMode mode;
         if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
-            return Error(SDL_FUNCTION_ERROR, "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
-                         MEDIUM);
+            return Error(Error::ErrorCode::SDL_FUNCTION_ERROR, "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
+                         Error::Severity::MEDIUM);
         } else {
             SDL_SetWindowSize(window, mode.w, mode.h);
             SDL_SetWindowPosition(window, 0, 0);

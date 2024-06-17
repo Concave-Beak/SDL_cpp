@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 #include "../../lib/utils/engine_utils.hh"
-#include "../../lib/utils/error_handling.hh"
+#include "../../lib/utils/error_utils.hh"
 #include "../../lib/utils/math_utils.hh"
 #include "./Action.hh"
 
@@ -18,6 +18,7 @@ class Config {
     static Config* GetConfig();
 
     void WriteConfig();  // TODO
+    std::string GetLogPath();
     const Error ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vec2<int*> screenResolution_, ActionHandler* actionHandler);
     bool ShowFPSState();          // TODO: SHOULD BE REMOVED
     void ToggleMenuVisibility();  // TODO

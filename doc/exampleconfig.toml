@@ -17,7 +17,6 @@ voice_volume = 70         # Voiceover Volume: specify volume level (0-100)
 
 [Debug]
 debug_enabled = true              # Needs to be true for the options below, this option itself does nothing, only enables or disables the below
-log_file_path = ".logs/debug.log" # Log File Path: specify the path for the debug log file not relative to the game's path
 show_fps = true
 show_debug_info = true
 no_video = true # Only for backend debugging purposes
