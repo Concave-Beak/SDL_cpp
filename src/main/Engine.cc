@@ -13,7 +13,7 @@
 #include "../..//include/game/entities/NPC.hh"
 #include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../include/main/Level.hh"
-#include "../../lib/utils/error_utils.hh"
+#include "../../lib/utils/debug_utils.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
 //------------------------------------------------------------------------------
@@ -102,7 +102,6 @@ void Engine::Render(Uint32 beginTick) {
     {
         Level::Draw(cameraPos, renderer);
         ShowDebugInfo();
-        // HandleEvents();
         HandleFPS(beginTick);
         UI::Button::Handle(event, renderer).Handle();
         cameraInstance->FollowPlayer(playerInstance->GetPos(), timeDelta, screenSpecs,
@@ -127,43 +126,44 @@ void Engine::Init() {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         exit(1);
     }
-    std::cout << "INFO: SDL_Init initialized succesfully\n";
+    PrintInfo(Info::SDL_INITIALIZED_SUCESSFULY, "");
 
-    window = SDL_CreateWindow("SoulBound", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_CENTERED, screenSpecs.x, screenSpecs.y, SDL_WINDOW_BORDERLESS);
+    window = SDL_CreateWindow("SoulBound",
+                              SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_CENTERED,
+                              screenSpecs.x, screenSpecs.y,
+                              SDL_WINDOW_BORDERLESS);
     if (window == NULL) {
         exit(1);
     }
-    std::cout << "INFO: Window initialized succesfully\n";
+    SDL_SetWindowGrab(window, SDL_TRUE);
+    scc(SDL_SetRelativeMouseMode(SDL_TRUE)).Handle();
+    PrintInfo(Info::SDL_WINDOW_INITIALIZED, "");
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
         exit(1);
     }
-
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    std::cout << "INFO: Renderer initialized succesfully\n";
+    scc(SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND)).Handle();
+    PrintInfo(Info::SDL_RENDERER_INITIALIZED, "");
 
     debugFont = Font(renderer, "./assets/fonts/charmap-oldschool_white.png");
     if (debugFont.IsEmpty()) {
         exit(1);
     }
-    std::cout << "INFO: Loaded Debug Font\n";
-
-    SDL_SetWindowGrab(window, SDL_TRUE);
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    PrintInfo(Info::FONT_LOADED, "debug font");
 
     Error err = configInstance->ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y}, actionHandler);
     if (!err.IsEmpty()) {
         err.Handle();
     }
-    std::cout << "INFO: Config read succesfully\n";
+    PrintInfo(Info::CONFIG_READ_SUCESSFULLY, "");
 }
 
 void Engine::Run() {
-    std::cout << "Starting the game loop...\n";
+    PrintInfo(Info::STARTING_GAME_LOOP, "");
     GameLoop();
 
-    std::cout << "Game closed\n";
+    PrintInfo(Info::GAME_CLOSED, "");
     SDL_DestroyWindow(window);
     SDL_Quit();
     return;

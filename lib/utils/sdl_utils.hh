@@ -9,7 +9,7 @@
 #include <string>
 
 #include "../../lib/stbi/stb_image.h"
-#include "error_utils.hh"
+#include "debug_utils.hh"
 #include "math_utils.hh"
 
 #define BLACK 0x00, 0x00, 0x00
@@ -26,7 +26,7 @@
 inline Error scc(int code) {
     if (code != 0) {
         return Error(Error::ErrorCode::SDL_FUNCTION_ERROR,
-                     "SDL ERROR: %s" + std::string(SDL_GetError()),
+                     "SDL ERROR: " + std::string(SDL_GetError()),
                      Error::Severity::LOW);
     }
     return Error();

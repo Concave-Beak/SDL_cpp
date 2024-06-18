@@ -3,7 +3,7 @@
 #include <SDL2/SDL_render.h>
 
 #include <cassert>
-#include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -45,7 +45,7 @@ class [[nodiscard]] Error {
         }
     };
     inline Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_) : code(errorCode_), info(errorInfo_), severity(severity_) {
-        defaultMessage = "ERROR: Could not initialize error!";
+        defaultMessage = "ERROR: Could not initialize error messsage!";
         if (mapErrorMessage.find(errorCode_) != mapErrorMessage.end()) {
             defaultMessage = mapErrorMessage[code];
         }
@@ -79,7 +79,7 @@ class [[nodiscard]] Error {
         if (IsEmpty()) return;
         int severity_ = static_cast<int>(severity);
         if (severity_ >= static_cast<int>(Error::Severity::LOW)) PrintError(*this);
-        if (severity_ == static_cast<int>(Error::Severity::HIGH)) Crash(*this);
+        if (severity_ == static_cast<int>(Error::Severity::HIGH)) Crash();
         isHandled = true;
     }
 
@@ -91,18 +91,29 @@ class [[nodiscard]] Error {
     mutable bool isHandled = false;
 
     inline static std::unordered_map<ErrorCode, std::string> mapErrorMessage = {
+        {ErrorCode::NONE, ""},
+
+        {ErrorCode::BAD_PARAMS, "ERROR: Bad parameters: "},
+
         {ErrorCode::FAILED_TO_OPEN_FILE, "ERROR: Failed to open file: "},
+
         {ErrorCode::COULDNT_PARSE_CONFIG_FILE, "ERROR: Could not parse config file: "},
         {ErrorCode::INVALID_CONFIG_TOKEN, "ERROR: Invalid token: "},
+
+        {ErrorCode::SDL_FUNCTION_ERROR, "ERROR: SDL function error: "},
+        {ErrorCode::COULDNT_LOAD_TEXTURE, "ERROR: Couldn't load texture: "},
+        {ErrorCode::TEXTURE_IS_NULL, "ERROR: Texture is NULL: "},
+        {ErrorCode::TEXTURE_ALREADY_SET, "ERROR: Texture field is already set: "},
     };
 
     static Error lastError;
 
    private:
     static void PrintError(const Error& err) {
-        std::cerr << "CODE: " << static_cast<int>(err.GetErrorCode()) << " " << err.GetDefaultMessage() << err.GetInfo() << std::endl;
+        std::cerr << "CODE: " << static_cast<int>(err.GetErrorCode()) << '\n'
+                  << err.GetDefaultMessage() << ' ' << err.GetInfo() << std::endl;
     };
-    static void Crash(const Error& err) { (void)err; };
+    static void Crash() { std::terminate(); };
 };
 inline Error Error::lastError = Error();
 
@@ -118,3 +129,37 @@ class [[nodiscard]] Result {
         return *this;
     }
 };
+
+enum class Info {
+    SDL_INITIALIZED_SUCESSFULY = 0,
+    SDL_WINDOW_INITIALIZED = 1,
+    SDL_RENDERER_INITIALIZED = 2,
+
+    STARTING_GAME_LOOP = 8,
+    GAME_CLOSED = 9,
+
+    FONT_LOADED = 10,
+
+    CONFIG_READ_SUCESSFULLY = 20,
+};
+inline void PrintInfo(const Info& info_, const std::string& msg) {
+    switch (info_) {
+        case Info::SDL_INITIALIZED_SUCESSFULY:
+            std::cout << "INFO: SDL_Init initialized sucessfully\n";
+        case Info::SDL_WINDOW_INITIALIZED:
+            std::cout << "INFO: Window initialized successfully\n";
+        case Info::SDL_RENDERER_INITIALIZED:
+            std::cout << "INFO: Renderer initialized successfully\n";
+
+        case Info::STARTING_GAME_LOOP:
+            std::cout << "INFO: Game loop started\n";
+        case Info::GAME_CLOSED:
+            std::cout << "INFO: Game closed";
+
+        case Info::FONT_LOADED:
+            std::cout << "INFO: Font loaded " << msg << '\n';
+
+        case Info::CONFIG_READ_SUCESSFULLY:
+            std::cout << "INFO: Config read sucessfully\n";
+    }
+}

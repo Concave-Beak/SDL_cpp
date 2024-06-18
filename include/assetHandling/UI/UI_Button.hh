@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "../../../lib/utils/error_utils.hh"
+#include "../../../lib/utils/debug_utils.hh"
 #include "../../../lib/utils/math_utils.hh"
 
 namespace UI {
