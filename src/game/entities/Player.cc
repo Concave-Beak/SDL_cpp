@@ -29,7 +29,7 @@ void Player::SwitchWeapon(WeaponHand weaponHand) {
 
 void Player::Attack() {
     // Vec2<float> attackSpawnPos = {Player::GetPos().x, Player::GetPos().y};
-    currentItemHolding.Attack(this->GetEntity(), positionNow, angleFacing);
+    currentItemHolding.Attack(GetEntity(), positionNow, angleFacing);
 }
 
 void Player::Handle(const Vec2<int>& mousePos_) {
@@ -39,10 +39,10 @@ void Player::Handle(const Vec2<int>& mousePos_) {
 void Player::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
     SDL_Rect playerModel = {
         // rectangles for now, because I dont have proper models
-        (int)this->positionNow.x - cameraPos.x,
-        (int)this->positionNow.y - cameraPos.y,
-        this->hitbox.x,
-        this->hitbox.y,
+        (int)positionNow.x - cameraPos.x,
+        (int)positionNow.y - cameraPos.y,
+        hitbox.x,
+        hitbox.y,
     };
     scc(SDL_SetRenderDrawColor(renderer, RED, 0xff)).Handle();
     scc(SDL_RenderFillRect(renderer, &playerModel)).Handle();
@@ -50,9 +50,9 @@ void Player::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
 }
 
 void Player::SetFacingAngle(const Vec2<int>& mousePos, const Vec2<int>& cameraPos) {
-    int dx = mousePos.x - (this->positionNow.x - cameraPos.x);
-    int dy = mousePos.y - (this->positionNow.y - cameraPos.y);
-    this->angleFacing = atan2(dy, dx);
+    int dx = mousePos.x - (positionNow.x - cameraPos.x);
+    int dy = mousePos.y - (positionNow.y - cameraPos.y);
+    angleFacing = atan2(dy, dx);
 }
 
 void Player::DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
@@ -60,8 +60,8 @@ void Player::DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraP
     SetFacingAngle(mousePos, cameraPos);
 
     Vec2<int> lineBegin = {
-        int(this->positionNow.x - cameraPos.x),
-        int(this->positionNow.y - cameraPos.y),
+        int(positionNow.x - cameraPos.x),
+        int(positionNow.y - cameraPos.y),
     };
 
     Vec2<int> lineEnd = GetSightLineEnd(cameraPos, lineLength);
@@ -74,6 +74,6 @@ void Player::DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraP
 
 Vec2<int> Player::GetSightLineEnd(const Vec2<int>& cameraPos, float lineLength) {
     return Vec2<int>{
-        int((this->positionNow.x - cameraPos.x) + lineLength * cos(this->angleFacing)),
-        int((this->positionNow.y - cameraPos.y) + lineLength * sin(this->angleFacing))};
+        int((positionNow.x - cameraPos.x) + lineLength * cos(angleFacing)),
+        int((positionNow.y - cameraPos.y) + lineLength * sin(angleFacing))};
 }

@@ -13,11 +13,11 @@
 std::vector<NPC *> NPC::npcVector = {};
 
 NPC::NPC(Entity::EntityType type_, Vec2<float> spawnPos_) : spawnPos(spawnPos_) {
-    this->isWandering = true;  // Placeholder
-    this->runningSpeed = {10, 200};
-    this->walkingSpeed = {5, 150};
-    this->visionConeAngle = 20;
-    this->visionConeRange = 1000;
+    isWandering = true;  // Placeholder
+    runningSpeed = {10, 200};
+    walkingSpeed = {5, 150};
+    visionConeAngle = 20;
+    visionConeRange = 1000;
     Entity::Init(type_);
     npcVector.push_back(this);
 }
@@ -81,12 +81,12 @@ void NPC::HandleMovement(NPC *npc, SDL_Renderer *renderer, Vec2<float> playerPos
 void NPC::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
     SDL_Rect npcModel = {
         // rectangles for now, because I dont have proper models
-        (int)this->positionNow.x - cameraPos.x,
-        (int)this->positionNow.y - cameraPos.y,
-        this->hitbox.x,
-        this->hitbox.y,
+        (int)positionNow.x - cameraPos.x,
+        (int)positionNow.y - cameraPos.y,
+        hitbox.x,
+        hitbox.y,
     };
-    if (this->isDead) {
+    if (isDead) {
         scc(SDL_SetRenderDrawColor(renderer, WHITE, 0xff)).Handle();
     } else {
         scc(SDL_SetRenderDrawColor(renderer, YELLOW, 0xff)).Handle();

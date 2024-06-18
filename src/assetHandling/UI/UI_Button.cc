@@ -21,7 +21,7 @@ Button::Button(ButtonFlags flags_, SDL_Rect grid_)
       isShown(true),
       isClicked(false),
       isHovered(false) {
-    this->AddToButtonVector();
+    AddToButtonVector();
 }
 
 Button::~Button() {
@@ -74,10 +74,10 @@ const Error Button::SetTexture(SDL_Texture* newTexture, TextureField textureFiel
     return Error();
 }
 
-void Button::SetFlags(ButtonFlags flags_) { this->flags = flags_; }
+void Button::SetFlags(ButtonFlags flags_) { flags = flags_; }
 
 void Button::SetFunction(std::function<const Error()> clickEvent_) {
-    this->clickEvent = std::move(clickEvent_);
+    clickEvent = std::move(clickEvent_);
 }
 
 void Button::AddToButtonVector() { buttonVector.emplace_back(this); }

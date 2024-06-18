@@ -20,7 +20,7 @@ void Action::Activate() {
     this->function();
 }
 
-void Action::Unactivate() { this->isActive = false; }
+void Action::Unactivate() { isActive = false; }
 
 bool Action::IsActive() { return isActive; }
 

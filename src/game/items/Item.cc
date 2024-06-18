@@ -36,7 +36,7 @@ void Item::Drop(Matrix2D<Item>* inventory) {
 
 void Item::Attack(Entity* entityOrigin, const Vec2<float>& spawnPos, float angle) {
     Attack::AttackType atkType = Attack::SWORD_SLASH;
-    if (this->itemTtype == ItemType::SHORT_BOW) atkType = Attack::ARROW;
+    if (itemTtype == ItemType::SHORT_BOW) atkType = Attack::ARROW;
 
-    new class Attack(entityOrigin, this->damage, spawnPos, atkType, angle, 1000);
+    new class Attack(entityOrigin, damage, spawnPos, atkType, angle, 1000);
 }

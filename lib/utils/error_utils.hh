@@ -40,17 +40,17 @@ class [[nodiscard]] Error {
 
     inline Error() = default;
     inline ~Error() {
-        if (!isHandled && !this->IsEmpty()) {
+        if (!isHandled && !IsEmpty()) {
             std::terminate();
         }
     };
     inline Error(ErrorCode errorCode_, std::string errorInfo_, Severity severity_) : code(errorCode_), info(errorInfo_), severity(severity_) {
-        this->defaultMessage = "ERROR: Could not initialize error!";
+        defaultMessage = "ERROR: Could not initialize error!";
         if (mapErrorMessage.find(errorCode_) != mapErrorMessage.end()) {
-            this->defaultMessage = mapErrorMessage[code];
+            defaultMessage = mapErrorMessage[code];
         }
 
-        if (!this->IsEmpty()) {
+        if (!IsEmpty()) {
             lastError = *this;
         }
     }
@@ -73,14 +73,14 @@ class [[nodiscard]] Error {
         return lastError;
     }
 
-    inline void SetErrorInfo(std::string info_) { this->info = info_; };
+    inline void SetErrorInfo(std::string info_) { info = info_; };
 
     inline void Handle() const {
-        if (this->IsEmpty()) return;
-        int severity = static_cast<int>(this->severity);
-        if (severity >= static_cast<int>(Error::Severity::LOW)) PrintError(*this);
-        if (severity == static_cast<int>(Error::Severity::HIGH)) Crash(*this);
-        this->isHandled = true;
+        if (IsEmpty()) return;
+        int severity_ = static_cast<int>(severity);
+        if (severity_ >= static_cast<int>(Error::Severity::LOW)) PrintError(*this);
+        if (severity_ == static_cast<int>(Error::Severity::HIGH)) Crash(*this);
+        isHandled = true;
     }
 
    private:

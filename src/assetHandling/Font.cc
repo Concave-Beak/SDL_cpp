@@ -42,12 +42,12 @@ void Font::RenderChar(SDL_Renderer *renderer, char c, Vec2<int> pos, float scale
     assert(c >= ASCII_DISPLAY_LOW);
     assert(c <= ASCII_DISPLAY_HIGH);
     const size_t index = size_t(c - ASCII_DISPLAY_LOW);
-    scc(SDL_RenderCopy(renderer, this->spritesheet, &this->glyphTable[index], &dst)).Handle();
+    scc(SDL_RenderCopy(renderer, spritesheet, &glyphTable[index], &dst)).Handle();
 }
 
 void Font::RenderTextSized(SDL_Renderer *renderer, const char *text, size_t text_size, Vec2<int> pos,
                            SDL_Color color, float scale) {
-    SetTextureColor(this->spritesheet, color);
+    SetTextureColor(spritesheet, color);
 
     Vec2<int> pen = pos;
     for (size_t i = 0; i < text_size; ++i) {
