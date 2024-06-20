@@ -1,9 +1,11 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "../../../lib/utils/math_utils.hh"
 #include "../items/Item.hh"
+#include "../items/ItemFactory.hh"
 #include "./Entity.hh"
 
 class NPC : protected Entity {
@@ -39,10 +41,9 @@ class NPC : protected Entity {
     };
     AggressionType aggressionType;
 
-    Matrix2D<Item> inventory = Matrix2D<Item>{
+    Matrix2D<std::shared_ptr<Item>> inventory = Matrix2D<std::shared_ptr<Item>>{
         {
-            Item(Item::SHORTSWORD),
-            Item(Item::BOW_AND_ARROW),
+            // ItemFactory::Instance().CreateItem(Item::ItemID::BOW_AND_ARROW),
         },
     };
 

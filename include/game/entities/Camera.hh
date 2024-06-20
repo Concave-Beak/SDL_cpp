@@ -9,7 +9,7 @@
 
 class Camera {
    public:
-    static Camera* GetCameraInstance();
+    static Camera& Instance();
     Vec2<float> GetCameraPos();
 
     void FollowPlayer(Vec2<float> posPlayer, float delta, Vec2<int> cameraInfo,
@@ -33,7 +33,11 @@ class Camera {
     bool isBeingMoved = false;
 
    private:
-    static Camera* instance;
+    Camera() = default;
+    ~Camera() = default;
+
+   private:
+    static Camera instance;
 };
 
 //------------------------------------------------------------------------------

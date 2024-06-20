@@ -63,8 +63,8 @@ std::unordered_map<std::string, Action::ActionType> Config::actionTypeMap = {
 
 bool Config::ShowFPSState() { return showFPS; }
 
-Config* Config::config = new Config{};
-Config* Config::GetConfig() { return config; };
+Config Config::instance = Config();
+Config& Config::Instance() { return instance; };
 
 std::string Config::GetLogPath() { return logPath; }
 

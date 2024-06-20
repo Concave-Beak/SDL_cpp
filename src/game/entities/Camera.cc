@@ -2,9 +2,8 @@
 
 //------------------------------------------------------------------------------
 
-Camera* Camera::instance = new Camera;
-
-Camera* Camera::GetCameraInstance() { return instance; }
+Camera Camera::instance = Camera();
+Camera& Camera::Instance() { return instance; }
 
 void Camera::FollowPlayer(Vec2<float> posPlayer, float delta, Vec2<int> cameraInfo,
                           Vec2<int> hitboxPlayer, float timeMultiplier, const bool& isPaused) {

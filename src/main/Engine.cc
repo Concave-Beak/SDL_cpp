@@ -9,9 +9,13 @@
 #include <iostream>
 #include <sstream>
 
-#include "../..//include/game/entities/Attack.hh"
-#include "../..//include/game/entities/NPC.hh"
 #include "../../include/assetHandling/UI/UI_Button.hh"
+#include "../../include/game/entities/Attack.hh"
+#include "../../include/game/entities/Camera.hh"
+#include "../../include/game/entities/NPC.hh"
+#include "../../include/game/entities/Player.hh"
+#include "../../include/main/Action.hh"
+#include "../../include/main/Config.hh"
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/debug_utils.hh"
 #include "../../lib/utils/sdl_utils.hh"
@@ -38,10 +42,10 @@ void Engine::GameLoop() {
         beginTick = SDL_GetTicks();
         ClearBackground(renderer, 100, 100, 100, 255);
         UpdateScreenSpecs();
-        Entity::Handle(timeDelta, timeMultiplier, isPaused, cameraInstance->GetCameraPos(), renderer);
-        Player::Handle(mousePos);
+        Entity::Handle(timeDelta, timeMultiplier, isPaused, Camera::Instance().GetCameraPos(), renderer);
+        player->Handle(mousePos);
         actionHandler->Handle();
-        NPC::Handle(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
+        NPC::Handle(renderer, player->GetPos(), Camera::Instance().GetCameraPos(), player->GetHitbox());  // Placeholder
         Attack::CheckAndDestroyExpiredAttacks();
         Render(beginTick);
         UpdateTimeDelta();
@@ -67,7 +71,7 @@ void Engine::HandleFPS(Uint32 loopBegin) {
     Uint32 loopEnd = SDL_GetTicks();
     float timeDifference = timeStepInMS - float(loopEnd - loopBegin);
 
-    if (configInstance->ShowFPSState() == true) {
+    if (Config::Instance().ShowFPSState() == true) {
         std::stringstream fpsStr;  // fps is in secods, timeDifference is in ms.
         fpsStr << "FPS: " << std::setprecision(4)
                << fpsMAX - (timeDifference / 1000.0f);  // that's why it's divided by 1000
@@ -88,8 +92,8 @@ void Engine::ShowDebugInfo() {
     debugFont.RenderTextSized(renderer, levelItemStr.str().c_str(), levelItemStr.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE, 0xff}, 3);
 
     std::stringstream playerInfo;
-    playerInfo << "XY: " << std::setprecision(4) << playerInstance->GetPos().x << " " << std::setprecision(4)
-               << playerInstance->GetPos().y;
+    playerInfo << "XY: " << std::setprecision(4) << player->GetPos().x << " " << std::setprecision(4)
+               << player->GetPos().y;
     debugFont.RenderTextSized(renderer, playerInfo.str().c_str(), playerInfo.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, SDL_Color{WHITE, 0xff}, 3);
 }
 
@@ -97,15 +101,15 @@ size_t Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  /
 
 void Engine::Render(Uint32 beginTick) {
     Error err;
-    Vec2<int> cameraPos = cameraInstance->GetCameraPos();
+    Vec2<int> cameraPos = Camera::Instance().GetCameraPos();
 
     {
         Level::Draw(cameraPos, renderer);
         ShowDebugInfo();
         HandleFPS(beginTick);
         UI::Button::Handle(event, renderer).Handle();
-        cameraInstance->FollowPlayer(playerInstance->GetPos(), timeDelta, screenSpecs,
-                                     playerInstance->GetHitbox(), timeMultiplier, isPaused);
+        Camera::Instance().FollowPlayer(player->GetPos(), timeDelta, screenSpecs,
+                                        player->GetHitbox(), timeMultiplier, isPaused);
         DrawMouse();
         SDL_RenderPresent(renderer);
     }
@@ -152,7 +156,7 @@ void Engine::Init() {
     }
     PrintInfo(Info::FONT_LOADED, "debug font");
 
-    Error err = configInstance->ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y}, actionHandler);
+    Error err = Config::Instance().ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y}, actionHandler);
     if (!err.IsEmpty()) {
         err.Handle();
     }

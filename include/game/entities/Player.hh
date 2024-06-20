@@ -3,7 +3,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
 
+#include <cwchar>
+#include <memory>
+
 #include "../../../lib/utils/math_utils.hh"
+#include "../items/Inventory.hh"
 #include "../items/Item.hh"
 #include "./Entity.hh"
 
@@ -11,11 +15,8 @@
 
 class Player : public Entity {
    public:
-    static Player* GetPlayerInstace();
+    static Player* Instance();
 
-    // Vec2<float> GetPos();
-
-    // Vec2<float> GetVelocityNow();
     Vec2<float> GetRunningSpeed();
     Vec2<float> GetWalkingSpeed();
 
@@ -30,8 +31,11 @@ class Player : public Entity {
 
     static void Handle(const Vec2<int>& mousePos);
 
+    ~Player() = default;
+
    private:
-    static Player* playerInstance;
+    Player() = default;
+    static Player* instance;
 
     Vec2<int> mousePos = {0, 0};
     float angleFacing = 0;
@@ -39,16 +43,12 @@ class Player : public Entity {
     Vec2<float> runningSpeed = {20, 125};
     Vec2<float> walkingSpeed = {10, 75};
 
-    Vec2<Uint8> inventorySize;
-    Matrix2D<Item> inventory = Matrix2D<Item>{
-        {
-            Item(Item::SHORTSWORD),
-            Item(Item::BOW_AND_ARROW),
-        },
-    };
-    Item currentItemHolding = inventory[0][0];
+    Inventory inventory = Inventory(5, 5);
+    std::shared_ptr<Item> currentItemHolding;
 
    private:
+    void InitInventory();
+
     void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) override;
 
     void DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, SDL_Renderer* renderer);

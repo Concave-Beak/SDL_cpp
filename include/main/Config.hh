@@ -15,7 +15,7 @@
 
 class Config {
    public:
-    static Config* GetConfig();
+    static Config& Instance();
 
     void WriteConfig();  // TODO
     std::string GetLogPath();
@@ -37,13 +37,17 @@ class Config {
     bool showFPS = false;
     bool showDebugInfo = false;
 
-    static Config* config;
+    ~Config() = default;
 
    private:
+    Config() = default;
+
     static std::unordered_map<std::string, Key> str2Keybinding;
     static std::unordered_map<std::string, Action::ActionType> actionTypeMap;
 
    private:
+    static Config instance;
+
     const Error ReadFullConfig(ActionHandler* actionHandler);
 
     const Error ReadGraphics(toml::node_view<toml::node> graphicsNode);

@@ -74,12 +74,12 @@ class ActionHandler {
    public:
     void Handle();
 
-    static ActionHandler* GetActionHandler(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_);
+    static ActionHandler* Instance(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_);
 
     void SetAction(Action action, Key key);
 
    private:
-    ActionHandler(SDL_Event* event_, Player* playerinstance_, Vec2<int>* mousePos_, bool* shouldQuit_);
+    ActionHandler(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_);
     ~ActionHandler();
 
     void HandleKeyboard();
@@ -88,11 +88,12 @@ class ActionHandler {
     void Quit();
 
    private:
-    static inline ActionHandler* instance = nullptr;
+    static inline ActionHandler* instance;
     static inline std::unordered_map<Key, Action> keymap = {};
 
-    SDL_Event* event = nullptr;
     Player* playerInstance = nullptr;
+
+    SDL_Event* event = nullptr;
 
     const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
     Vec2<int>* mousePos = nullptr;

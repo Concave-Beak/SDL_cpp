@@ -6,34 +6,44 @@
 
 #include <cmath>
 
+#include "../../../include/game/items/ItemFactory.hh"
 #include "../../../lib/utils/math_utils.hh"
 #include "../../../lib/utils/sdl_utils.hh"
 
-Player* Player::playerInstance = new Player;
+Player* Player::instance = new Player();
 
-// Vec2<float> Player::GetPos() { return Entity::GetPos(); }
-// Vec2<float> Player::GetVelocityNow() { return Entity::GetVelocityNow(); }
-
-Player* Player::GetPlayerInstace() { return Player::playerInstance; }
+Player* Player::Instance() {
+    instance->InitInventory();
+    return Player::instance;
+}
 Vec2<float> Player::GetRunningSpeed() { return runningSpeed; }
 Vec2<float> Player::GetWalkingSpeed() { return walkingSpeed; }
 
 Vec2<int> Player::GetHitbox() { return Entity::GetHitbox(); }
 
+void Player::InitInventory() {
+    inventory.Set(0, 0, ItemFactory::Instance().CreateItem(Item::ItemID::SHORTSWORD));
+    currentItemHolding = inventory.At(0, 0);
+}
+
 void Player::SwitchWeapon(WeaponHand weaponHand) {
-    currentItemHolding = inventory[0][0];
+    currentItemHolding = inventory.At(0, 0);
     if (weaponHand == RIGHT_HAND) {
-        currentItemHolding = inventory[0][1];
+        currentItemHolding = inventory.At(0, 1);
     }
 }
 
 void Player::Attack() {
-    // Vec2<float> attackSpawnPos = {Player::GetPos().x, Player::GetPos().y};
-    currentItemHolding.Attack(GetEntity(), positionNow, angleFacing);
+    Vec2<float> attackSpawnPos = {Player::GetPos().x, Player::GetPos().y};
+    if (currentItemHolding == nullptr) {
+    }
+    if (currentItemHolding != nullptr) {
+        currentItemHolding->Attack(GetEntity(), positionNow, angleFacing);
+    }
 }
 
 void Player::Handle(const Vec2<int>& mousePos_) {
-    playerInstance->mousePos = mousePos_;
+    instance->mousePos = mousePos_;
 }
 
 void Player::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {

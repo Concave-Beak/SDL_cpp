@@ -1,4 +1,4 @@
-#include "../..//include/main/Action.hh"
+#include "../../include/main/Action.hh"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_mouse.h>
@@ -7,6 +7,8 @@
 #include <functional>
 #include <iostream>
 #include <utility>
+
+#include "../../include/game/entities/Player.hh"
 
 Action::Action() : actionType(Action::ActionType::NOT_SET) {}
 Action::Action(Action::ActionType type_) : actionType(type_) {}
@@ -31,10 +33,7 @@ void Action::SetFunction(std::function<void()> function_) { function = function_
 
 ActionHandler::ActionHandler(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_) : event(event_), playerInstance(playerInstance_), mousePos(mousePos_), shouldQuitGame(shouldQuit_) {}
 
-ActionHandler* ActionHandler::GetActionHandler(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_) {
-    if (instance != nullptr) {
-        return instance;
-    }
+ActionHandler* ActionHandler::Instance(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_) {
     instance = new ActionHandler(event_, playerInstance_, mousePos_, shouldQuit_);
     return instance;
 }

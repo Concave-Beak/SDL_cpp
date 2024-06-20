@@ -1,9 +1,8 @@
 #pragma once
 
-#include <string>
-struct Inventory;
-
 #include <SDL2/SDL_stdinc.h>
+
+#include <string>
 
 #include "../../../lib/utils/math_utils.hh"
 #include "../entities/Entity.hh"
@@ -14,21 +13,22 @@ class Item {
         BOW_AND_ARROW = 0,
         SHORTSWORD,
     };
-    Item(ItemID itemID_);
-    ~Item();
 
     void Drop(Matrix2D<Item>* inventory);
     void Attack(Entity* entityOrigin, const Vec2<float>& spawnPos, float angle);
 
-   private:
-    ItemID ID;
+   protected:
+    Item() = default;
+    ~Item() = default;
+
     std::string name;
+    ItemID ID;
 
     enum ItemType {
         SHORT_BOW = 1,
         ONE_HANDED_SWORD,
     };
-    ItemType itemTtype;
+    ItemType itemType;
 
     float damage;
     float armorPenetration;

@@ -146,20 +146,24 @@ inline void PrintInfo(const Info& info_, const std::string& msg) {
     switch (info_) {
         case Info::SDL_INITIALIZED_SUCESSFULY:
             std::cout << "INFO: SDL_Init initialized sucessfully\n";
+            break;
         case Info::SDL_WINDOW_INITIALIZED:
             std::cout << "INFO: Window initialized successfully\n";
+            break;
         case Info::SDL_RENDERER_INITIALIZED:
             std::cout << "INFO: Renderer initialized successfully\n";
-
+            break;
         case Info::STARTING_GAME_LOOP:
             std::cout << "INFO: Game loop started\n";
+            break;
         case Info::GAME_CLOSED:
             std::cout << "INFO: Game closed";
-
+            break;
         case Info::FONT_LOADED:
             std::cout << "INFO: Font loaded " << msg << '\n';
-
+            break;
         case Info::CONFIG_READ_SUCESSFULLY:
             std::cout << "INFO: Config read sucessfully\n";
+            break;
     }
 }

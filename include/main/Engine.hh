@@ -6,9 +6,6 @@
 #include <unordered_map>
 
 #include "../assetHandling/Font.hh"
-#include "../game/entities/Camera.hh"
-#include "../game/entities/Player.hh"
-#include "./Config.hh"
 #include "Action.hh"
 
 //------------------------------------------------------------------------------
@@ -23,10 +20,8 @@ class Engine {
    private:
     static Engine* instance;
 
-    Player* playerInstance = Player::GetPlayerInstace();
-    Config* configInstance = Config::GetConfig();
-    Camera* cameraInstance = Camera::GetCameraInstance();
-    ActionHandler* actionHandler = ActionHandler::GetActionHandler(&event, playerInstance, &mousePos, &quit);
+    Player* player = Player::Instance();
+    ActionHandler* actionHandler = ActionHandler::Instance(&event, player, &mousePos, &quit);
 
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;
