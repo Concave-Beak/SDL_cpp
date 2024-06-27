@@ -13,14 +13,12 @@
 
 //------------------------------------------------------------------------------
 
-class Player : public Entity {
+class Player : public Entity, public std::enable_shared_from_this<Player> {
    public:
     static Player* Instance();
 
     Vec2<float> GetRunningSpeed();
     Vec2<float> GetWalkingSpeed();
-
-    Vec2<int> GetHitbox();
 
     enum WeaponHand {
         LEFT_HAND = 0,
@@ -34,7 +32,7 @@ class Player : public Entity {
     ~Player() = default;
 
    private:
-    Player() = default;
+    Player();
     static Player* instance;
 
     Vec2<int> mousePos = {0, 0};

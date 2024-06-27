@@ -15,11 +15,9 @@ Entity::Entity() {
 }
 Entity::~Entity() {}
 
-void Entity::Init(EntityType ID_) {
-    Type = ID_;
+void Entity::Init(EntityType ID_) {  // TODO remove this
+    type = ID_;
 }
-
-std::vector<Entity*> Entity::entityVector = {};
 
 bool Entity::GetCollidedInformation(Direction direction) {
     switch (direction) {
@@ -42,7 +40,7 @@ bool Entity::GetCollidedInformation(Direction direction) {
 Vec2<float> Entity::GetVelocityNow() { return velocityNow; }
 Vec2<float> Entity::GetPos() { return positionNow; }
 
-Vec2<int> Entity::GetHitbox() { return hitbox; }
+SDL_Rect Entity::GetModel() { return model; }
 
 Direction Entity::GetFacingDirection() { return facing; }
 
@@ -80,18 +78,30 @@ void Entity::Move(const Direction& direction, const Vec2<float>& accelSpeed, con
 }
 
 void Entity::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
-    SDL_Rect entityModel = {
-        // rectangles for now, because I dont have proper models
-        (int)positionNow.x - cameraPos.x,
-        (int)positionNow.y - cameraPos.y,
-        hitbox.x,
-        hitbox.y,
-    };
+    SDL_Rect modelToDraw = this->model - SDL_Rect{.x = cameraPos.x, .y = cameraPos.y, .w = 0, .h = 0};
     scc(SDL_SetRenderDrawColor(renderer, PINK, 0xff)).Handle();
-    scc(SDL_RenderFillRect(renderer, &entityModel)).Handle();
+    scc(SDL_RenderFillRect(renderer, &modelToDraw)).Handle();
+}
+
+void Entity::CheckExpiredEntities() {
+    for (std::vector<Entity*>::iterator entityIt = entityVector.begin(); entityIt != entityVector.end();) {
+        if ((*entityIt)->isMarkedForDeletion) {
+            Delete(entityIt);
+        } else {
+            ++entityIt;
+        }
+    }
+}
+
+void Entity::Delete(std::vector<Entity*>::iterator entityIt) {
+    Entity* entityToDelete = *entityIt;
+
+    entityIt = entityVector.erase(entityIt);
+    delete entityToDelete;
 }
 
 void Entity::Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused, const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
+    CheckExpiredEntities();
     for (Entity* entity : entityVector) {
         entity->HandleVelocity(timeDelta, timeMultiplier, isPaused);
         entity->HandleCollisions(timeDelta, timeMultiplier, isPaused);
@@ -139,32 +149,32 @@ SDL_Rect Entity::GetEntityRect() {
     return SDL_Rect{
         .x = int(positionNow.x),
         .y = int(positionNow.y),
-        .w = hitbox.x,
-        .h = hitbox.y,
+        .w = model.w,
+        .h = model.h,
     };
 }
 
 Entity* Entity::GetEntity() { return this; }
 
+Entity::EntityType Entity::GetType() { return type; }
+
 void Entity::HandleVerticalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
                                      const float& timeDelta, const float& timeMultiplier) {
     float levelItemTop = float(levelItem.pos.y),
-          levelItemBottom = float(levelItem.pos.y + levelItem.wireframe.h);
+          levelItemBottom = float(levelItem.pos.y + levelItem.rect.h);
 
-    bool hitFeet = CheckSideCollision(entityRect, levelItem.wireframe,
-                                      Direction::DOWN, velocityNow, timeDelta, timeMultiplier);
+    bool hitFeet = IsSideColliding(entityRect, levelItem.rect, Direction::DOWN, velocityNow, timeDelta, timeMultiplier);
     if (hitFeet) {
         collidedDown = true;
         surfaceAttrition = levelItem.attritionCoefficient;
-        positionNow.y = levelItemTop - float(hitbox.y);
+        positionNow.y = levelItemTop - float(model.h);
         velocityNow.y = 0;
         if (levelItem.collisionType == PLATFORM) isAbovePlatform = true;
     }
 
     if (levelItem.collisionType == CollisionType::PLATFORM) return;
 
-    bool hitHead = CheckSideCollision(entityRect, levelItem.wireframe,
-                                      Direction::UP, velocityNow, timeDelta, timeMultiplier);
+    bool hitHead = IsSideColliding(entityRect, levelItem.rect, Direction::UP, velocityNow, timeDelta, timeMultiplier);
     if (hitHead) {
         collidedUp = true;
         positionNow.y = levelItemBottom;
@@ -177,18 +187,16 @@ void Entity::HandleHorizontalCollision(const SDL_Rect& entityRect, const LevelIt
     if (levelItem.collisionType == PLATFORM) return;
 
     float levelItemLeft = float(levelItem.pos.x),
-          levelItemRight = float(levelItem.pos.x + levelItem.wireframe.w);
+          levelItemRight = float(levelItem.pos.x + levelItem.rect.w);
 
-    bool hitRight = CheckSideCollision(entityRect, levelItem.wireframe,
-                                       Direction::RIGHT, velocityNow, timeDelta, timeMultiplier);
+    bool hitRight = IsSideColliding(entityRect, levelItem.rect, Direction::RIGHT, velocityNow, timeDelta, timeMultiplier);
     if (hitRight) {
         collidedRight = true;
         velocityNow.x = -velocityNow.x * SURFACE_BOUNCE;
-        positionNow.x = levelItemLeft - float(hitbox.x);
+        positionNow.x = levelItemLeft - float(model.w);
     }
 
-    bool hitLeft = CheckSideCollision(entityRect, levelItem.wireframe,
-                                      Direction::LEFT, velocityNow, timeDelta, timeMultiplier);
+    bool hitLeft = IsSideColliding(entityRect, levelItem.rect, Direction::LEFT, velocityNow, timeDelta, timeMultiplier);
     if (hitLeft) {
         collidedLeft = true;
         velocityNow.x = -velocityNow.x * SURFACE_BOUNCE;
@@ -201,12 +209,11 @@ void Entity::HandleCollisions(const float& timeDelta, const float& timeMultiplie
 
     ResetCollisionState();
 
-    SDL_Rect entityRect;
     for (LevelItem levelItem : Level::collisions) {
-        entityRect = GetEntityRect();
-        HandleVerticalCollision(entityRect, levelItem, timeDelta, timeMultiplier);
-        entityRect = GetEntityRect();
-        HandleHorizontalCollision(entityRect, levelItem, timeDelta, timeMultiplier);
+        model = GetEntityRect();
+        HandleVerticalCollision(model, levelItem, timeDelta, timeMultiplier);
+        model = GetEntityRect();
+        HandleHorizontalCollision(model, levelItem, timeDelta, timeMultiplier);
     }
 }
 

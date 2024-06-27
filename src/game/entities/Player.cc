@@ -10,6 +10,9 @@
 #include "../../../lib/utils/math_utils.hh"
 #include "../../../lib/utils/sdl_utils.hh"
 
+Player::Player() {
+    model = {0, 0, 64, 64};
+}
 Player* Player::instance = new Player();
 
 Player* Player::Instance() {
@@ -18,8 +21,6 @@ Player* Player::Instance() {
 }
 Vec2<float> Player::GetRunningSpeed() { return runningSpeed; }
 Vec2<float> Player::GetWalkingSpeed() { return walkingSpeed; }
-
-Vec2<int> Player::GetHitbox() { return Entity::GetHitbox(); }
 
 void Player::InitInventory() {
     inventory.Set(0, 0, ItemFactory::Instance().CreateItem(Item::ItemID::SHORTSWORD));
@@ -51,8 +52,8 @@ void Player::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
         // rectangles for now, because I dont have proper models
         (int)positionNow.x - cameraPos.x,
         (int)positionNow.y - cameraPos.y,
-        hitbox.x,
-        hitbox.y,
+        model.w,
+        model.h,
     };
     scc(SDL_SetRenderDrawColor(renderer, RED, 0xff)).Handle();
     scc(SDL_RenderFillRect(renderer, &playerModel)).Handle();

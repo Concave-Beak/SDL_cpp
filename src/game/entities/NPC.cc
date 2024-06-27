@@ -13,6 +13,7 @@
 std::vector<NPC *> NPC::npcVector = {};
 
 NPC::NPC(Entity::EntityType type_, Vec2<float> spawnPos_) : spawnPos(spawnPos_) {
+    model = {0, 0, 64, 64};
     isWandering = true;  // Placeholder
     runningSpeed = {10, 200};
     walkingSpeed = {5, 150};
@@ -24,18 +25,12 @@ NPC::NPC(Entity::EntityType type_, Vec2<float> spawnPos_) : spawnPos(spawnPos_) 
 
 NPC::~NPC() {}
 
-Vec2<float> NPC::GetPos() { return Entity::GetPos(); }
-
-Vec2<float> NPC::GetVelocityNow() { return Entity::GetVelocityNow(); }
-
-Vec2<int> NPC::GetHitbox() { return Entity::GetHitbox(); }
-
 void NPC::ResetVisionCone(NPC *npc) {
     float halfAngle = npc->visionConeAngle / 2.0f;
     float angleA = float(atan2(0.0f, npc->visionConeRange)) + halfAngle;
     float angleB = float(atan2(0.0f, npc->visionConeRange)) - halfAngle;
 
-    Vec2<float> posNpc = npc->Entity::GetPos() + Vec2<float>{float(npc->GetHitbox().x), 0};
+    Vec2<float> posNpc = npc->Entity::GetPos() + Vec2<float>{float(npc->model.w), 0};
     Vec2<float> pointA = {-(cos(angleA) * float(npc->visionConeRange)), sin(angleA) * float(npc->visionConeRange)};
     Vec2<float> pointB = {-(cos(angleB) * float(npc->visionConeRange)), sin(angleB) * float(npc->visionConeRange)};
     if (npc->Entity::GetFacingDirection() == Direction::LEFT) {
@@ -83,8 +78,8 @@ void NPC::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
         // rectangles for now, because I dont have proper models
         (int)positionNow.x - cameraPos.x,
         (int)positionNow.y - cameraPos.y,
-        hitbox.x,
-        hitbox.y,
+        model.w,
+        model.h,
     };
     if (isDead) {
         scc(SDL_SetRenderDrawColor(renderer, WHITE, 0xff)).Handle();

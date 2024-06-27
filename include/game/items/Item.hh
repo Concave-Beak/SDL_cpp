@@ -34,6 +34,4 @@ class Item {
     float armorPenetration;
     float durability;
     float invetoryWeight;
-
-    float range;
 };

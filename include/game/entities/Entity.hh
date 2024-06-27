@@ -24,7 +24,9 @@ class Entity {
     Vec2<float> GetVelocityNow();
     Vec2<float> GetPos();
 
-    Vec2<int> GetHitbox();
+    SDL_Rect GetModel();
+
+    EntityType GetType();
 
     Direction GetFacingDirection();
 
@@ -32,15 +34,16 @@ class Entity {
 
     static void Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused, const Vec2<int>& cameraPos, SDL_Renderer* renderer);
 
-    void Init(EntityType Type);
+    void Init(EntityType type);
 
     SDL_Rect GetEntityRect();
 
     void Damage(int damage);
 
+    virtual ~Entity();
+
    protected:
     Entity();
-    virtual ~Entity();
 
    protected:
     bool collidedDown = false;
@@ -49,7 +52,7 @@ class Entity {
     bool collidedUp = false;
     bool isAbovePlatform = true;
 
-    EntityType Type;
+    EntityType type;
     Uint16 ID;
 
     Vec2<float> velocityNow = {0, 0};
@@ -57,13 +60,15 @@ class Entity {
 
     Direction facing = Direction::RIGHT;
 
-    Vec2<Uint8> hitbox = {64, 64};
+    SDL_Rect model = {.x = (int)positionNow.x, .y = (int)positionNow.y, .w = 0, .h = 0};
 
     float surfaceAttrition = 0;
 
     float healthMax = 10;
     float heathNow = 10;
     bool isDead = false;
+
+    bool isMarkedForDeletion = false;
 
    protected:
     void ResetCollisionState();
@@ -74,14 +79,17 @@ class Entity {
     virtual void HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
     virtual void HandleCollisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
 
-    virtual void HandleVerticalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
-                                         const float& timeDelta, const float& timeMultiplier);
-    virtual void HandleHorizontalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
-                                           const float& timeDelta, const float& timeMultiplier);
+    void HandleVerticalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,  // TODO remove entityRect
+                                 const float& timeDelta, const float& timeMultiplier);
+    void HandleHorizontalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
+                                   const float& timeDelta, const float& timeMultiplier);
     virtual void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer);
 
+    static void CheckExpiredEntities();
+    static void Delete(std::vector<Entity*>::iterator entityIt);
+
    protected:
-    static std::vector<Entity*> entityVector;
+    inline static std::vector<Entity*> entityVector = {};
 };
 
 //------------------------------------------------------------------------------

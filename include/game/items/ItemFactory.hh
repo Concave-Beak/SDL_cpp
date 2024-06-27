@@ -7,6 +7,8 @@
 #include "./Item.hh"
 
 class ItemFactory : public Item {
+    using itemFactoryMap = std::unordered_map<ItemID, std::function<std::shared_ptr<Item>()>>;
+
    public:
     static ItemFactory& Instance();
 
@@ -17,7 +19,7 @@ class ItemFactory : public Item {
    private:
     static ItemFactory instance;
 
-    std::unordered_map<ItemID, std::function<std::shared_ptr<Item>()>> itemCreators;
+    itemFactoryMap itemCreators;
 
    private:
     ItemFactory();

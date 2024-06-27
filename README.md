@@ -36,3 +36,4 @@ make
 - Player and texture assets
 - Create enemies and AI
 - Better fps handling
+  - FPS is being displayed incorrectly.

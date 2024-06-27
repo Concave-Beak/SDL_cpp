@@ -10,7 +10,6 @@
 #include <sstream>
 
 #include "../../include/assetHandling/UI/UI_Button.hh"
-#include "../../include/game/entities/Attack.hh"
 #include "../../include/game/entities/Camera.hh"
 #include "../../include/game/entities/NPC.hh"
 #include "../../include/game/entities/Player.hh"
@@ -45,8 +44,7 @@ void Engine::GameLoop() {
         Entity::Handle(timeDelta, timeMultiplier, isPaused, Camera::Instance().GetCameraPos(), renderer);
         player->Handle(mousePos);
         actionHandler->Handle();
-        NPC::Handle(renderer, player->GetPos(), Camera::Instance().GetCameraPos(), player->GetHitbox());  // Placeholder
-        Attack::CheckAndDestroyExpiredAttacks();
+        NPC::Handle(renderer, player->GetPos(), Camera::Instance().GetCameraPos(), {player->GetModel().x, player->GetModel().y});  // Placeholder
         Render(beginTick);
         UpdateTimeDelta();
         ResetTimeMultiplier();
@@ -109,7 +107,7 @@ void Engine::Render(Uint32 beginTick) {
         HandleFPS(beginTick);
         UI::Button::Handle(event, renderer).Handle();
         Camera::Instance().FollowPlayer(player->GetPos(), timeDelta, screenSpecs,
-                                        player->GetHitbox(), timeMultiplier, isPaused);
+                                        {player->GetModel().w, player->GetModel().h}, timeMultiplier, isPaused);
         DrawMouse();
         SDL_RenderPresent(renderer);
     }

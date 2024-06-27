@@ -21,7 +21,7 @@ void ItemFactory::RegisterItem(ItemID id, std::function<std::shared_ptr<Item>()>
 }
 
 std::shared_ptr<Item> ItemFactory::CreateItem(Item::ItemID id) {
-    auto it = itemCreators.find(id);
+    itemFactoryMap::iterator it = itemCreators.find(id);
     if (it != itemCreators.end()) {
         return it->second();
     }
@@ -30,5 +30,5 @@ std::shared_ptr<Item> ItemFactory::CreateItem(Item::ItemID id) {
 
 void ItemFactory::RegisterAll() {
     RegisterItem(ItemID::SHORTSWORD, []() { return std::make_shared<ShortSword>(); });
-    RegisterItem(ItemID::BOW_AND_ARROW, []() { return std::make_shared<BowAndArrow>(); });
+    RegisterItem(ItemID::BOW_AND_ARROW, []() { return std::make_shared<Items::BowAndArrow>(); });
 }

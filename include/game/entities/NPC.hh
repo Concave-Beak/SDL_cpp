@@ -5,18 +5,12 @@
 
 #include "../../../lib/utils/math_utils.hh"
 #include "../items/Item.hh"
-#include "../items/ItemFactory.hh"
 #include "./Entity.hh"
 
 class NPC : protected Entity {
    public:
     NPC(Entity::EntityType type, Vec2<float> startPos_);
     ~NPC();
-
-    Vec2<float> GetPos();
-    Vec2<float> GetVelocityNow();
-
-    Vec2<int> GetHitbox();
 
     static void Handle(SDL_Renderer* renderer, Vec2<float> playerPos, Vec2<float> cameraPos, Vec2<int> playerHitbox);
 

@@ -27,82 +27,95 @@
 #include <sys/types.h>
 
 #include <array>
+#include <cstddef>
 #include <ostream>
+#include <type_traits>
 #include <vector>
 
 #include "./engine_utils.hh"
 
 inline float DegreesToRadians(float degrees) { return degrees * 3.14f / 180; }
 
-template <class Type>
-using Matrix2D = std::vector<std::vector<Type>>;
+template <class T>
+using Matrix2D = std::vector<std::vector<T>>;
 
 template <typename ElementType, size_t NumRows, size_t NumCols>
 using Array2D = std::array<std::array<ElementType, NumCols>, NumRows>;
 
-template <class Type>
-struct Vec2 {
-    Type x;
-    Type y;
+template <typename T>
+struct is_integer_or_float_pointer : std::false_type {};
 
-    Vec2<Type> operator+(const Vec2<Type>& other) const {
+template <typename T>
+struct is_integer_or_float_pointer<T*>
+    : std::integral_constant<bool, std::is_integral<T>::value || std::is_floating_point<T>::value> {};
+
+template <class T>
+struct Vec2 {
+    static_assert(std::is_integral_v<T> | std::is_floating_point_v<T> | std::is_pointer_v<T> | is_integer_or_float_pointer<T>::value,
+                  "ERROR: Could not create Gemotry: not integer or float");
+    T x;
+    T y;
+
+    Vec2<T> operator+(const Vec2<T>& other) const {
         return {x + other.x, y + other.y};
     }
 
-    Vec2<Type> operator*(float scalar) const {
+    Vec2<T> operator*(float scalar) const {
         return {x * scalar, y * scalar};
     }
-    Vec2<Type> operator-(const Vec2<Type>& other) const {
-        return Vec2<Type>(x - other.x, y - other.y);
+    Vec2<T> operator-(const Vec2<T>& other) const {
+        return Vec2<T>(x - other.x, y - other.y);
     }
-    Type cross(const Vec2<Type>& other) const {
+    T cross(const Vec2<T>& other) const {
         return x * other.y - y * other.x;
     }
-    Type dot(const Vec2<Type>& other) const {
+    T dot(const Vec2<T>& other) const {
         return x * other.x + y * other.y;
     }
     template <typename U>
     operator Vec2<U>() const {
         return {static_cast<U>(x), static_cast<U>(y)};
     }
-    friend std::ostream& operator<<(std::ostream& os, const Vec2<Type>& vec) {
+    friend std::ostream& operator<<(std::ostream& os, const Vec2<T>& vec) {
         os << "(" << vec.x << ", " << vec.y << ")";
         return os;
     }
 };
 
-template <class Type>
+template <class T>
 struct Triangle {
-    Vec2<Type> a;
-    Vec2<Type> b;
-    Vec2<Type> c;
+    static_assert(std::is_integral_v<T> | std::is_floating_point_v<T> | std::is_pointer_v<T> | is_integer_or_float_pointer<T>::value,
+                  "ERROR: Could not create Gemotry: not integer or float");
+    Vec2<T> a;
+    Vec2<T> b;
+    Vec2<T> c;
 
     void Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color);
 };
 
-template <class Type>
-inline bool IsPointInTriangle(const Vec2<Type>& p, const Triangle<Type>& triangle) {
-    Vec2<Type> v0 = triangle.c - triangle.a;
-    Vec2<Type> v1 = triangle.b - triangle.a;
-    Vec2<Type> v2 = p - triangle.a;
+template <class T>
+inline bool IsPointInTriangle(const Vec2<T>& p, const Triangle<T>& triangle) {
+    Vec2<T> v0 = triangle.c - triangle.a;
+    Vec2<T> v1 = triangle.b - triangle.a;
+    Vec2<T> v2 = p - triangle.a;
 
-    Type dot00 = v0.dot(v0);
-    Type dot01 = v0.dot(v1);
-    Type dot02 = v0.dot(v2);
-    Type dot11 = v1.dot(v1);
-    Type dot12 = v1.dot(v2);
+    T dot00 = v0.dot(v0);
+    T dot01 = v0.dot(v1);
+    T dot02 = v0.dot(v2);
+    T dot11 = v1.dot(v1);
+    T dot12 = v1.dot(v2);
 
     // Compute barycentric coordinates
-    Type invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-    Type u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    Type v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+    T invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+    T u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    T v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
     // Check if point is in triangle
     return (u >= 0) && (v >= 0) && (u + v <= 1);
 }
 
-template <class Type>
-inline void Triangle<Type>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) {
+template <class T>
+inline void Triangle<T>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) {
     SDL_Vertex vertices[3];
 
     vertices[0].position.x = a.x - cameraPos.x;
@@ -138,7 +151,7 @@ inline void Triangle<Type>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, 
 // @param Vec2<float> velocity | The velocity that the entity/model/rect is moving
 // @param float timeDelta      | The time delta
 // @param float timeMultiplier | The time multiplier
-inline bool CheckSideCollision(const SDL_Rect& rect, const SDL_Rect& surface, const Direction& side, const Vec2<float>& velocity, const float& timeDelta, const float& timeMultiplier) {
+inline bool IsSideColliding(const SDL_Rect& rect, const SDL_Rect& surface, const Direction& side, const Vec2<float>& velocity, const float& timeDelta, const float& timeMultiplier) {
     int rTop = rect.y, rBottom = rect.y + rect.h,
         rLeft = rect.x, rRight = rect.x + rect.w;
 
@@ -176,8 +189,8 @@ inline bool CheckSideCollision(const SDL_Rect& rect, const SDL_Rect& surface, co
     return (hasCollided && isOverlapping);
 }
 
-template <class Type>
-inline bool IsPointInRectangle(const Vec2<Type>& point, const SDL_Rect& rect) {
+template <class T>
+inline bool IsPointInRectangle(const Vec2<T>& point, const SDL_Rect& rect) {
     return point.x >= rect.x &&
            point.x <= rect.x + rect.w &&
            point.y >= rect.y &&

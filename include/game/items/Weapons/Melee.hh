@@ -14,7 +14,6 @@ class ShortSword : public Item {
         armorPenetration = 10;
         durability = 10;
         invetoryWeight = 1;
-        range = -1;
     }
     ~ShortSword() = default;
 };

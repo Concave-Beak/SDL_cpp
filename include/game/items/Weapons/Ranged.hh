@@ -2,6 +2,7 @@
 
 #include "../Item.hh"
 
+namespace Items {
 class BowAndArrow : public Item {
    public:
     inline BowAndArrow() {
@@ -14,6 +15,6 @@ class BowAndArrow : public Item {
         armorPenetration = 10;
         durability = 10;
         invetoryWeight = 1;
-        range = -1;
     }
 };
+}  // namespace Items

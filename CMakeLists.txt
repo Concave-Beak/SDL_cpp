@@ -16,6 +16,9 @@ find_package(SDL2 REQUIRED)
 # Globbing source files
 file(GLOB_RECURSE SOURCES "src/*.cc" "src/*.cpp")
 
+# Globbing header files
+file(GLOB_RECURSE HEADERS "include/*.hh" "include/*.hpp")
+
 # Add executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -27,14 +30,15 @@ endif()
 # Set optimization level
 add_compile_options(-O2)
 
-# Add include directories
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${SDL2_INCLUDE_DIRS}  # Include SDL2 headers
-)
+# Add include directories recursively
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# Add include directories for SDL2
+include_directories(${SDL2_INCLUDE_DIRS})
 
 # Link SDL2 libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
 
 # Copy assets to build directory
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
+

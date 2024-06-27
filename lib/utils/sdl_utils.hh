@@ -98,3 +98,22 @@ inline void DrawTextureNotFound(SDL_Rect textureGrid, const Vec2<int> resolution
         }
     }
 }
+
+inline SDL_Rect operator+(const SDL_Rect &a, const SDL_Rect &b) {
+    SDL_Rect result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.w = a.w + b.w;
+    result.h = a.h + b.h;
+    return result;
+}
+
+// Subtraction of two SDL_Rect
+inline SDL_Rect operator-(const SDL_Rect &a, const SDL_Rect &b) {
+    SDL_Rect result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.w = a.w - b.w;
+    result.h = a.h - b.h;
+    return result;
+}
