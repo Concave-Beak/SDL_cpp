@@ -16,6 +16,9 @@ Feel free to give me any feedback!
 
 - Linux
 - SDL2
+- g++
+- CMake
+- Make
 
 ### Build
 

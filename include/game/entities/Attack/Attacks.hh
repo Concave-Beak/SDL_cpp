@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "../../../../lib/utils/math_utils.hh"
 #include "../Entity.hh"
 
 namespace Attacks {
@@ -34,14 +35,17 @@ class ArrowProjectile : public Entity {
    protected:
     WeaponStats weaponStats;
     float angle = 0;
+    Vec2<float> maximumVelocity;
 
     bool isStuckToSurface = false;
     bool isStuckToEntity = false;  // if is stuck and not on entity is stuck on floor
     Entity *stuckEntity = nullptr;
     Vec2<int> posStuck;  // if stuck on entity this is the pos related to the entity
 
+    Quad<float> quad;
+
    protected:
-    ArrowProjectile() : weaponStats(AttackType::ARROW_PROJECTILE) {}
+    ArrowProjectile(float angle, Vec2<float> posNow_, Vec2<float> dimentions, Vec2<float> velocity);
     ~ArrowProjectile() = default;
 
    protected:
@@ -55,7 +59,7 @@ class ArrowProjectile : public Entity {
     void HandleEntityCollision(Entity *entity, const std::array<Vec2<int>, 4> &modelVerticies);
 
    private:
-    void HandleModel() {}
+    void HandleQuadRotation();
     void HandleStuck();
 
     void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override { (void)direction, (void)accelSpeed, (void)isPaused; };  // does nothing

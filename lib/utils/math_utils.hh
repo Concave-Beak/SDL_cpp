@@ -56,15 +56,29 @@ struct Vec2 {
     T x;
     T y;
 
-    Vec2<T> operator+(const Vec2<T>& other) const {
+    Vec2 operator+(const Vec2& other) const {
         return {x + other.x, y + other.y};
     }
+    Vec2& operator+=(const Vec2& other) {
+        x += other.x;
+        y += other.y;
+        return *this;
+    }
+    bool operator==(const Vec2& other) {
+        return (x == other.x, y == other.y);
+    }
 
-    Vec2<T> operator*(float scalar) const {
+    Vec2 operator-(const Vec2& other) const {
+        return Vec2<T>(x - other.x, y - other.y);
+    }
+    Vec2 operator*(float scalar) const {
         return {x * scalar, y * scalar};
     }
-    Vec2<T> operator-(const Vec2<T>& other) const {
-        return Vec2<T>(x - other.x, y - other.y);
+    Vec2 operator/(float scalar) const {
+        return {x / scalar, y / scalar};
+    }
+    Vec2 operator/(Vec2<T> other) const {
+        return {x / other.x, y / other.y};
     }
     T cross(const Vec2<T>& other) const {
         return x * other.y - y * other.x;
@@ -195,4 +209,186 @@ inline bool IsPointInRectangle(const Vec2<T>& point, const SDL_Rect& rect) {
            point.x <= rect.x + rect.w &&
            point.y >= rect.y &&
            point.y <= rect.y + rect.h;
+}
+
+/* Quad struct | Differently from the SDL_Rect it has no fixed angle or form
+ *
+ * This may change while rotating, but should be created like that
+ * a = Top Left vertice
+ * b = Top Right vertice
+ * c = Bottom Right vertice
+ * d = Bottom Left vertice
+ *
+ * AB-BC-CD-DA are the size sides of the rectangle
+ */
+template <class T>
+struct Quad {
+    Quad(std::array<Vec2<T>, 4> vertices_) : isRectangleOrSquare(false) {
+        a = vertices_[0];
+        b = vertices_[1];
+        c = vertices_[2];
+        d = vertices_[3];
+        CalculateSize();
+    }
+
+    Quad(Vec2<T> topLeftPos, Vec2<T> dimentions) : isRectangleOrSquare(true) {
+        a = Vec2<T>{topLeftPos};
+        b = Vec2<T>{topLeftPos.x + dimentions.x, topLeftPos.y};
+        c = Vec2<T>{topLeftPos + dimentions};
+        d = Vec2<T>{topLeftPos.x, topLeftPos.y + dimentions.y};
+
+        // easy calculations because it is a rectangle
+        AB = dimentions.x, CD = dimentions.x;
+        BC = dimentions.y, DA = dimentions.y;
+    };
+
+    float AB, BC, CD, DA;
+    Vec2<T> a, b, c, d;
+    const bool isRectangleOrSquare;
+
+    friend std::ostream& operator<<(std::ostream& os, const Quad<T>& quad) {
+        os << "a: " << quad.a << ", b: " << quad.b << " , c: " << quad.c << " , d: " << quad.d;
+        return os;
+    }
+
+   private:
+    float angleNow = 0;
+
+   public:
+    inline float GetAngle();
+
+    void CalculateSize();
+
+    void RotateVerticie(float angleInRadians, size_t verticieToRotate);
+    void RotateCenter(float angleInRadians);
+
+    void Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) const;
+
+    void Move(Vec2<T> newPos);
+    void SetPos(Vec2<T> newPos, size_t verticie);
+
+   private:
+    void RotateAroundPoint(float angleInRadians, const Vec2<T>& point);
+    void RotateVertex(Vec2<T>& vertex, const Vec2<T>& point, T cosTheta, T sinTheta);
+};
+
+template <class T>
+inline float Quad<T>::GetAngle() { return angleNow; }
+
+template <class T>
+inline void Quad<T>::CalculateSize() {
+    AB = std::sqrt(std::pow(b.x - a.x, 2) + std::pow(b.y - a.y, 2));
+    BC = std::sqrt(std::pow(c.x - b.x, 2) + std::pow(c.y - b.y, 2));
+    CD = std::sqrt(std::pow(d.x - c.x, 2) + std::pow(d.y - c.y, 2));
+    DA = std::sqrt(std::pow(a.x - d.x, 2) + std::pow(a.y - d.y, 2));
+}
+
+template <class T>
+inline void Quad<T>::RotateVerticie(float angleInRadians, size_t verticieToRotate) {
+    if (verticieToRotate > 3) return;
+
+    Vec2<T>* pivot;
+    switch (verticieToRotate) {
+        case 0:
+            pivot = &a;
+            break;
+        case 1:
+            pivot = &b;
+            break;
+        case 2:
+            pivot = &c;
+            break;
+        case 3:
+            pivot = &d;
+            break;
+    }
+
+    RotateAroundPoint(angleInRadians, *pivot);
+    angleNow += angleInRadians;
+    CalculateSize();
+}
+
+template <class T>
+inline void Quad<T>::RotateCenter(float angleInRadians) {
+    Vec2<T> center = Vec2<T>{
+        (a.x + b.x + c.x + d.x) / 4,
+        (a.y + b.y + c.y + d.y) / 4};
+
+    RotateAroundPoint(angleInRadians, center);
+    angleNow += angleInRadians;
+    CalculateSize();
+}
+template <class T>
+void Quad<T>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) const {
+    SDL_Vertex vertices[4];
+    vertices[0].position = {static_cast<float>(a.x - cameraPos.x), static_cast<float>(a.y - cameraPos.y)};
+    vertices[1].position = {static_cast<float>(b.x - cameraPos.x), static_cast<float>(b.y - cameraPos.y)};
+    vertices[2].position = {static_cast<float>(c.x - cameraPos.x), static_cast<float>(c.y - cameraPos.y)};
+    vertices[3].position = {static_cast<float>(d.x - cameraPos.x), static_cast<float>(d.y - cameraPos.y)};
+
+    for (int i = 0; i < 4; ++i) {
+        vertices[i].color = color;
+    }
+
+    int indices[] = {0, 1, 2, 2, 3, 0};
+    SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
+}
+
+template <class T>
+inline void Quad<T>::RotateAroundPoint(float angleInRadians, const Vec2<T>& point) {
+    T cosTheta = std::cos(angleInRadians);
+    T sinTheta = std::sin(angleInRadians);
+
+    RotateVertex(a, point, cosTheta, sinTheta);
+    RotateVertex(b, point, cosTheta, sinTheta);
+    RotateVertex(c, point, cosTheta, sinTheta);
+    RotateVertex(d, point, cosTheta, sinTheta);
+}
+
+template <class T>
+inline void Quad<T>::RotateVertex(Vec2<T>& vertex, const Vec2<T>& point, T cosTheta, T sinTheta) {
+    Vec2<T> translated = vertex - point;
+
+    T xNew = translated.x * cosTheta - translated.y * sinTheta;
+    T yNew = translated.x * sinTheta + translated.y * cosTheta;
+
+    vertex.x = xNew + point.x;
+    vertex.y = yNew + point.y;
+}
+
+template <class T>
+void Quad<T>::Move(Vec2<T> addPos) {
+    a += addPos;
+    b += addPos;
+    c += addPos;
+    d += addPos;
+}
+
+template <class T>
+void Quad<T>::SetPos(Vec2<T> newPos, size_t verticie) {
+    Vec2<T>* targetVertex;
+
+    switch (verticie) {
+        case 0:
+            targetVertex = &a;
+            break;
+        case 1:
+            targetVertex = &b;
+            break;
+        case 2:
+            targetVertex = &c;
+            break;
+        case 3:
+            targetVertex = &d;
+            break;
+        default:
+            return;  // Invalid vertex index
+    }
+
+    Vec2<T> offset = newPos - *targetVertex;
+
+    a += offset;
+    b += offset;
+    c += offset;
+    d += offset;
 }

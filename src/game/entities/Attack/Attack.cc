@@ -49,18 +49,28 @@ WeaponStats::WeaponStats(AttackType atkType) {
     }
 }
 
+ArrowProjectile::ArrowProjectile(float angle_, Vec2<float> posNow_, Vec2<float> dimentions, Vec2<float> velocity) : weaponStats(AttackType::ARROW_PROJECTILE), quad(posNow_, dimentions), angle(angle_), maximumVelocity(velocity) {
+    velocityNow = {
+        400 * cos(angle_),
+        400 * sin(angle_),
+    };
+    quad.RotateCenter(angle_);
+}
+
+void ArrowProjectile::HandleQuadRotation() {
+    angle = atan2(velocityNow.y, velocityNow.x);
+
+    float angleDif = angle - quad.GetAngle();
+    quad.RotateCenter(angleDif);
+}
+
 void ArrowProjectile::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
-    SDL_Rect arrowModel = SDL_Rect{
-        int(positionNow.x - cameraPos.x),
-        int(positionNow.y - cameraPos.y),
-        model.w,
-        model.h};
-    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff)).Handle();
-    scc(SDL_RenderFillRect(renderer, &arrowModel)).Handle();
+    quad.Draw(renderer, cameraPos, {BLACK, 0xff});
 }
 
 void ArrowProjectile::HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
-    if (isPaused || isStuckToSurface) return;
+    if (isPaused || isStuckToSurface || isStuckToEntity) return;
+    HandleQuadRotation();
 
     if (velocityNow.y > MAX_PROJECTILE_SPEED_Y) {
         velocityNow.y = MAX_PROJECTILE_SPEED_Y;
@@ -79,14 +89,11 @@ void ArrowProjectile::HandleVelocity(const float &timeDelta, const float &timeMu
     int gravity = 0;
     if (weaponStats.isEffectedByGravity == true) gravity = GRAVITY;
 
-    if (!collidedDown) {
-        velocityNow.y += timeDelta * gravity * timeMultiplier;
-        positionNow.y += velocityNow.y * timeDelta * timeMultiplier;
-    }
-
-    if (!collidedDown) surfaceAttrition = AIR_ATTRITION;  // resets attrition
-
+    velocityNow.y += timeDelta * GRAVITY * timeMultiplier;
+    positionNow.y += velocityNow.y * timeDelta * timeMultiplier;
     positionNow.x += velocityNow.x * timeMultiplier * timeDelta;
+
+    quad.SetPos(positionNow, 0);
 }
 
 void ArrowProjectile::HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
@@ -99,10 +106,10 @@ void ArrowProjectile::HandleCollisions(const float &timeDelta, const float &time
     (void)timeDelta, (void)timeMultiplier;
 
     std::array<Vec2<int>, 4> modelVerticies = {
-        Vec2<int>{(int)positionNow.x, (int)positionNow.y},
-        Vec2<int>{(int)positionNow.x + model.w, (int)positionNow.y},
-        Vec2<int>{(int)positionNow.x, (int)positionNow.y + model.h},
-        Vec2<int>{(int)positionNow.x + model.w, (int)positionNow.y + model.h},
+        Vec2<int>(quad.a),
+        Vec2<int>(quad.b),
+        Vec2<int>(quad.c),
+        Vec2<int>(quad.d),
     };
 
     for (Entity *entity : Entity::entityVector) {
@@ -124,10 +131,11 @@ void ArrowProjectile::HandleStuck() {
         return;
     }
     if (isStuckToEntity) {
-        positionNow = posStuck + stuckEntity->GetPos();
+        quad.SetPos(posStuck + stuckEntity->GetPos(), 0);
         return;
     }
     if (isStuckToSurface) {
+        quad.SetPos(posStuck, 0);
         return;
     }
 }

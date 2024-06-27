@@ -5,6 +5,7 @@
 #include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_video.h>
 
+#include <array>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
