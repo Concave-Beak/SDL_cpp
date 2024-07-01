@@ -15,7 +15,7 @@ class Item {
     };
 
     void Drop(Matrix2D<Item>* inventory);
-    void Attack(Entity* entityOrigin, const Vec2<float>& spawnPos, float angle);
+    void Attack(Entity* entityOrigin, float angle);
 
    protected:
     Item() = default;

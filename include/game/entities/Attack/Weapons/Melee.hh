@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../../Entity.hh"
+#include "../Attack.hh"
 
 namespace Attack {
 
-class ShortSwordSwing : public Entity {
+class ShortSwordSwing : public Attack::Swing {
    public:
-    inline ShortSwordSwing(const Entity* entityOrigin_, float angle) {
+    inline ShortSwordSwing(Entity* entityOrigin_, float angle_) : Attack::Swing(entityOrigin_, angle_, entityOrigin_->GetPos(), {32, 64}) {
     }
 };
 

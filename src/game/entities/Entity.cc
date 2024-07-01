@@ -40,7 +40,10 @@ bool Entity::GetCollidedInformation(Direction direction) {
 Vec2<float> Entity::GetVelocityNow() { return velocityNow; }
 Vec2<float> Entity::GetPos() { return positionNow; }
 
-SDL_Rect Entity::GetModel() { return model; }
+SDL_Rect Entity::GetModel() {
+    UpdateModel();
+    return model;
+}
 
 Direction Entity::GetFacingDirection() { return facing; }
 
@@ -145,8 +148,8 @@ void Entity::ResetCollisionState() {
     isAbovePlatform = false;
 }
 
-SDL_Rect Entity::GetEntityRect() {
-    return SDL_Rect{
+void Entity::UpdateModel() {
+    model = SDL_Rect{
         .x = int(positionNow.x),
         .y = int(positionNow.y),
         .w = model.w,
@@ -210,9 +213,9 @@ void Entity::HandleCollisions(const float& timeDelta, const float& timeMultiplie
     ResetCollisionState();
 
     for (LevelItem levelItem : Level::collisions) {
-        model = GetEntityRect();
+        UpdateModel();
         HandleVerticalCollision(model, levelItem, timeDelta, timeMultiplier);
-        model = GetEntityRect();
+        UpdateModel();
         HandleHorizontalCollision(model, levelItem, timeDelta, timeMultiplier);
     }
 }

@@ -36,8 +36,6 @@ class Entity {
 
     void Init(EntityType type);
 
-    SDL_Rect GetEntityRect();
-
     void Damage(int damage);
 
     virtual ~Entity();
@@ -76,6 +74,8 @@ class Entity {
     Entity* GetEntity();
 
    private:
+    void UpdateModel();
+
     virtual void HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
     virtual void HandleCollisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
 

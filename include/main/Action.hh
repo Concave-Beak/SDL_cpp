@@ -91,9 +91,9 @@ class ActionHandler {
     static inline ActionHandler* instance;
     static inline std::unordered_map<Key, Action> keymap = {};
 
-    Player* playerInstance = nullptr;
-
     SDL_Event* event = nullptr;
+
+    Player* playerInstance = nullptr;
 
     const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
     Vec2<int>* mousePos = nullptr;

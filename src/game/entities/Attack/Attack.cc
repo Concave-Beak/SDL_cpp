@@ -1,9 +1,12 @@
+#include "../../../../include/game/entities/Attack/Attack.hh"
+
 #include <SDL2/SDL_timer.h>
 
-#include "../../../../include/game/entities/Attack/Attacks.hh"
+#include <iostream>
+
 #include "../../../../lib/utils/sdl_utils.hh"
 
-namespace Attacks {
+namespace Attack {
 WeaponStats::WeaponStats(AttackType atkType) {
     switch (atkType) {
         case AttackType::ARROW_PROJECTILE: {
@@ -49,26 +52,31 @@ WeaponStats::WeaponStats(AttackType atkType) {
     }
 }
 
-ArrowProjectile::ArrowProjectile(float angle_, Vec2<float> posNow_, Vec2<float> dimentions, Vec2<float> velocity) : weaponStats(AttackType::ARROW_PROJECTILE), quad(posNow_, dimentions), angle(angle_), maximumVelocity(velocity) {
-    velocityNow = {
+Arrow::Arrow(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity) : weaponStats(AttackType::ARROW_PROJECTILE), quad(positionNow_, dimentions), angle(angle_), maximumVelocity(velocity) {
+    Entity::model = {0, 0, (int)dimentions.x, (int)dimentions.y};  // not really used
+    Entity::velocityNow = {
         400 * cos(angle_),
         400 * sin(angle_),
     };
+    Entity::positionNow = entityOrigin_->GetPos() + Vec2<int>{entityOrigin_->GetModel().w, entityOrigin_->GetModel().h} * 0.5f;
+    Entity::type = EntityType::ARROW;
+
+    weaponStats.entityOrigin = entityOrigin_;
     quad.RotateCenter(angle_);
 }
 
-void ArrowProjectile::HandleQuadRotation() {
+void Arrow::HandleQuadRotation() {
     angle = atan2(velocityNow.y, velocityNow.x);
 
     float angleDif = angle - quad.GetAngle();
     quad.RotateCenter(angleDif);
 }
 
-void ArrowProjectile::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
+void Arrow::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
     quad.Draw(renderer, cameraPos, {BLACK, 0xff});
 }
 
-void ArrowProjectile::HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
+void Arrow::HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
     if (isPaused || isStuckToSurface || isStuckToEntity) return;
     HandleQuadRotation();
 
@@ -89,14 +97,14 @@ void ArrowProjectile::HandleVelocity(const float &timeDelta, const float &timeMu
     int gravity = 0;
     if (weaponStats.isEffectedByGravity == true) gravity = GRAVITY;
 
-    velocityNow.y += timeDelta * GRAVITY * timeMultiplier;
+    velocityNow.y += timeDelta * gravity * timeMultiplier;
     positionNow.y += velocityNow.y * timeDelta * timeMultiplier;
     positionNow.x += velocityNow.x * timeMultiplier * timeDelta;
 
     quad.SetPos(positionNow, 0);
 }
 
-void ArrowProjectile::HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
+void Arrow::HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
     if (isPaused) return;
     if (isStuckToSurface || isStuckToEntity) {
         HandleStuck();
@@ -125,7 +133,7 @@ void ArrowProjectile::HandleCollisions(const float &timeDelta, const float &time
     }
 }
 
-void ArrowProjectile::HandleStuck() {
+void Arrow::HandleStuck() {
     if (isStuckToEntity && stuckEntity == nullptr) {
         isStuckToEntity = false;
         return;
@@ -140,9 +148,9 @@ void ArrowProjectile::HandleStuck() {
     }
 }
 
-void ArrowProjectile::HandleEntityCollision(Entity *entity, const std::array<Vec2<int>, 4> &modelVerticies) {
+void Arrow::HandleEntityCollision(Entity *entity, const std::array<Vec2<int>, 4> &modelVerticies) {
     for (const Vec2<int> &point : modelVerticies) {
-        if (IsPointInRectangle(point, entity->GetEntityRect())) {
+        if (IsPointInRectangle(point, entity->GetModel())) {
             velocityNow = {0, 0};
             isStuckToEntity = true;
             stuckEntity = entity;
@@ -153,7 +161,7 @@ void ArrowProjectile::HandleEntityCollision(Entity *entity, const std::array<Vec
     }
 }
 
-void ArrowProjectile::HandleSurfaceCollision(const SDL_Rect &surfaceRect, const std::array<Vec2<int>, 4> &modelVerticies) {
+void Arrow::HandleSurfaceCollision(const SDL_Rect &surfaceRect, const std::array<Vec2<int>, 4> &modelVerticies) {
     for (const Vec2<int> &point : modelVerticies) {
         if (IsPointInRectangle(point, surfaceRect)) {
             velocityNow = {0, 0};
@@ -164,4 +172,75 @@ void ArrowProjectile::HandleSurfaceCollision(const SDL_Rect &surfaceRect, const 
     }
 }
 
-}  // namespace Attacks
+//------------------------------------------------------------------------------
+
+Swing::Swing(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions) : weaponStats(AttackType::SWORD_SLASH), quad(positionNow_, dimentions) {
+    weaponStats.entityOrigin = entityOrigin_;
+    weaponStats.lifeEndTick = SDL_GetTicks() + 200;
+
+    Vec2<float> rectCenter = Vec2<float>{
+        weaponStats.entityOrigin->GetModel().x + weaponStats.entityOrigin->GetModel().w / 2.0f,
+        weaponStats.entityOrigin->GetModel().y + weaponStats.entityOrigin->GetModel().h / 2.0f};
+    float radius = sqrt(pow(weaponStats.entityOrigin->GetModel().w * 0.6f, 2) + pow(weaponStats.entityOrigin->GetModel().h * 0.6f, 2));
+    Vec2<float> spawnOffset = Vec2<float>{
+        radius * cos(angle_),
+        radius * sin(angle_)};
+
+    Vec2<float> spawnPos = rectCenter + spawnOffset;
+
+    quad.SetPos(spawnPos, 4);
+    quad.RotateCenter(angle_);
+    angle = angle_;
+}
+
+void Swing::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
+    quad.Draw(renderer, cameraPos, {BLACK, 0xff});
+}
+
+void Swing::HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
+    if (isPaused) return;
+    if (isMarkedForDeletion) return;
+    (void)timeDelta, (void)timeMultiplier;
+
+    Vec2<float> rectCenter = Vec2<float>{
+        weaponStats.entityOrigin->GetModel().x + weaponStats.entityOrigin->GetModel().w / 2.0f,
+        weaponStats.entityOrigin->GetModel().y + weaponStats.entityOrigin->GetModel().h / 2.0f};
+    float radius = sqrt(pow(weaponStats.entityOrigin->GetModel().w * 0.6f, 2) + pow(weaponStats.entityOrigin->GetModel().h * 0.6f, 2));
+    Vec2<float> spawnOffset = Vec2<float>{
+        radius * cos(angle),
+        radius * sin(angle)};
+
+    Vec2<float> spawnPos = rectCenter + spawnOffset;
+    quad.SetPos(spawnPos, 4);
+
+    HandleLifetime();
+}
+
+void Swing::HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
+    if (isPaused) return;
+    if (isMarkedForDeletion) return;
+    (void)timeDelta, (void)timeMultiplier;
+
+    for (Entity *entity : entityVector) {
+        if (entity == this->GetEntity() || (!weaponStats.canHitOrigin && weaponStats.entityOrigin == entity)) continue;
+
+        HandleEntityCollision(entity);
+    }
+}
+
+void Swing::HandleEntityCollision(Entity *entity) {
+    if (IsQuadColliding(quad, Quad<float>(entity->GetModel()))) {
+        weaponStats.timesHit++;
+        entity->Damage(weaponStats.damage);
+        return;
+    }
+}
+
+void Swing::HandleLifetime() {
+    if (SDL_GetTicks() > weaponStats.lifeEndTick) isMarkedForDeletion = true;
+}
+
+void Swing::Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) {
+    (void)direction, (void)accelSpeed, (void)isPaused;
+}
+}  // namespace Attack

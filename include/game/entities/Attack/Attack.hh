@@ -5,7 +5,7 @@
 #include "../../../../lib/utils/math_utils.hh"
 #include "../Entity.hh"
 
-namespace Attacks {
+namespace Attack {
 enum class AttackType {
     ARROW_PROJECTILE = 0,
     SWORD_SLASH = 1,
@@ -29,11 +29,12 @@ struct WeaponStats {
     bool isEffectedByGravity = false;
 };
 
-class ArrowProjectile : public Entity {
+class Arrow : public Entity {
     WeaponStats GetWeaponStats();
 
    protected:
     WeaponStats weaponStats;
+    Quad<float> quad;
     float angle = 0;
     Vec2<float> maximumVelocity;
 
@@ -42,11 +43,9 @@ class ArrowProjectile : public Entity {
     Entity *stuckEntity = nullptr;
     Vec2<int> posStuck;  // if stuck on entity this is the pos related to the entity
 
-    Quad<float> quad;
-
    protected:
-    ArrowProjectile(float angle, Vec2<float> posNow_, Vec2<float> dimentions, Vec2<float> velocity);
-    ~ArrowProjectile() = default;
+    Arrow(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
+    ~Arrow() = default;
 
    protected:
     void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
@@ -64,4 +63,32 @@ class ArrowProjectile : public Entity {
 
     void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override { (void)direction, (void)accelSpeed, (void)isPaused; };  // does nothing
 };
-}  // namespace Attacks
+
+//------------------------------------------------------------------------------
+
+class Swing : public Entity {  // I have plans to make most items have a swing attack, including ranged ones
+    WeaponStats weaponStats;
+    float angle = 0;
+
+    Quad<float> quad;
+
+   protected:
+    Swing(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
+    ~Swing() = default;
+
+   protected:
+    void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
+
+    void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
+
+    void HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
+
+   private:
+    void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override;
+
+    void HandleEntityCollision(Entity *entity);
+
+    void HandleLifetime();
+};
+
+}  // namespace Attack

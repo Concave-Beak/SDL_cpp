@@ -3,15 +3,15 @@
 #include <functional>
 #include <unordered_map>
 
-#include "Attacks.hh"
+#include "Attack.hh"
 
 class AttackFactory {
-    using attackFactoryMap = std::unordered_map<Attacks::AttackType, std::function<void(Entity*, float)>>;
+    using attackFactoryMap = std::unordered_map<Attack::AttackType, std::function<void(Entity*, float)>>;
 
    public:
     static AttackFactory& Instance();
 
-    void CreateAttack(Attacks::AttackType atkType, Entity* entity, float angle);
+    void CreateAttack(Attack::AttackType atkType, Entity* entity, float angle);
 
    private:
     static AttackFactory instance;
@@ -23,5 +23,5 @@ class AttackFactory {
     ~AttackFactory() = default;
 
     void RegisterAll();
-    void RegisterItem(Attacks::AttackType atkType, std::function<void(Entity*, float)> constructor);
+    void RegisterItem(Attack::AttackType atkType, std::function<void(Entity*, float)> constructor);
 };
