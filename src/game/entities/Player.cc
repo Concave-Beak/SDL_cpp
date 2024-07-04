@@ -23,7 +23,7 @@ Vec2<float> Player::GetRunningSpeed() { return runningSpeed; }
 Vec2<float> Player::GetWalkingSpeed() { return walkingSpeed; }
 
 void Player::InitInventory() {
-    inventory.Set(0, 0, ItemFactory::Instance().CreateItem(Item::ItemID::SHORTSWORD));
+    inventory.Set(0, 0, Items::ItemFactory::Instance().CreateItem(Items::Item::ItemID::SHORTSWORD));
     currentItemHolding = inventory.At(0, 0);
 }
 
@@ -36,7 +36,7 @@ void Player::SwitchWeapon(WeaponHand weaponHand) {
 
 void Player::Attack() {
     if (currentItemHolding != nullptr) {
-        currentItemHolding->Attack(GetEntity(), angleFacing);
+        currentItemHolding->Attack(GetEntity(), angleFacing, &itemCooldown);
     }
 }
 

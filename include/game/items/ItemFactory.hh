@@ -6,8 +6,9 @@
 
 #include "./Item.hh"
 
-class ItemFactory : public Item {
-    using itemFactoryMap = std::unordered_map<ItemID, std::function<std::shared_ptr<Item>()>>;
+namespace Items {
+class ItemFactory {
+    using itemFactoryMap = std::unordered_map<Item::ItemID, std::function<std::shared_ptr<Item>()>>;
 
    public:
     static ItemFactory& Instance();
@@ -25,5 +26,6 @@ class ItemFactory : public Item {
     ItemFactory();
     ~ItemFactory();
 
-    void RegisterItem(ItemID id, std::function<std::shared_ptr<Item>()> constructor);
+    void RegisterItem(Item::ItemID id, std::function<std::shared_ptr<Item>()> constructor);
 };
+}  // namespace Items

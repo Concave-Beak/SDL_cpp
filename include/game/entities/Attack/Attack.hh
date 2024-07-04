@@ -1,8 +1,10 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 #include "../../../../lib/utils/math_utils.hh"
+#include "../../items/Item.hh"
 #include "../Entity.hh"
 
 namespace Attack {
@@ -12,28 +14,30 @@ enum class AttackType {
     MUSKET_BALL = 2,
 };
 
-struct WeaponStats {
-    WeaponStats(AttackType atkType);
-    ~WeaponStats() = default;
-    Entity *entityOrigin = nullptr;
+struct WeaponInfo {
+    WeaponInfo(AttackType atkType);
+    ~WeaponInfo() = default;
+    Entity *attackSource = nullptr;
     bool canHitOrigin = false;
     Uint32 canHitOriginAfter = -1;  // Number of ticks after being spawned
-
-    float damage;  // TODO: divide damage into different types, eg: piercing, bludgeoning...
 
     Uint32 lifeEndTick = -1;  // Number of ticks after being spawned
 
     int timesHit = 0;
     int maxHits = 1;
+    bool canHitTheSameEntityTwice = false;
+    std::vector<const Entity *> entitiesHit = {};
 
     bool isEffectedByGravity = false;
 };
 
 class Arrow : public Entity {
-    WeaponStats GetWeaponStats();
+    WeaponInfo GetWeaponInfo();
 
    protected:
-    WeaponStats weaponStats;
+    WeaponInfo weaponInfo;
+    const Items::ItemStats itemStats;
+
     Quad<float> quad;
     float angle = 0;
     Vec2<float> maximumVelocity;
@@ -44,7 +48,7 @@ class Arrow : public Entity {
     Vec2<int> posStuck;  // if stuck on entity this is the pos related to the entity
 
    protected:
-    Arrow(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
+    Arrow(Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
     ~Arrow() = default;
 
    protected:
@@ -67,13 +71,14 @@ class Arrow : public Entity {
 //------------------------------------------------------------------------------
 
 class Swing : public Entity {  // I have plans to make most items have a swing attack, including ranged ones
-    WeaponStats weaponStats;
+    WeaponInfo weaponInfo;
+    const Items::ItemStats itemStats;
     float angle = 0;
 
     Quad<float> quad;
 
    protected:
-    Swing(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
+    Swing(const Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
     ~Swing() = default;
 
    protected:

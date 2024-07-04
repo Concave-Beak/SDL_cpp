@@ -2,21 +2,20 @@
 
 #include <SDL2/SDL_timer.h>
 
-#include <iostream>
+#include <algorithm>
 
 #include "../../../../lib/utils/sdl_utils.hh"
 
 namespace Attack {
-WeaponStats::WeaponStats(AttackType atkType) {
+WeaponInfo::WeaponInfo(AttackType atkType) {
     switch (atkType) {
         case AttackType::ARROW_PROJECTILE: {
             canHitOrigin = true;
             canHitOriginAfter = SDL_GetTicks() + 2000;
 
-            damage = 10;  // PLACEHOLDER
-
             lifeEndTick = -1;
 
+            canHitTheSameEntityTwice = false;
             timesHit = 0;
             maxHits = 1;
 
@@ -26,10 +25,9 @@ WeaponStats::WeaponStats(AttackType atkType) {
         case AttackType::SWORD_SLASH: {
             canHitOriginAfter = -1;
 
-            damage = 10;  // PLACEHOLDER
-
             lifeEndTick = -1;
 
+            canHitTheSameEntityTwice = false;
             timesHit = 0;
             maxHits = 3;
 
@@ -39,10 +37,9 @@ WeaponStats::WeaponStats(AttackType atkType) {
         case AttackType::MUSKET_BALL: {
             canHitOriginAfter = -1;
 
-            damage = 10;  // PLACEHOLDER
-
             lifeEndTick = -1;
 
+            canHitTheSameEntityTwice = true;
             timesHit = 0;
             maxHits = 2;
 
@@ -52,7 +49,11 @@ WeaponStats::WeaponStats(AttackType atkType) {
     }
 }
 
-Arrow::Arrow(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity) : weaponStats(AttackType::ARROW_PROJECTILE), quad(positionNow_, dimentions), angle(angle_), maximumVelocity(velocity) {
+Arrow::Arrow(Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity) : weaponInfo(AttackType::ARROW_PROJECTILE),
+                                                                                                                                                         itemStats(itemStats_),
+                                                                                                                                                         quad(positionNow_, dimentions),
+                                                                                                                                                         angle(angle_),
+                                                                                                                                                         maximumVelocity(velocity) {
     Entity::model = {0, 0, (int)dimentions.x, (int)dimentions.y};  // not really used
     Entity::velocityNow = {
         400 * cos(angle_),
@@ -61,7 +62,7 @@ Arrow::Arrow(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2
     Entity::positionNow = entityOrigin_->GetPos() + Vec2<int>{entityOrigin_->GetModel().w, entityOrigin_->GetModel().h} * 0.5f;
     Entity::type = EntityType::ARROW;
 
-    weaponStats.entityOrigin = entityOrigin_;
+    weaponInfo.attackSource = entityOrigin_;
     quad.RotateCenter(angle_);
 }
 
@@ -95,7 +96,7 @@ void Arrow::HandleVelocity(const float &timeDelta, const float &timeMultiplier, 
     }
 
     int gravity = 0;
-    if (weaponStats.isEffectedByGravity == true) gravity = GRAVITY;
+    if (weaponInfo.isEffectedByGravity == true) gravity = GRAVITY;
 
     velocityNow.y += timeDelta * gravity * timeMultiplier;
     positionNow.y += velocityNow.y * timeDelta * timeMultiplier;
@@ -122,8 +123,8 @@ void Arrow::HandleCollisions(const float &timeDelta, const float &timeMultiplier
 
     for (Entity *entity : Entity::entityVector) {
         if (entity == this->GetEntity() ||
-            (!weaponStats.canHitOrigin && entity == weaponStats.entityOrigin) ||
-            (SDL_GetTicks() < weaponStats.canHitOriginAfter && entity == weaponStats.entityOrigin) ||
+            (!weaponInfo.canHitOrigin && entity == weaponInfo.attackSource) ||
+            (SDL_GetTicks() < weaponInfo.canHitOriginAfter && entity == weaponInfo.attackSource) ||
             entity->GetType() == EntityType::ARROW) continue;
 
         HandleEntityCollision(entity, modelVerticies);
@@ -155,7 +156,7 @@ void Arrow::HandleEntityCollision(Entity *entity, const std::array<Vec2<int>, 4>
             isStuckToEntity = true;
             stuckEntity = entity;
             posStuck = positionNow - stuckEntity->GetPos();
-            entity->Damage(weaponStats.damage);
+            entity->Damage(itemStats.damage);
             return;
         }
     }
@@ -174,14 +175,17 @@ void Arrow::HandleSurfaceCollision(const SDL_Rect &surfaceRect, const std::array
 
 //------------------------------------------------------------------------------
 
-Swing::Swing(Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions) : weaponStats(AttackType::SWORD_SLASH), quad(positionNow_, dimentions) {
-    weaponStats.entityOrigin = entityOrigin_;
-    weaponStats.lifeEndTick = SDL_GetTicks() + 200;
+Swing::Swing(const Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions) : weaponInfo(AttackType::SWORD_SLASH),
+                                                                                                                                         itemStats(itemStats_),
+                                                                                                                                         quad(positionNow_, dimentions) {
+    weaponInfo.attackSource = entityOrigin_;
+    weaponInfo.lifeEndTick = SDL_GetTicks() + 200;
 
     Vec2<float> rectCenter = Vec2<float>{
-        weaponStats.entityOrigin->GetModel().x + weaponStats.entityOrigin->GetModel().w / 2.0f,
-        weaponStats.entityOrigin->GetModel().y + weaponStats.entityOrigin->GetModel().h / 2.0f};
-    float radius = sqrt(pow(weaponStats.entityOrigin->GetModel().w * 0.6f, 2) + pow(weaponStats.entityOrigin->GetModel().h * 0.6f, 2));
+        weaponInfo.attackSource->GetModel().x + weaponInfo.attackSource->GetModel().w / 2.0f,
+        weaponInfo.attackSource->GetModel().y + weaponInfo.attackSource->GetModel().h / 2.0f,
+    };
+    float radius = sqrt(pow(weaponInfo.attackSource->GetModel().w * 0.6f, 2) + pow(weaponInfo.attackSource->GetModel().h * 0.6f, 2));
     Vec2<float> spawnOffset = Vec2<float>{
         radius * cos(angle_),
         radius * sin(angle_)};
@@ -203,9 +207,11 @@ void Swing::HandleVelocity(const float &timeDelta, const float &timeMultiplier, 
     (void)timeDelta, (void)timeMultiplier;
 
     Vec2<float> rectCenter = Vec2<float>{
-        weaponStats.entityOrigin->GetModel().x + weaponStats.entityOrigin->GetModel().w / 2.0f,
-        weaponStats.entityOrigin->GetModel().y + weaponStats.entityOrigin->GetModel().h / 2.0f};
-    float radius = sqrt(pow(weaponStats.entityOrigin->GetModel().w * 0.6f, 2) + pow(weaponStats.entityOrigin->GetModel().h * 0.6f, 2));
+        weaponInfo.attackSource->GetModel().x + weaponInfo.attackSource->GetModel().w / 2.0f,
+        weaponInfo.attackSource->GetModel().y + weaponInfo.attackSource->GetModel().h / 2.0f};
+
+    float radius = sqrt(pow(weaponInfo.attackSource->GetModel().w * 0.6f, 2) + pow(weaponInfo.attackSource->GetModel().h * 0.6f, 2));
+
     Vec2<float> spawnOffset = Vec2<float>{
         radius * cos(angle),
         radius * sin(angle)};
@@ -222,22 +228,29 @@ void Swing::HandleCollisions(const float &timeDelta, const float &timeMultiplier
     (void)timeDelta, (void)timeMultiplier;
 
     for (Entity *entity : entityVector) {
-        if (entity == this->GetEntity() || (!weaponStats.canHitOrigin && weaponStats.entityOrigin == entity)) continue;
+        // check to see if entity in entityVector is this and if can hit it's attacker
+        if (entity == this->GetEntity() || (!weaponInfo.canHitOrigin && weaponInfo.attackSource == entity)) continue;
+        if (std::find(weaponInfo.entitiesHit.begin(), weaponInfo.entitiesHit.end(), entity) != weaponInfo.entitiesHit.end() && !weaponInfo.canHitTheSameEntityTwice) continue;  // if it finds the entity in the entitiesHit vector and cannot hit it twice, it continues
 
         HandleEntityCollision(entity);
     }
 }
 
 void Swing::HandleEntityCollision(Entity *entity) {
-    if (IsQuadColliding(quad, Quad<float>(entity->GetModel()))) {
-        weaponStats.timesHit++;
-        entity->Damage(weaponStats.damage);
+    if (weaponInfo.maxHits <= weaponInfo.timesHit) {
+        isMarkedForDeletion = true;
         return;
+    }
+    if (IsQuadColliding(quad, Quad<float>(entity->GetModel()))) {
+        weaponInfo.timesHit++;
+        entity->Damage(itemStats.damage);
+
+        if (!weaponInfo.canHitTheSameEntityTwice) weaponInfo.entitiesHit.push_back(entity);
     }
 }
 
 void Swing::HandleLifetime() {
-    if (SDL_GetTicks() > weaponStats.lifeEndTick) isMarkedForDeletion = true;
+    if (SDL_GetTicks() > weaponInfo.lifeEndTick) isMarkedForDeletion = true;
 }
 
 void Swing::Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) {

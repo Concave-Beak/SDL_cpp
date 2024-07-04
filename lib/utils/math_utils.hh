@@ -215,11 +215,11 @@ inline bool IsPointInRectangle(const Vec2<T>& point, const SDL_Rect& rect) {
 
 /* Quad struct | Differently from the SDL_Rect it has no fixed angle or form
  *
- * This may change while rotating, but should be created like that
- * a = Top Left vertice
- * b = Top Right vertice
- * c = Bottom Right vertice
- * d = Bottom Left vertice
+ * This may change while rotating, but should be created like this:
+ * a = Top Left vertice;
+ * b = Top Right vertice;
+ * c = Bottom Right vertice;
+ * d = Bottom Left vertice;
  *
  * AB-BC-CD-DA are the size sides of the rectangle
  */

@@ -41,8 +41,9 @@ class Player : public Entity, public std::enable_shared_from_this<Player> {
     Vec2<float> runningSpeed = {20, 125};
     Vec2<float> walkingSpeed = {10, 75};
 
-    Inventory inventory = Inventory(5, 5);
-    std::shared_ptr<Item> currentItemHolding;
+    Items::Inventory inventory = Items::Inventory(5, 5);
+    std::shared_ptr<Items::Item> currentItemHolding;
+    Uint32 itemCooldown = 0;
 
    private:
     void InitInventory();

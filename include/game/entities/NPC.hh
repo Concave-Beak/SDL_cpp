@@ -35,7 +35,7 @@ class NPC : protected Entity {
     };
     AggressionType aggressionType;
 
-    Matrix2D<std::shared_ptr<Item>> inventory = Matrix2D<std::shared_ptr<Item>>{
+    Matrix2D<std::shared_ptr<Items::Item>> inventory = Matrix2D<std::shared_ptr<Items::Item>>{
         {
             // ItemFactory::Instance().CreateItem(Item::ItemID::BOW_AND_ARROW),
         },

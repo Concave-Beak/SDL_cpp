@@ -37,7 +37,9 @@ struct Action {
         MOVE_RIGHT,
 
         ATTACK1,
+        ATTACK1_,
         ATTACK2,
+        ATTACK2_,
 
         SWITCH_WEAPONS,
         OPEN_INVENTORY,
@@ -51,8 +53,8 @@ struct Action {
 
     ActionType GetActionType();
 
-    void Activate();
-    void Unactivate();
+    void Activate() const;
+    void Unactivate() const;
 
     bool IsActive();
 
@@ -64,7 +66,7 @@ struct Action {
    private:
     ActionType actionType = Action::ActionType::NOT_SET;
 
-    bool isActive = false;
+    mutable bool isActive = false;
     bool isHoldable = false;
 
     std::function<void()> function = nullptr;

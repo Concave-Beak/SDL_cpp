@@ -16,13 +16,13 @@ Action::~Action() {}
 
 Action::ActionType Action::GetActionType() { return actionType; }
 
-void Action::Activate() {
+void Action::Activate() const {
     if (!isHoldable && isActive) return;
     this->isActive = true;
     this->function();
 }
 
-void Action::Unactivate() { isActive = false; }
+void Action::Unactivate() const { isActive = false; }
 
 bool Action::IsActive() { return isActive; }
 
@@ -83,6 +83,11 @@ void ActionHandler::SetAction(Action action, Key key) {
         }
         case Action::ActionType::ATTACK1: {
             action.SetFunction(std::bind(&Player::Attack, playerInstance));
+            action.SetIsHoldable(true);
+            break;
+        }
+        case Action::ActionType::ATTACK1_: {
+            action.SetFunction(std::bind(&Player::Attack, playerInstance));
             break;
         }
         case Action::ActionType::ATTACK2: {
@@ -90,7 +95,11 @@ void ActionHandler::SetAction(Action action, Key key) {
             action.SetIsHoldable(true);
             break;
         }
-        case Action::ActionType::SWITCH_WEAPONS: {  // TODO:PLACEHOLDEr
+        case Action::ActionType::ATTACK2_: {
+            action.SetFunction(std::bind(&Player::Attack, playerInstance));
+            break;
+        }
+        case Action::ActionType::SWITCH_WEAPONS: {  // TODO:PLACEHOLDER
             action.SetFunction(std::bind(
                 &Player::Move, playerInstance, Direction::RIGHT, Vec2<float>{0, 0}, false));
             break;

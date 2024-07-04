@@ -6,6 +6,7 @@
 #include "../../../lib/utils/math_utils.hh"
 #include "./Item.hh"
 
+namespace Items {
 class Inventory {
    public:
     Inventory(size_t rows, size_t cols);
@@ -23,3 +24,4 @@ class Inventory {
    private:
     Matrix2D<std::shared_ptr<Item>> data;
 };
+}  // namespace Items

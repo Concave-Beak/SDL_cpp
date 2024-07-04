@@ -3,18 +3,17 @@
 #include "../Item.hh"
 
 namespace Items {
-class BowAndArrow : public Item {
+class BowAndArrow : public Item::Item {
    public:
-    inline BowAndArrow() {
+    inline BowAndArrow() : Item(ItemStats(1, 10, 10, 800, 1)) {
         ID = ItemID::BOW_AND_ARROW;
         name = "Bow and Arrow";
-        itemType = ItemType::SHORT_BOW;
         // atkType = Attack::AttackType::ARROW;
         // attackTypeAliveTime = 1000;
-        damage = 10;
-        armorPenetration = 10;
-        durability = 10;
-        invetoryWeight = 1;
+        itemStats.damage = 10;
+        itemStats.armorPenetration = 10;
+        itemStats.durability = 10;
+        itemStats.weight = 1;
     }
 };
 }  // namespace Items

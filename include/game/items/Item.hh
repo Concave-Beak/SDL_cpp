@@ -7,6 +7,27 @@
 #include "../../../lib/utils/math_utils.hh"
 #include "../entities/Entity.hh"
 
+namespace Items {
+
+struct ItemStats {
+    ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_);  // TODO: create a fractory
+    ~ItemStats() = default;
+
+    float weight;
+    float damage;  // TODO: divide damage into different types, eg: piercing, bludgeoning...
+    float armorPenetration;
+
+    bool isUsable;
+    Uint32 useCooldown;  // only used in usableItems
+
+    Uint32 attackCooldownInTicks;  // I want to make everyItem have an attack animation, even if it's a simple one
+
+    float chargeRate;  // rate it increases
+    float chargeNow;   // rate it's at now
+
+    int durability;
+};
+
 class Item {
    public:
     enum ItemID {
@@ -15,23 +36,25 @@ class Item {
     };
 
     void Drop(Matrix2D<Item>* inventory);
-    void Attack(Entity* entityOrigin, float angle);
+    void Attack(Entity* entityOrigin, float angle, Uint32* entityCooldown);
+
+    ItemStats GetItemStats();
+
+    // related to the ItemStats.charge fields
+    bool isBeingCharged = false;
 
    protected:
-    Item() = default;
+    Item(ItemStats stats);
     ~Item() = default;
+
+    void ChargeAttack();
+    void ReleaseAttack();
+    void UnchargeAttack();
 
     std::string name;
     ItemID ID;
 
-    enum ItemType {
-        SHORT_BOW = 1,
-        ONE_HANDED_SWORD,
-    };
-    ItemType itemType;
-
-    float damage;
-    float armorPenetration;
-    float durability;
-    float invetoryWeight;
+    ItemStats itemStats;
 };
+
+}  // namespace Items
