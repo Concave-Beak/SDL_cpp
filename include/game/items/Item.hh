@@ -10,7 +10,7 @@
 namespace Items {
 
 struct ItemStats {
-    ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_);  // TODO: create a fractory
+    ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_, float chargeRate);  // TODO: create a fractory
     ~ItemStats() = default;
 
     float weight;
@@ -36,18 +36,16 @@ class Item {
     };
 
     void Drop(Matrix2D<Item>* inventory);
-    void Attack(Entity* entityOrigin, float angle, Uint32* entityCooldown);
+
+    void ChargeAttack();
+    void ReleaseAttack(Entity* entityOrigin, float angle, Uint32* entityCooldown);
 
     ItemStats GetItemStats();
-
-    // related to the ItemStats.charge fields
-    bool isBeingCharged = false;
 
    protected:
     Item(ItemStats stats);
     ~Item() = default;
 
-    void ChargeAttack();
     void ReleaseAttack();
     void UnchargeAttack();
 

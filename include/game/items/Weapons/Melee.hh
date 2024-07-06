@@ -5,7 +5,7 @@
 namespace Items {
 class ShortSword : public Item {
    public:
-    inline ShortSword() : Item(ItemStats(1, 10, 10, 800, 1)) {
+    inline ShortSword() : Item(ItemStats(1, 10, 10, 800, 1, 5)) {
         ID = ItemID::BOW_AND_ARROW;
         name = "Bow and Arrow";
         // atkType = Attack::AttackType::ARROW;

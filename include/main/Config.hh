@@ -63,5 +63,5 @@ class Config {
     void SetControls();  // TODO
 
     const Error ReadKeybindings(toml::node_view<toml::node> keybindingNode, ActionHandler* actionHandler);
-    void SetKeybindings();
+    void SetKeybindings(); // TODO
 };

@@ -5,7 +5,7 @@
 namespace Items {
 class BowAndArrow : public Item::Item {
    public:
-    inline BowAndArrow() : Item(ItemStats(1, 10, 10, 800, 1)) {
+    inline BowAndArrow() : Item(ItemStats(1, 10, 10, 800, 1, 1)) {
         ID = ItemID::BOW_AND_ARROW;
         name = "Bow and Arrow";
         // atkType = Attack::AttackType::ARROW;

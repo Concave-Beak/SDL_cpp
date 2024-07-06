@@ -64,6 +64,7 @@ void Entity::Move(const Direction& direction, const Vec2<float>& accelSpeed, con
         case Direction::UP: {
             if (!collidedDown) break;
             velocityNow.y -= accelSpeed.y;
+            collidedDown = false;
             break;
         }
         case Direction::DOWN: {

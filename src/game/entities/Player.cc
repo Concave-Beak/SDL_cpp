@@ -34,9 +34,15 @@ void Player::SwitchWeapon(WeaponHand weaponHand) {
     }
 }
 
-void Player::Attack() {
+void Player::ChargeAttack() {
     if (currentItemHolding != nullptr) {
-        currentItemHolding->Attack(GetEntity(), angleFacing, &itemCooldown);
+        currentItemHolding->ChargeAttack();
+    }
+}
+
+void Player::ReleaseAttack() {
+    if (currentItemHolding != nullptr) {
+        currentItemHolding->ReleaseAttack(GetEntity(), angleFacing, &itemCooldown);
     }
 }
 

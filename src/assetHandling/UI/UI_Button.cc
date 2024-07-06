@@ -83,7 +83,7 @@ void Button::SetFunction(std::function<const Error()> clickEvent_) {
 void Button::AddToButtonVector() { buttonVector.emplace_back(this); }
 
 const Error Button::Handle(SDL_Event event, SDL_Renderer* renderer) {
-    SDL_PollEvent(&event);  // TODO: Remove this
+    // SDL_PollEvent(&event);  // TODO: Remove this
 
     Error err = DrawButtons(renderer);
     if (!err.IsEmpty()) {

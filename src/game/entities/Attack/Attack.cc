@@ -54,13 +54,14 @@ Arrow::Arrow(Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, V
                                                                                                                                                          quad(positionNow_, dimentions),
                                                                                                                                                          angle(angle_),
                                                                                                                                                          maximumVelocity(velocity) {
-    Entity::model = {0, 0, (int)dimentions.x, (int)dimentions.y};  // not really used
-    Entity::velocityNow = {
-        400 * cos(angle_),
-        400 * sin(angle_),
+    model = {0, 0, (int)dimentions.x, (int)dimentions.y};  // not really used
+    std::cout << itemStats.chargeNow << std::endl;
+    velocityNow = {
+        400 * cos(angle_) * itemStats.chargeNow / 100,
+        400 * sin(angle_) * itemStats.chargeNow / 100,
     };
-    Entity::positionNow = entityOrigin_->GetPos() + Vec2<int>{entityOrigin_->GetModel().w, entityOrigin_->GetModel().h} * 0.5f;
-    Entity::type = EntityType::ARROW;
+    positionNow = entityOrigin_->GetPos() + Vec2<int>{entityOrigin_->GetModel().w, entityOrigin_->GetModel().h} * 0.5f;
+    type = EntityType::ARROW;
 
     weaponInfo.attackSource = entityOrigin_;
     quad.RotateCenter(angle_);

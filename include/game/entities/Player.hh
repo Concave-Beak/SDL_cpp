@@ -25,7 +25,8 @@ class Player : public Entity, public std::enable_shared_from_this<Player> {
         RIGHT_HAND
     };
     void SwitchWeapon(WeaponHand weaponHand);
-    void Attack();
+    void ChargeAttack();
+    void ReleaseAttack();
 
     static void Handle(const Vec2<int>& mousePos);
 

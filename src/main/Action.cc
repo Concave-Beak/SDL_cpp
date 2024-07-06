@@ -22,7 +22,10 @@ void Action::Activate() const {
     this->function();
 }
 
-void Action::Unactivate() const { isActive = false; }
+void Action::Unactivate() const {
+    isActive = false;
+    if (releaseFunction != nullptr) releaseFunction();
+}
 
 bool Action::IsActive() { return isActive; }
 
@@ -30,6 +33,9 @@ bool Action::IsHoldable() { return isHoldable; }
 void Action::SetIsHoldable(bool isHoldable_) { isHoldable = isHoldable_; }
 
 void Action::SetFunction(std::function<void()> function_) { function = function_; }
+void Action::SetReleaseFunction(std::function<void()> function_) { releaseFunction = function_; }
+
+//------------------------------------------------------------------------------
 
 ActionHandler::ActionHandler(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_) : event(event_), playerInstance(playerInstance_), mousePos(mousePos_), shouldQuitGame(shouldQuit_) {}
 
@@ -38,6 +44,7 @@ ActionHandler* ActionHandler::Instance(SDL_Event* event_, Player* playerInstance
     return instance;
 }
 
+
 void ActionHandler::Handle() {
     while (SDL_PollEvent(event)) {
         switch (event->type) {
@@ -45,100 +52,121 @@ void ActionHandler::Handle() {
                 *shouldQuitGame = true;
                 break;
             }
+            case SDL_KEYDOWN: {
+                HandleKeyboardPress(event->key.keysym.sym);
+                break;
+            }
+            case SDL_KEYUP: {
+                HandleKeyboardRelease(event->key.keysym.sym);
+                break;
+            }
+            case SDL_MOUSEBUTTONDOWN: {
+                HandleMousePress(event->button.button);
+                break;
+            }
+            case SDL_MOUSEBUTTONUP: {
+                HandleMouseRelease(event->button.button);
+                break;
+            }
         }
     }
-    HandleKeyboard();
-    HandleMouse();
+
+    mouseState = SDL_GetMouseState(&mousePos->x, &mousePos->y);
+    HandleActive();
+}
+
+void ActionHandler::HandleActive() {
+    for (std::unordered_map<Key, Action>::iterator it = keymap.begin(); it != keymap.end(); ++it) {
+        if (it->second.IsActive()) {
+            it->second.Activate();
+        }
+    }
 }
 
 void ActionHandler::SetAction(Action action, Key key) {
+    std::function<void()> actionFunc = nullptr;
+    std::function<void()> releaseFunc = nullptr;
+    bool isHoldable_ = false;
     switch (action.GetActionType()) {
         case Action::ActionType::NOT_SET: {
-            std::cerr << "Action not set\n";
-            return;
+            actionFunc = []() -> void { std::cerr << "Mapping not Set\n"; };
+            break;
         }
         case Action::ActionType::MOVE_UP: {
-            action.SetFunction(std::bind(
-                &Player::Move, playerInstance, Direction::UP, playerInstance->GetRunningSpeed(), false));
-            action.SetIsHoldable(true);
+            actionFunc = std::bind(&Player::Move, playerInstance, Direction::UP, playerInstance->GetRunningSpeed(), false);
+            isHoldable_ = true;
             break;
         }
         case Action::ActionType::MOVE_DOWN: {
-            action.SetFunction(std::bind(
-                &Player::Move, playerInstance, Direction::DOWN, playerInstance->GetRunningSpeed(), false));
-            action.SetIsHoldable(true);
+            actionFunc = std::bind(&Player::Move, playerInstance, Direction::DOWN, playerInstance->GetRunningSpeed(), false);
+            isHoldable_ = true;
             break;
         }
         case Action::ActionType::MOVE_LEFT: {
-            action.SetFunction(std::bind(
-                &Player::Move, playerInstance, Direction::LEFT, playerInstance->GetRunningSpeed(), false));
-            action.SetIsHoldable(true);
+            actionFunc = std::bind(&Player::Move, playerInstance, Direction::LEFT, playerInstance->GetRunningSpeed(), false);
+            isHoldable_ = true;
             break;
         }
         case Action::ActionType::MOVE_RIGHT: {
-            action.SetFunction(std::bind(
-                &Player::Move, playerInstance, Direction::RIGHT, playerInstance->GetRunningSpeed(), false));
-            action.SetIsHoldable(true);
+            actionFunc = std::bind(&Player::Move, playerInstance, Direction::RIGHT, playerInstance->GetRunningSpeed(), false);
+            isHoldable_ = true;
             break;
         }
         case Action::ActionType::ATTACK1: {
-            action.SetFunction(std::bind(&Player::Attack, playerInstance));
-            action.SetIsHoldable(true);
-            break;
-        }
-        case Action::ActionType::ATTACK1_: {
-            action.SetFunction(std::bind(&Player::Attack, playerInstance));
+            actionFunc = std::bind(&Player::ChargeAttack, playerInstance);
+            releaseFunc = std::bind(&Player::ReleaseAttack, playerInstance);
+            isHoldable_ = true;
             break;
         }
         case Action::ActionType::ATTACK2: {
-            action.SetFunction(std::bind(&Player::Attack, playerInstance));
-            action.SetIsHoldable(true);
+            actionFunc = std::bind(&Player::ReleaseAttack, playerInstance);
+            isHoldable_ = true;
             break;
         }
-        case Action::ActionType::ATTACK2_: {
-            action.SetFunction(std::bind(&Player::Attack, playerInstance));
-            break;
-        }
-        case Action::ActionType::SWITCH_WEAPONS: {  // TODO:PLACEHOLDER
-            action.SetFunction(std::bind(
-                &Player::Move, playerInstance, Direction::RIGHT, Vec2<float>{0, 0}, false));
+        case Action::ActionType::SWITCH_WEAPONS: {
+            actionFunc = []() -> void { std::cerr << "Mapping not Set\n"; };
             break;
         }
         case Action::ActionType::OPEN_INVENTORY: {
-            action.SetFunction(std::bind(
-                &Player::Move, playerInstance, Direction::RIGHT, Vec2<float>{0, 0}, false));
+            actionFunc = []() -> void { std::cerr << "Mapping not Set\n"; };
             break;
         }
         case Action::ActionType::QUIT_GAME: {
-            action.SetFunction(std::bind(&ActionHandler::Quit, this));
+            actionFunc = std::bind(&ActionHandler::Quit, this);
             break;
         }
     }
+    action.SetFunction(actionFunc);  // should not crash lol
+    action.SetIsHoldable(isHoldable_);
+    action.SetReleaseFunction(releaseFunc);
+
     keymap.insert(std::make_pair(key, action));
 }
 
-void ActionHandler::HandleKeyboard() {
+void ActionHandler::HandleKeyboardPress(SDL_Keycode keycode) {
     for (std::unordered_map<Key, Action>::iterator it = keymap.begin(); it != keymap.end(); ++it) {
-        if (it->first.key == SDL_SCANCODE_UNKNOWN) continue;
+        if (it->first.key == keycode) it->second.Activate();
+    }
+}
 
-        if (keyboardState[it->first.key]) {
-            it->second.Activate();
-        } else {
+void ActionHandler::HandleKeyboardRelease(SDL_Keycode keycode) {
+    for (std::unordered_map<Key, Action>::iterator it = keymap.begin(); it != keymap.end(); ++it) {
+        if (it->first.key == SDLK_UNKNOWN) continue;
+        if (it->first.key == keycode) {
             it->second.Unactivate();
         }
     }
 }
 
-void ActionHandler::HandleMouse() {
-    mouseState = SDL_GetMouseState(&mousePos->x, &mousePos->y);
+void ActionHandler::HandleMousePress(Uint8 button) {
     for (std::unordered_map<Key, Action>::iterator it = keymap.begin(); it != keymap.end(); ++it) {
-        if (it->first.mouseButton == 0) continue;
+        if (it->first.mouseButton == button) it->second.Activate();
+    }
+}
 
-        if (mouseState & SDL_BUTTON(it->first.mouseButton)) {
-            it->second.Activate();
-        } else {
-            it->second.Unactivate();
-        }
+void ActionHandler::HandleMouseRelease(Uint8 button) {
+    for (std::unordered_map<Key, Action>::iterator it = keymap.begin(); it != keymap.end(); ++it) {
+        if (it->first.mouseButton == button) it->second.Unactivate();
     }
 }
 

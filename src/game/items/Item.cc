@@ -7,7 +7,7 @@ namespace Items {
 
 Item::Item(ItemStats stats) : itemStats(stats) {}
 
-ItemStats::ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_) : weight(weight_), damage(damage_), armorPenetration(armorPenetration_), attackCooldownInTicks(cooldownInTicks_), durability(durability_) {}
+ItemStats::ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_, float chargeRate_) : weight(weight_), damage(damage_), armorPenetration(armorPenetration_), attackCooldownInTicks(cooldownInTicks_), durability(durability_), chargeRate(chargeRate_) {}
 
 ItemStats Item::GetItemStats() { return itemStats; }
 
@@ -18,26 +18,18 @@ void Item::Drop(Matrix2D<Item>* inventory) {
 }
 
 void Item::ChargeAttack() {
+    itemStats.chargeNow += itemStats.chargeRate;
     if (itemStats.chargeNow > 100) {
         itemStats.chargeNow = 100;
-        isBeingCharged = true;
-        return;
     }
-    itemStats.chargeNow += itemStats.chargeRate;
-    isBeingCharged = true;
 }
 
-void Item::Attack(Entity* attackOrigin, float angle, Uint32* entityCooldown) {
+void Item::ReleaseAttack(Entity* attackOrigin, float angle, Uint32* entityCooldown) {
     if (*entityCooldown > SDL_GetTicks()) return;
 
-    if (itemStats.chargeNow == 0 || isBeingCharged) {
-        ChargeAttack();
-        return;
-    }
-    if (itemStats.chargeNow != 0 && !isBeingCharged) {
-        AttackFactory::Instance().CreateAttack(Attack::AttackType::SWORD_SLASH, itemStats, attackOrigin, angle);
-        *entityCooldown = SDL_GetTicks() + itemStats.attackCooldownInTicks;
-    }
+    AttackFactory::Instance().CreateAttack(Attack::AttackType::ARROW_PROJECTILE, itemStats, attackOrigin, angle);
+    *entityCooldown = SDL_GetTicks() + itemStats.attackCooldownInTicks;
+    itemStats.chargeNow = 0;
 }
 
 void Item::ReleaseAttack() {}
