@@ -5,14 +5,14 @@
 #include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_video.h>
 
-#include <array>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
 #include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../include/game/entities/Camera.hh"
-#include "../../include/game/entities/NPC.hh"
+#include "../../include/game/entities/Creature/Creature.hh"
 #include "../../include/game/entities/Player.hh"
 #include "../../include/main/Action.hh"
 #include "../../include/main/Config.hh"
@@ -37,7 +37,6 @@ void Engine::GameLoop() {
     new LevelItem(Vec2<int>{screenSpecs.x / 3 + 100, screenSpecs.y - 100}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);     // Placeholder
     new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
-    NPC npc(Entity::GENERIC_HUMANOID_ENEMY, {1200, 900});
     while (!quit) {
         beginTick = SDL_GetTicks();
         ClearBackground(renderer, 100, 100, 100, 255);
@@ -45,7 +44,6 @@ void Engine::GameLoop() {
         Entity::Handle(timeDelta, timeMultiplier, isPaused, Camera::Instance().GetCameraPos(), renderer);
         player->Handle(mousePos);
         actionHandler->Handle();
-        NPC::Handle(renderer, player->GetPos(), Camera::Instance().GetCameraPos(), {player->GetModel().x, player->GetModel().y});  // Placeholder
         Render(beginTick);
         UpdateTimeDelta();
         ResetTimeMultiplier();

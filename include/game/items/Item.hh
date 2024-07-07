@@ -10,7 +10,7 @@
 namespace Items {
 
 struct ItemStats {
-    ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_, float chargeRate);  // TODO: create a fractory
+    ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_, float chargeRate);  // TODO: create a factory
     ~ItemStats() = default;
 
     float weight;
@@ -28,13 +28,13 @@ struct ItemStats {
     int durability;
 };
 
+enum ItemID {
+    BOW_AND_ARROW = 0,
+    SHORTSWORD,
+};
+
 class Item {
    public:
-    enum ItemID {
-        BOW_AND_ARROW = 0,
-        SHORTSWORD,
-    };
-
     void Drop(Matrix2D<Item>* inventory);
 
     void ChargeAttack();

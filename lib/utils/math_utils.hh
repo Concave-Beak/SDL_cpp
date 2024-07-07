@@ -73,8 +73,18 @@ struct Vec2 {
     Vec2 operator-(const Vec2& other) const {
         return Vec2<T>(x - other.x, y - other.y);
     }
+    Vec2& operator-=(const Vec2& other) {
+        x -= other.x;
+        y -= other.y;
+        return *this;
+    }
     Vec2 operator*(float scalar) const {
         return {static_cast<T>(x * scalar), static_cast<T>(y * scalar)};
+    }
+    Vec2& operator*=(float scalar) {
+        x *= scalar;
+        y *= scalar;
+        return *this;
     }
     Vec2 operator/(float scalar) const {
         return {x / scalar, y / scalar};

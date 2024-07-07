@@ -7,7 +7,7 @@
 #include "../../items/Item.hh"
 #include "../Entity.hh"
 
-namespace Attack {
+namespace Attacks {
 enum class AttackType {
     ARROW_PROJECTILE = 0,
     SWORD_SLASH = 1,

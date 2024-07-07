@@ -27,7 +27,7 @@ void Item::ChargeAttack() {
 void Item::ReleaseAttack(Entity* attackOrigin, float angle, Uint32* entityCooldown) {
     if (*entityCooldown > SDL_GetTicks()) return;
 
-    AttackFactory::Instance().CreateAttack(Attack::AttackType::ARROW_PROJECTILE, itemStats, attackOrigin, angle);
+    Attacks::AttackFactory::Instance().CreateAttack(Attacks::AttackType::ARROW_PROJECTILE, itemStats, attackOrigin, angle);
     *entityCooldown = SDL_GetTicks() + itemStats.attackCooldownInTicks;
     itemStats.chargeNow = 0;
 }

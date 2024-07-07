@@ -6,7 +6,7 @@
 
 #include "../../../../lib/utils/sdl_utils.hh"
 
-namespace Attack {
+namespace Attacks {
 WeaponInfo::WeaponInfo(AttackType atkType) {
     switch (atkType) {
         case AttackType::ARROW_PROJECTILE: {
@@ -49,13 +49,8 @@ WeaponInfo::WeaponInfo(AttackType atkType) {
     }
 }
 
-Arrow::Arrow(Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity) : weaponInfo(AttackType::ARROW_PROJECTILE),
-                                                                                                                                                         itemStats(itemStats_),
-                                                                                                                                                         quad(positionNow_, dimentions),
-                                                                                                                                                         angle(angle_),
-                                                                                                                                                         maximumVelocity(velocity) {
+Arrow::Arrow(Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity) : weaponInfo(AttackType::ARROW_PROJECTILE), itemStats(itemStats_), quad(positionNow_, dimentions), angle(angle_), maximumVelocity(velocity) {
     model = {0, 0, (int)dimentions.x, (int)dimentions.y};  // not really used
-    std::cout << itemStats.chargeNow << std::endl;
     velocityNow = {
         400 * cos(angle_) * itemStats.chargeNow / 100,
         400 * sin(angle_) * itemStats.chargeNow / 100,
@@ -257,4 +252,4 @@ void Swing::HandleLifetime() {
 void Swing::Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) {
     (void)direction, (void)accelSpeed, (void)isPaused;
 }
-}  // namespace Attack
+}  // namespace Attacks

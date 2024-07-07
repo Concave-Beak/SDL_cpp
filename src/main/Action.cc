@@ -44,7 +44,6 @@ ActionHandler* ActionHandler::Instance(SDL_Event* event_, Player* playerInstance
     return instance;
 }
 
-
 void ActionHandler::Handle() {
     while (SDL_PollEvent(event)) {
         switch (event->type) {
@@ -120,6 +119,7 @@ void ActionHandler::SetAction(Action action, Key key) {
         }
         case Action::ActionType::ATTACK2: {
             actionFunc = std::bind(&Player::ReleaseAttack, playerInstance);
+            releaseFunc = std::bind(&Player::ReleaseAttack, playerInstance);
             isHoldable_ = true;
             break;
         }

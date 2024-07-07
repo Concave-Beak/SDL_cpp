@@ -8,12 +8,12 @@
 
 namespace Items {
 class ItemFactory {
-    using itemFactoryMap = std::unordered_map<Item::ItemID, std::function<std::shared_ptr<Item>()>>;
+    typedef std::unordered_map<ItemID, std::function<std::shared_ptr<Item>()>> itemFactoryMap;
 
    public:
     static ItemFactory& Instance();
 
-    std::shared_ptr<Item> CreateItem(Item::ItemID id);
+    std::shared_ptr<Item> CreateItem(ItemID id);
 
     void RegisterAll();
 
@@ -26,6 +26,6 @@ class ItemFactory {
     ItemFactory();
     ~ItemFactory();
 
-    void RegisterItem(Item::ItemID id, std::function<std::shared_ptr<Item>()> constructor);
+    void RegisterItem(ItemID id, std::function<std::shared_ptr<Item>()> constructor);
 };
 }  // namespace Items
