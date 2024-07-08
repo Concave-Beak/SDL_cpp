@@ -3,14 +3,19 @@
 #include <SDL2/SDL_render.h>
 
 #include <cstdlib>
+#include <memory>
 #include <vector>
 
 #include "../../../lib/utils/engine_utils.hh"
 #include "../../../lib/utils/math_utils.hh"
 #include "../../main/Level.hh"
 
-class Entity {
+class Entity : std::enable_shared_from_this<Entity> {
+    typedef std::vector<std::weak_ptr<Entity>> entityVec;
+
    public:
+    static std::shared_ptr<Entity> Create();
+
     enum EntityType {
         PLAYER = 0,
         GENERIC_HUMANOID_ENEMY = 100,
@@ -30,18 +35,19 @@ class Entity {
 
     Direction GetFacingDirection();
 
+    static void PushToEntities(std::weak_ptr<Entity> entity2Push);
+    static std::vector<std::shared_ptr<Entity>> GetEntities();
+
     virtual void Move(const Direction& direction, const Vec2<float>& accelSpeed, const bool& isPaused);
 
     static void Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused, const Vec2<int>& cameraPos, SDL_Renderer* renderer);
 
-    void Init(EntityType type);
-
     void Damage(int damage);
 
-    virtual ~Entity();
+    virtual ~Entity() = default;
 
    protected:
-    Entity();
+    Entity() = default;
 
    protected:
     bool collidedDown = false;
@@ -71,7 +77,7 @@ class Entity {
    protected:
     void ResetCollisionState();
 
-    Entity* GetEntity();
+    std::shared_ptr<Entity> GetEntity();
 
    private:
     void UpdateModel();
@@ -86,10 +92,10 @@ class Entity {
     virtual void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer);
 
     static void CheckExpiredEntities();
-    static void Delete(std::vector<Entity*>::iterator entityIt);
+    static void Delete(entityVec::iterator entityIt);
 
-   protected:
-    inline static std::vector<Entity*> entityVector = {};
+   private:
+    inline static entityVec entities = {};
 };
 
 //------------------------------------------------------------------------------

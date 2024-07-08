@@ -24,7 +24,7 @@ void Item::ChargeAttack() {
     }
 }
 
-void Item::ReleaseAttack(Entity* attackOrigin, float angle, Uint32* entityCooldown) {
+void Item::ReleaseAttack(std::shared_ptr<Entity> attackOrigin, float angle, Uint32* entityCooldown) {
     if (*entityCooldown > SDL_GetTicks()) return;
 
     Attacks::AttackFactory::Instance().CreateAttack(Attacks::AttackType::ARROW_PROJECTILE, itemStats, attackOrigin, angle);
@@ -32,6 +32,4 @@ void Item::ReleaseAttack(Entity* attackOrigin, float angle, Uint32* entityCooldo
     itemStats.chargeNow = 0;
 }
 
-void Item::ReleaseAttack() {}
-void Item::UnchargeAttack() {}
 }  // namespace Items

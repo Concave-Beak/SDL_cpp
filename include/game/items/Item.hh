@@ -38,16 +38,13 @@ class Item {
     void Drop(Matrix2D<Item>* inventory);
 
     void ChargeAttack();
-    void ReleaseAttack(Entity* entityOrigin, float angle, Uint32* entityCooldown);
+    void ReleaseAttack(std::shared_ptr<Entity> entityOrigin, float angle, Uint32* entityCooldown);
 
     ItemStats GetItemStats();
 
    protected:
     Item(ItemStats stats);
     ~Item() = default;
-
-    void ReleaseAttack();
-    void UnchargeAttack();
 
     std::string name;
     ItemID ID;

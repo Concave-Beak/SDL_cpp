@@ -7,13 +7,13 @@
 #include "Attack.hh"
 
 namespace Attacks {
-class  AttackFactory {
-    using attackFactoryMap = std::unordered_map<AttackType, std::function<void(Items::ItemStats, Entity*, float)>>;
+class AttackFactory {
+    typedef std::unordered_map<AttackType, std::function<void(Items::ItemStats, std::shared_ptr<Entity>, float)>> attackFactoryMap;
 
    public:
     static AttackFactory& Instance();
 
-    void CreateAttack(AttackType atkType, Items::ItemStats itemStats, Entity* entity, float angle);
+    void CreateAttack(AttackType atkType, Items::ItemStats itemStats, std::shared_ptr<Entity> entity, float angle);
 
    private:
     static AttackFactory instance;
@@ -25,6 +25,6 @@ class  AttackFactory {
     ~AttackFactory() = default;
 
     void RegisterAll();
-    void RegisterItem(AttackType atkType, std::function<void(Items::ItemStats, Entity*, float)> constructor);
+    void RegisterAttack(AttackType atkType, std::function<void(Items::ItemStats, std::shared_ptr<Entity>, float)> constructor);
 };
-}  // namespace Items
+}  // namespace Attacks

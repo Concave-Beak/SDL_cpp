@@ -20,8 +20,8 @@ class Engine {
    private:
     static Engine* instance;
 
-    Player* player = Player::Instance();
-    ActionHandler* actionHandler = ActionHandler::Instance(&event, player, &mousePos, &quit);
+    std::shared_ptr<Player> player = Player::Instance();
+    ActionHandler* actionHandler = ActionHandler::Instance(&event, player.get(), &mousePos, &quit);
 
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;

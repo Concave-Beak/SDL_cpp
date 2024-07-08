@@ -10,15 +10,20 @@
 #include "../../../lib/utils/math_utils.hh"
 #include "../../../lib/utils/sdl_utils.hh"
 
-Player::Player() {
-    model = {0, 0, 64, 64};
+std::shared_ptr<Player> Player::Create() {
+    std::shared_ptr<Player> player(new Player());
+    Entity::PushToEntities(player);
+    return player;
 }
-Player* Player::instance = new Player();
 
-Player* Player::Instance() {
+std::shared_ptr<Player> Player::instance = Create();
+
+std::shared_ptr<Player> Player::Instance() {
     instance->InitInventory();
+    instance->model = {0, 0, 64, 64};
     return Player::instance;
 }
+
 Vec2<float> Player::GetRunningSpeed() { return runningSpeed; }
 Vec2<float> Player::GetWalkingSpeed() { return walkingSpeed; }
 

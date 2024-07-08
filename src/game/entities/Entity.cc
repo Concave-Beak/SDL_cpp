@@ -4,19 +4,17 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 
+#include <iostream>
+#include <memory>
 #include <vector>
 
 #include "../../../include/main/Level.hh"
 #include "../../../lib/utils/sdl_utils.hh"
 
-Entity::Entity() {
-    ID = entityVector.size();
-    entityVector.push_back(this);
-}
-Entity::~Entity() {}
-
-void Entity::Init(EntityType ID_) {  // TODO remove this
-    type = ID_;
+std::shared_ptr<Entity> Entity::Create() {
+    std::shared_ptr<Entity> entity(new Entity());
+    entities.push_back(entity);
+    return entity;
 }
 
 bool Entity::GetCollidedInformation(Direction direction) {
@@ -82,14 +80,14 @@ void Entity::Move(const Direction& direction, const Vec2<float>& accelSpeed, con
 }
 
 void Entity::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
-    SDL_Rect modelToDraw = this->model - SDL_Rect{.x = cameraPos.x, .y = cameraPos.y, .w = 0, .h = 0};
+    SDL_Rect modelToDraw = model - SDL_Rect{.x = cameraPos.x, .y = cameraPos.y, .w = 0, .h = 0};
     scc(SDL_SetRenderDrawColor(renderer, PINK, 0xff)).Handle();
     scc(SDL_RenderFillRect(renderer, &modelToDraw)).Handle();
 }
 
 void Entity::CheckExpiredEntities() {
-    for (std::vector<Entity*>::iterator entityIt = entityVector.begin(); entityIt != entityVector.end();) {
-        if ((*entityIt)->isMarkedForDeletion) {
+    for (entityVec::iterator entityIt = entities.begin(); entityIt != entities.end();) {
+        if ((*entityIt).lock()->isMarkedForDeletion) {
             Delete(entityIt);
         } else {
             ++entityIt;
@@ -97,19 +95,18 @@ void Entity::CheckExpiredEntities() {
     }
 }
 
-void Entity::Delete(std::vector<Entity*>::iterator entityIt) {
-    Entity* entityToDelete = *entityIt;
-
-    entityIt = entityVector.erase(entityIt);
-    delete entityToDelete;
+void Entity::Delete(entityVec::iterator entityIt) {
+    entityIt = entities.erase(entityIt);
 }
 
 void Entity::Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused, const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
     CheckExpiredEntities();
-    for (Entity* entity : entityVector) {
-        entity->HandleVelocity(timeDelta, timeMultiplier, isPaused);
-        entity->HandleCollisions(timeDelta, timeMultiplier, isPaused);
-        entity->Draw(cameraPos, renderer);
+    for (std::weak_ptr<Entity> entity : entities) {
+        if (entity.expired()) continue;
+
+        entity.lock()->HandleVelocity(timeDelta, timeMultiplier, isPaused);
+        entity.lock()->HandleCollisions(timeDelta, timeMultiplier, isPaused);
+        entity.lock()->Draw(cameraPos, renderer);
     }
 }
 
@@ -158,7 +155,22 @@ void Entity::UpdateModel() {
     };
 }
 
-Entity* Entity::GetEntity() { return this; }
+void Entity::PushToEntities(std::weak_ptr<Entity> entity2Push) {
+    entities.push_back(entity2Push);
+}
+
+std::vector<std::shared_ptr<Entity>> Entity::GetEntities() {
+    std::vector<std::shared_ptr<Entity>> validEntities;
+
+    for (const std::weak_ptr<Entity>& weakEntity : entities) {
+        if (std::shared_ptr<Entity> entity = weakEntity.lock()) {
+            validEntities.push_back(entity);
+        }
+    }
+    return validEntities;
+}
+
+std::shared_ptr<Entity> Entity::GetEntity() { return shared_from_this(); }
 
 Entity::EntityType Entity::GetType() { return type; }
 

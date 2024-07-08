@@ -13,9 +13,9 @@
 
 //------------------------------------------------------------------------------
 
-class Player : public Entity, public std::enable_shared_from_this<Player> {
+class Player : public Entity {
    public:
-    static Player* Instance();
+    static std::shared_ptr<Player> Instance();
 
     Vec2<float> GetRunningSpeed();
     Vec2<float> GetWalkingSpeed();
@@ -33,8 +33,10 @@ class Player : public Entity, public std::enable_shared_from_this<Player> {
     ~Player() = default;
 
    private:
-    Player();
-    static Player* instance;
+    static std::shared_ptr<Player> Create();
+
+    Player() = default;
+    static std::shared_ptr<Player> instance;
 
     Vec2<int> mousePos = {0, 0};
     float angleFacing = 0;
