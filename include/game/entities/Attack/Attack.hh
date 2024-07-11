@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <vector>
 
 #include "../../../../lib/utils/math_utils.hh"
@@ -15,9 +16,11 @@ enum class AttackType {
 };
 
 struct WeaponInfo {
+    WeaponInfo() = default;
     WeaponInfo(AttackType atkType);
     ~WeaponInfo() = default;
-    std::weak_ptr<Entity> attackSource;
+
+    Entity *attackSource;
     bool canHitOrigin = false;
     Uint32 canHitOriginAfter = -1;  // Number of ticks after being spawned
 
@@ -26,7 +29,7 @@ struct WeaponInfo {
     int timesHit = 0;
     int maxHits = 1;
     bool canHitTheSameEntityTwice = false;
-    std::vector<std::weak_ptr<Entity>> entitiesHit;
+    std::vector<std::weak_ptr<Entity>> entitiesHit = {};
 
     bool isEffectedByGravity = false;
 };
@@ -36,7 +39,7 @@ class Arrow : public Entity {
 
    protected:
     WeaponInfo weaponInfo;
-    const Items::ItemStats itemStats;
+    Items::ItemStats itemStats;
 
     Quad<float> quad;
     float angle = 0;
@@ -48,11 +51,13 @@ class Arrow : public Entity {
     Vec2<int> posStuck;  // if stuck on entity this is the pos related to the entity
 
    protected:
-    Arrow(Items::ItemStats itemStats_, std::weak_ptr<Entity> entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
+    Arrow() = default;
     ~Arrow() = default;
 
    protected:
     void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
+
+    void Init(Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
 
     void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
 
@@ -71,17 +76,24 @@ class Arrow : public Entity {
 //------------------------------------------------------------------------------
 
 class Swing : public Entity {  // I have plans to make most items have a swing attack, including ranged ones
+   public:
+    ~Swing() = default;
+
+   protected:
     WeaponInfo weaponInfo;
-    const Items::ItemStats itemStats;
+    Items::ItemStats itemStats;
     float angle = 0;
 
     Quad<float> quad;
 
    protected:
-    Swing(const Items::ItemStats itemStats_, std::weak_ptr<Entity> entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
-    ~Swing() = default;
+    // std::shared_ptr<Swing> Create(const Items::ItemStats itemStats_, std::weak_ptr<Entity> entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
+
+    Swing() = default;
 
    protected:
+    void Init(const Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
+
     void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
 
     void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
@@ -91,7 +103,7 @@ class Swing : public Entity {  // I have plans to make most items have a swing a
    private:
     void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override;
 
-    void HandleEntityCollision(std::shared_ptr<Entity> entity);
+    void HandleEntityCollision(std::weak_ptr<Entity> entity);
 
     void HandleLifetime();
 };

@@ -12,8 +12,7 @@
 
 #include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../include/game/entities/Camera.hh"
-#include "../../include/game/entities/Creature/Creature.hh"
-#include "../../include/game/entities/Player.hh"
+#include "../../include/game/entities/Creature/CreatureFactory.hh"
 #include "../../include/main/Action.hh"
 #include "../../include/main/Config.hh"
 #include "../../include/main/Level.hh"
@@ -37,6 +36,7 @@ void Engine::GameLoop() {
     new LevelItem(Vec2<int>{screenSpecs.x / 3 + 100, screenSpecs.y - 100}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);     // Placeholder
     new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
+    Creatures::CreatureFactory::Instance().CreateCreature(Creatures::CreatureID::HUMAN, {100, 100});  // placeholder
     while (!quit) {
         beginTick = SDL_GetTicks();
         ClearBackground(renderer, 100, 100, 100, 255);

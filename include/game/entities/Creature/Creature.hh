@@ -1,7 +1,6 @@
 #pragma once
 
-#include <functional>
-#include <unordered_map>
+#include <memory>
 
 #include "../../../../lib/utils/math_utils.hh"
 #include "../../items/Inventory.hh"
@@ -13,12 +12,15 @@ enum class CreatureID {
     HUMAN = 0,
 };
 
-class Creature : protected Entity {
+class Creature : public Entity {
    public:
-    Creature(Vec2<float> spawnPos_);
+    static std::shared_ptr<Creature> Create();
+
     virtual ~Creature() = default;
 
    protected:
+    Creature() = default;
+
     enum class AgressionType {
         NOT_SET,
         PASSIVE = 0,
@@ -38,39 +40,26 @@ class Creature : protected Entity {
 
     bool isWandering = true;
 
-    Items::Inventory inventory;
+    Items::Inventory inventory = Items::Inventory(0, 0);
 
    protected:
-    void ResetVisionCone(Creature* npc);
+    void ResetVisionCone(Creature *npc);
 
     // Generates a randomness in a models width and height
-    Vec2<int> GenerateRandomnessInModel(Vec2<int> modelWH, int variation);
+    void GenerateModelRandomness(Vec2<int *> modelWH, Vec2<int> defaultValue, int variation);
 
    private:
+    static inline std::vector<std::shared_ptr<Creature>> creatureVector = {};
+
+   private:
+    static void Delete(std::shared_ptr<Creature> creature);
+
+   private:
+    // void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override;
+    // void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
+    // void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
+    //
     friend class CreatureFactory;
-};
-
-class CreatureFactory {
-    typedef std::unordered_map<CreatureID, std::function<void(Vec2<float> spawnPos)>> creatureFactoryMap;
-
-   public:
-    static CreatureFactory& Instance();
-
-    void CreateCreature(CreatureID id, Vec2<float> spawnPos);
-
-   private:
-    static CreatureFactory instance;
-
-    creatureFactoryMap creatureCreators;
-
-   private:
-    CreatureFactory();
-    ~CreatureFactory() = default;
-
-   private:
-    void RegisterAll();
-
-    void RegisterCreature(CreatureID id, std::function<void(Vec2<float>)> constructor);
 };
 
 }  // namespace Creatures

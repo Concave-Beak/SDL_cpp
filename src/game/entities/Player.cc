@@ -12,7 +12,7 @@
 
 std::shared_ptr<Player> Player::Create() {
     std::shared_ptr<Player> player(new Player());
-    Entity::PushToEntities(player);
+    Entity::PushToEntityVector(player);
     return player;
 }
 
@@ -47,7 +47,7 @@ void Player::ChargeAttack() {
 
 void Player::ReleaseAttack() {
     if (currentItemHolding != nullptr) {
-        currentItemHolding->ReleaseAttack(GetEntity(), angleFacing, &itemCooldown);
+        currentItemHolding->ReleaseAttack(GetEntity(), angleFacing, &this->itemCooldown);
     }
 }
 

@@ -8,12 +8,12 @@
 
 namespace Attacks {
 class AttackFactory {
-    typedef std::unordered_map<AttackType, std::function<void(Items::ItemStats, std::shared_ptr<Entity>, float)>> attackFactoryMap;
+    typedef std::unordered_map<AttackType, std::function<void(Items::ItemStats, Entity*, float)>> attackFactoryMap;
 
    public:
     static AttackFactory& Instance();
 
-    void CreateAttack(AttackType atkType, Items::ItemStats itemStats, std::shared_ptr<Entity> entity, float angle);
+    void CreateAttack(AttackType atkType, Items::ItemStats itemStats, Entity* entity, float angle);
 
    private:
     static AttackFactory instance;
@@ -25,6 +25,6 @@ class AttackFactory {
     ~AttackFactory() = default;
 
     void RegisterAll();
-    void RegisterAttack(AttackType atkType, std::function<void(Items::ItemStats, std::shared_ptr<Entity>, float)> constructor);
+    void RegisterAttack(AttackType atkType, std::function<void(Items::ItemStats, Entity*, float)> constructor);
 };
 }  // namespace Attacks

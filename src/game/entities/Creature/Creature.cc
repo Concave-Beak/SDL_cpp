@@ -4,15 +4,19 @@
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_timer.h>
 
-#include <cstdio>
-#include <cstdlib>
+#include <memory>
 
 #include "../../../../include/game/entities/Creature/Neutral/Human.hh"
 
 namespace Creatures {
-Creature::Creature(Vec2<float> spawnPos_) : spawnPos(spawnPos_), inventory(0, 0) {}
 
-void Creature::ResetVisionCone(Creature* npc) {
+std::shared_ptr<Creature> Creature::Create() {
+    std::shared_ptr<Creature> creature(new Creature());
+    Entity::PushToEntityVector(creature);
+    return creature;
+}
+
+void Creature::ResetVisionCone(Creature *npc) {
     float halfAngle = npc->visionConeAngle / 2.0f;
     float angleA = float(atan2(0.0f, npc->visionConeRange)) + halfAngle;
     float angleB = float(atan2(0.0f, npc->visionConeRange)) - halfAngle;
@@ -33,39 +37,16 @@ void Creature::ResetVisionCone(Creature* npc) {
     };
 }
 
-Vec2<int> Creature::GenerateRandomnessInModel(Vec2<int> modelWH, int variation) {
-    Vec2<int> newHW = {};
-    newHW.x = rand() % variation + modelWH.x;
-    newHW.y = rand() % variation + modelWH.y;
-    newHW.x *= rand() % 2;
-    newHW.y *= rand() % 2;
-
-    return newHW;
+void Creature::GenerateModelRandomness(Vec2<int *> modelWH, Vec2<int> defaultValue, int variation) {
+    *modelWH.x = rand() % variation + defaultValue.x;
+    *modelWH.y = rand() % variation + defaultValue.y;
+    *modelWH.x *= rand() % 2;
+    *modelWH.y *= rand() % 2;
 }
 
-//------------------------------------------------------------------------------
-
-CreatureFactory::CreatureFactory() {
-    instance.RegisterAll();
-};
-
-CreatureFactory CreatureFactory::instance = CreatureFactory();
-CreatureFactory& CreatureFactory::Instance() { return instance; }
-
-void CreatureFactory::RegisterAll() {
-    instance.RegisterCreature(CreatureID::HUMAN, [](Vec2<float> spawnPos) {
-        new Human(spawnPos);
-    });
-}
-void CreatureFactory::RegisterCreature(CreatureID id, std::function<void(Vec2<float>)> constructor) {
-    instance.creatureCreators.emplace(id, constructor);
-}
-
-void CreatureFactory::CreateCreature(CreatureID id, Vec2<float> spawnPos) {
-    creatureFactoryMap::iterator it = creatureCreators.find(id);
-    if (it != creatureCreators.end()) {
-        it->second(spawnPos);
-    }
+void Creature::Delete(std::shared_ptr<Creature> creature) {
+    creatureVector.erase(std::remove(creatureVector.begin(), creatureVector.end(), creature), creatureVector.end());
+    Entity::Delete(creature);
 }
 
 }  // namespace Creatures

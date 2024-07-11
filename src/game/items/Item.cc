@@ -7,7 +7,11 @@ namespace Items {
 
 Item::Item(ItemStats stats) : itemStats(stats) {}
 
+ItemStats::ItemStats() : weight(0), damage(0), armorPenetration(0), isUsable(false), useCooldown(0), attackCooldownInTicks(0), chargeRate(0), chargeNow(0), durability(0) {}
+
 ItemStats::ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_, float chargeRate_) : weight(weight_), damage(damage_), armorPenetration(armorPenetration_), attackCooldownInTicks(cooldownInTicks_), durability(durability_), chargeRate(chargeRate_) {}
+
+//------------------------------------------------------------------------------
 
 ItemStats Item::GetItemStats() { return itemStats; }
 
@@ -24,7 +28,7 @@ void Item::ChargeAttack() {
     }
 }
 
-void Item::ReleaseAttack(std::shared_ptr<Entity> attackOrigin, float angle, Uint32* entityCooldown) {
+void Item::ReleaseAttack(Entity* attackOrigin, float angle, Uint32* entityCooldown) {
     if (*entityCooldown > SDL_GetTicks()) return;
 
     Attacks::AttackFactory::Instance().CreateAttack(Attacks::AttackType::ARROW_PROJECTILE, itemStats, attackOrigin, angle);

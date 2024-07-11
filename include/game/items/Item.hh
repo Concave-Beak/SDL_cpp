@@ -10,6 +10,7 @@
 namespace Items {
 
 struct ItemStats {
+    ItemStats();
     ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_, float chargeRate);  // TODO: create a factory
     ~ItemStats() = default;
 
@@ -38,7 +39,7 @@ class Item {
     void Drop(Matrix2D<Item>* inventory);
 
     void ChargeAttack();
-    void ReleaseAttack(std::shared_ptr<Entity> entityOrigin, float angle, Uint32* entityCooldown);
+    void ReleaseAttack(Entity* attackOrigin, float angle, Uint32* entityCooldown);
 
     ItemStats GetItemStats();
 

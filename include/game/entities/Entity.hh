@@ -10,8 +10,8 @@
 #include "../../../lib/utils/math_utils.hh"
 #include "../../main/Level.hh"
 
-class Entity : std::enable_shared_from_this<Entity> {
-    typedef std::vector<std::weak_ptr<Entity>> entityVec;
+class Entity {
+    typedef std::vector<std::shared_ptr<Entity>> entityVec;
 
    public:
     static std::shared_ptr<Entity> Create();
@@ -35,7 +35,7 @@ class Entity : std::enable_shared_from_this<Entity> {
 
     Direction GetFacingDirection();
 
-    static void PushToEntities(std::weak_ptr<Entity> entity2Push);
+    static void PushToEntityVector(std::shared_ptr<Entity> entity2Push);
     static std::vector<std::shared_ptr<Entity>> GetEntities();
 
     virtual void Move(const Direction& direction, const Vec2<float>& accelSpeed, const bool& isPaused);
@@ -77,7 +77,9 @@ class Entity : std::enable_shared_from_this<Entity> {
    protected:
     void ResetCollisionState();
 
-    std::shared_ptr<Entity> GetEntity();
+    Entity* GetEntity();
+
+    static void Delete(std::shared_ptr<Entity> entityIt);
 
    private:
     void UpdateModel();
@@ -89,13 +91,12 @@ class Entity : std::enable_shared_from_this<Entity> {
                                  const float& timeDelta, const float& timeMultiplier);
     void HandleHorizontalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
                                    const float& timeDelta, const float& timeMultiplier);
-    virtual void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer);
+    virtual void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer);  // TODO When I've get sprites this shouldnot be virtual
 
     static void CheckExpiredEntities();
-    static void Delete(entityVec::iterator entityIt);
 
    private:
-    inline static entityVec entities = {};
+    inline static entityVec entityVector = {};
 };
 
 //------------------------------------------------------------------------------

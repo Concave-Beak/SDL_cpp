@@ -240,6 +240,47 @@ struct Quad {
         return os;
     }
 
+    Quad(const Quad& other)
+        : AB(other.AB), BC(other.BC), CD(other.CD), DA(other.DA), a(other.a), b(other.b), c(other.c), d(other.d), isRectangleOrSquare(other.isRectangleOrSquare), angleNow(other.angleNow) {}
+
+    Quad(Quad&& other) noexcept
+        : AB(std::move(other.AB)), BC(std::move(other.BC)), CD(std::move(other.CD)), DA(std::move(other.DA)), a(std::move(other.a)), b(std::move(other.b)), c(std::move(other.c)), d(std::move(other.d)), isRectangleOrSquare(std::move(other.isRectangleOrSquare)), angleNow(std::move(other.angleNow)) {}
+
+    Quad& operator=(const Quad& other) {
+        if (this == &other) {
+            return *this;  // handle self assignment
+        }
+        AB = other.AB;
+        BC = other.BC;
+        CD = other.CD;
+        DA = other.DA;
+        a = other.a;
+        b = other.b;
+        c = other.c;
+        d = other.d;
+        // NOTE: isRectangleOrSquare is a const member, cannot be assigned
+        angleNow = other.angleNow;
+        return *this;
+    }
+
+    Quad& operator=(Quad&& other) noexcept {
+        if (this == &other) {
+            return *this;
+        }
+        AB = std::move(other.AB);
+        BC = std::move(other.BC);
+        CD = std::move(other.CD);
+        DA = std::move(other.DA);
+        a = std::move(other.a);
+        b = std::move(other.b);
+        c = std::move(other.c);
+        d = std::move(other.d);
+        angleNow = std::move(other.angleNow);
+        return *this;
+    }
+
+    Quad() : AB(0), BC(0), CD(0), DA(0), a({0, 0}), b({0, 0}), c({0, 0}), d({0, 0}), isRectangleOrSquare(false) {};
+
     Quad(std::array<Vec2<T>, 4> vertices_) : isRectangleOrSquare(false) {
         a = vertices_[0];
         b = vertices_[1];

@@ -4,7 +4,6 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 
-#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -13,7 +12,7 @@
 
 std::shared_ptr<Entity> Entity::Create() {
     std::shared_ptr<Entity> entity(new Entity());
-    entities.push_back(entity);
+    entityVector.push_back(entity);
     return entity;
 }
 
@@ -86,22 +85,22 @@ void Entity::Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
 }
 
 void Entity::CheckExpiredEntities() {
-    for (entityVec::iterator entityIt = entities.begin(); entityIt != entities.end();) {
-        if ((*entityIt).lock()->isMarkedForDeletion) {
-            Delete(entityIt);
+    for (entityVec::iterator entityIt = entityVector.begin(); entityIt != entityVector.end();) {
+        if ((*entityIt)->isMarkedForDeletion) {
+            Delete(*entityIt);
         } else {
             ++entityIt;
         }
     }
 }
 
-void Entity::Delete(entityVec::iterator entityIt) {
-    entityIt = entities.erase(entityIt);
+void Entity::Delete(std::shared_ptr<Entity> entityIt) {
+    entityVector.erase(std::remove(entityVector.begin(), entityVector.end(), entityIt), entityVector.end());
 }
 
 void Entity::Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused, const Vec2<int>& cameraPos, SDL_Renderer* renderer) {
     CheckExpiredEntities();
-    for (std::weak_ptr<Entity> entity : entities) {
+    for (std::weak_ptr<Entity> entity : entityVector) {
         if (entity.expired()) continue;
 
         entity.lock()->HandleVelocity(timeDelta, timeMultiplier, isPaused);
@@ -155,22 +154,13 @@ void Entity::UpdateModel() {
     };
 }
 
-void Entity::PushToEntities(std::weak_ptr<Entity> entity2Push) {
-    entities.push_back(entity2Push);
+void Entity::PushToEntityVector(std::shared_ptr<Entity> entity2Push) {
+    entityVector.push_back(entity2Push);
 }
 
-std::vector<std::shared_ptr<Entity>> Entity::GetEntities() {
-    std::vector<std::shared_ptr<Entity>> validEntities;
+std::vector<std::shared_ptr<Entity>> Entity::GetEntities() { return entityVector; }
 
-    for (const std::weak_ptr<Entity>& weakEntity : entities) {
-        if (std::shared_ptr<Entity> entity = weakEntity.lock()) {
-            validEntities.push_back(entity);
-        }
-    }
-    return validEntities;
-}
-
-std::shared_ptr<Entity> Entity::GetEntity() { return shared_from_this(); }
+Entity* Entity::GetEntity() { return this; }
 
 Entity::EntityType Entity::GetType() { return type; }
 
