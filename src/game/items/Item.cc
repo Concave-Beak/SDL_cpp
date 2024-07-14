@@ -1,5 +1,7 @@
 #include "../../../include/game/items/Item.hh"
 
+#include <SDL2/SDL_timer.h>
+
 #include "../../../include/game/entities/Attack/AttackFactory.hh"
 // #include "../../../include/game/entities/ItemEntity.hh"
 
@@ -28,11 +30,11 @@ void Item::ChargeAttack() {
     }
 }
 
-void Item::ReleaseAttack(Entity* attackOrigin, float angle, Uint32* entityCooldown) {
-    if (*entityCooldown > SDL_GetTicks()) return;
+void Item::ReleaseAttack(EntityAttributes* entityAttribute, CombatAttributes* combatAttribute, float angle) {
+    if (combatAttribute->itemCooldown > SDL_GetTicks()) return;
 
-    Attacks::AttackFactory::Instance().CreateAttack(Attacks::AttackType::ARROW_PROJECTILE, itemStats, attackOrigin, angle);
-    *entityCooldown = SDL_GetTicks() + itemStats.attackCooldownInTicks;
+    Attacks::AttackFactory::Instance().CreateAttack(Attacks::AttackType::ARROW_PROJECTILE, itemStats, entityAttribute, angle);
+    combatAttribute->itemCooldown = SDL_GetTicks() + itemStats.attackCooldownInTicks;
     itemStats.chargeNow = 0;
 }
 

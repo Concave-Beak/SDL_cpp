@@ -20,7 +20,7 @@ struct WeaponInfo {
     WeaponInfo(AttackType atkType);
     ~WeaponInfo() = default;
 
-    Entity *attackSource;
+    EntityAttributes *attackSource;
     bool canHitOrigin = false;
     Uint32 canHitOriginAfter = -1;  // Number of ticks after being spawned
 
@@ -29,12 +29,12 @@ struct WeaponInfo {
     int timesHit = 0;
     int maxHits = 1;
     bool canHitTheSameEntityTwice = false;
-    std::vector<std::weak_ptr<Entity>> entitiesHit = {};
+    std::vector<std::weak_ptr<EntityAttributes>> entitiesHit = {};
 
     bool isEffectedByGravity = false;
 };
 
-class Arrow : public Entity {
+class Arrow {
     WeaponInfo GetWeaponInfo();
 
    protected:
@@ -47,7 +47,7 @@ class Arrow : public Entity {
 
     bool isStuckToSurface = false;
     bool isStuckToEntity = false;  // if is stuck and not on entity is stuck on floor
-    std::weak_ptr<Entity> stuckEntity;
+    std::weak_ptr<EntityAttributes> stuckEntity;
     Vec2<int> posStuck;  // if stuck on entity this is the pos related to the entity
 
    protected:
@@ -55,27 +55,27 @@ class Arrow : public Entity {
     ~Arrow() = default;
 
    protected:
-    void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
+    // void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
 
-    void Init(Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
+    void Init(Items::ItemStats itemStats_, EntityAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
 
-    void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
+    // void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
 
-    void HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
+    // void HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
 
     void HandleSurfaceCollision(const SDL_Rect &surfaceRect, const std::array<Vec2<int>, 4> &verticiesAttackRect);
-    void HandleEntityCollision(std::shared_ptr<Entity> entity, const std::array<Vec2<int>, 4> &modelVerticies);
+    void HandleEntityCollision(std::shared_ptr<EntityAttributes> entity, const std::array<Vec2<int>, 4> &modelVerticies);
 
    private:
     void HandleQuadRotation();
     void HandleStuck();
 
-    void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override { (void)direction, (void)accelSpeed, (void)isPaused; };  // does nothing
+    // void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override { (void)direction, (void)accelSpeed, (void)isPaused; };  // does nothing
 };
 
 //------------------------------------------------------------------------------
 
-class Swing : public Entity {  // I have plans to make most items have a swing attack, including ranged ones
+class Swing {  // I have plans to make most items have a swing attack, including ranged ones
    public:
     ~Swing() = default;
 
@@ -92,18 +92,18 @@ class Swing : public Entity {  // I have plans to make most items have a swing a
     Swing() = default;
 
    protected:
-    void Init(const Items::ItemStats itemStats_, Entity *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
+    void Init(const Items::ItemStats itemStats_, EntityAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
 
-    void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
+    // void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
 
-    void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
+    // void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
 
-    void HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
+    // void HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
 
    private:
-    void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override;
+    // void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override;
 
-    void HandleEntityCollision(std::weak_ptr<Entity> entity);
+    void HandleEntityCollision(std::weak_ptr<EntityAttributes> entity);
 
     void HandleLifetime();
 };

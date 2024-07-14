@@ -39,7 +39,7 @@ class Item {
     void Drop(Matrix2D<Item>* inventory);
 
     void ChargeAttack();
-    void ReleaseAttack(Entity* attackOrigin, float angle, Uint32* entityCooldown);
+    void ReleaseAttack(EntityAttributes* entityAttribute, CombatAttributes* combatAttribute, float angle);
 
     ItemStats GetItemStats();
 

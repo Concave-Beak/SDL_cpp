@@ -3,100 +3,50 @@
 #include <SDL2/SDL_render.h>
 
 #include <cstdlib>
-#include <memory>
-#include <vector>
 
 #include "../../../lib/utils/engine_utils.hh"
 #include "../../../lib/utils/math_utils.hh"
-#include "../../main/Level.hh"
 
-class Entity {
-    typedef std::vector<std::shared_ptr<Entity>> entityVec;
+struct CombatAttributes {
+    Uint32 itemCooldown = 0;
 
-   public:
-    static std::shared_ptr<Entity> Create();
+    float healthMax = 10;
+    float heathNow = 10;
 
-    enum EntityType {
-        PLAYER = 0,
-        GENERIC_HUMANOID_ENEMY = 100,
-        ITEM_ENTITY = 200,
-        ATTACK = 300,
-        ARROW = 400,
-    };
+    bool isDead = false;
+};
 
-    bool GetCollidedInformation(Direction direction);
+struct EntityAttributes {
+    EntityAttributes();
 
-    Vec2<float> GetVelocityNow();
-    Vec2<float> GetPos();
+    Vec2<float> walkingSpeed = {0, 0};
+    Vec2<float> runningSpeed = {0, 0};
 
-    SDL_Rect GetModel();
+    Vec2<float> velocityNow = {0, 0};
 
-    EntityType GetType();
+    Vec2<float> positionNow = {0, 0};
+    Vec2<int> spawnPos = {0, 0};
 
-    Direction GetFacingDirection();
+    Direction facing = Direction::RIGHT;
 
-    static void PushToEntityVector(std::shared_ptr<Entity> entity2Push);
-    static std::vector<std::shared_ptr<Entity>> GetEntities();
+    SDL_Rect model = {.x = (int)positionNow.x, .y = (int)positionNow.y, .w = 0, .h = 0};
 
-    virtual void Move(const Direction& direction, const Vec2<float>& accelSpeed, const bool& isPaused);
+    inline Uint32 GetID();
 
-    static void Handle(const float& timeDelta, const float& timeMultiplier, const bool& isPaused, const Vec2<int>& cameraPos, SDL_Renderer* renderer);
+   private:
+    Uint32 id;
 
-    void Damage(int damage);
+    inline static Uint32 maxUsedID = 0;
+};
 
-    virtual ~Entity() = default;
-
-   protected:
-    Entity() = default;
-
-   protected:
+struct CollisionAttributes {
     bool collidedDown = false;
     bool collidedLeft = false;
     bool collidedRight = false;
     bool collidedUp = false;
     bool isAbovePlatform = true;
 
-    EntityType type;
-    Uint16 ID;
-
-    Vec2<float> velocityNow = {0, 0};
-    Vec2<float> positionNow = {0, 0};
-
-    Direction facing = Direction::RIGHT;
-
-    SDL_Rect model = {.x = (int)positionNow.x, .y = (int)positionNow.y, .w = 0, .h = 0};
-
     float surfaceAttrition = 0;
-
-    float healthMax = 10;
-    float heathNow = 10;
-    bool isDead = false;
-
-    bool isMarkedForDeletion = false;
-
-   protected:
-    void ResetCollisionState();
-
-    Entity* GetEntity();
-
-    static void Delete(std::shared_ptr<Entity> entityIt);
-
-   private:
-    void UpdateModel();
-
-    virtual void HandleVelocity(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
-    virtual void HandleCollisions(const float& timeDelta, const float& timeMultiplier, const bool& isPaused);
-
-    void HandleVerticalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,  // TODO remove entityRect
-                                 const float& timeDelta, const float& timeMultiplier);
-    void HandleHorizontalCollision(const SDL_Rect& entityRect, const LevelItem& levelItem,
-                                   const float& timeDelta, const float& timeMultiplier);
-    virtual void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer);  // TODO When I've get sprites this shouldnot be virtual
-
-    static void CheckExpiredEntities();
-
-   private:
-    inline static entityVec entityVector = {};
 };
 
 //------------------------------------------------------------------------------

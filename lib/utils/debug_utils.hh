@@ -131,18 +131,20 @@ class [[nodiscard]] Result {
 };
 
 enum class Info {
-    SDL_INITIALIZED_SUCESSFULY = 0,
-    SDL_WINDOW_INITIALIZED = 1,
-    SDL_RENDERER_INITIALIZED = 2,
+    SDL_INITIALIZED_SUCESSFULY = 0x01,
+    SDL_WINDOW_INITIALIZED = 0x02,
+    SDL_RENDERER_INITIALIZED = 0x03,
 
-    STARTING_GAME_LOOP = 8,
-    GAME_CLOSED = 9,
+    STARTING_GAME_LOOP = 0x100,
+    GAME_CLOSED = 0x101,
 
-    FONT_LOADED = 10,
+    FONT_LOADED = 0x200,
 
-    CONFIG_READ_SUCESSFULLY = 20,
+    CONFIG_READ_SUCESSFULLY = 0x300,
+
+    PLAYER_INITIALIZED_SUCESSFULLY = 0x400,
 };
-inline void PrintInfo(const Info& info_, const std::string& msg) {
+inline void PrintInfo(Info info_, std::string msg) {
     switch (info_) {
         case Info::SDL_INITIALIZED_SUCESSFULY:
             std::cout << "INFO: SDL_Init initialized sucessfully\n";
@@ -160,10 +162,14 @@ inline void PrintInfo(const Info& info_, const std::string& msg) {
             std::cout << "INFO: Game closed";
             break;
         case Info::FONT_LOADED:
-            std::cout << "INFO: Font loaded " << msg << '\n';
+            std::cout << "INFO: Font loaded :" << msg << '\n';
             break;
         case Info::CONFIG_READ_SUCESSFULLY:
             std::cout << "INFO: Config read sucessfully\n";
             break;
+        case Info::PLAYER_INITIALIZED_SUCESSFULLY: {
+            std::cout << "INFO: Player initialized sucessfully\n";
+            break;
+        }
     }
 }

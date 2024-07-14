@@ -2,9 +2,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "./Entity.hh"
-
-class ItemEntity : protected Entity {
+class ItemEntity {
    public:
     ItemEntity();
     void PickUp();

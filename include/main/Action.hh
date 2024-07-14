@@ -93,12 +93,12 @@ class ActionHandler {
    public:
     void Handle();
 
-    static ActionHandler* Instance(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_);
+    static ActionHandler* Instance(SDL_Event* event_, PlayerHandler* playerHandlerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_);
 
     void SetAction(Action action, Key key);
 
    private:
-    ActionHandler(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_);
+    ActionHandler(SDL_Event* event_, PlayerHandler* playerHandlerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_);
     ~ActionHandler();
 
     void HandleKeyboardPress(SDL_Keycode keycode);
@@ -124,7 +124,7 @@ class ActionHandler {
 
     SDL_Event* event = nullptr;
 
-    Player* playerInstance = nullptr;
+    PlayerHandler* playerHandlerInstance = nullptr;
 
     Vec2<int>* mousePos = nullptr;
     Uint32 mouseState = SDL_GetMouseState(&mousePos->x, &mousePos->y);

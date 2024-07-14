@@ -37,10 +37,10 @@ void Action::SetReleaseFunction(std::function<void()> function_) { releaseFuncti
 
 //------------------------------------------------------------------------------
 
-ActionHandler::ActionHandler(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_) : event(event_), playerInstance(playerInstance_), mousePos(mousePos_), shouldQuitGame(shouldQuit_) {}
+ActionHandler::ActionHandler(SDL_Event* event_, PlayerHandler* playerHandlerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_) : event(event_), playerHandlerInstance(playerHandlerInstance_), mousePos(mousePos_), shouldQuitGame(shouldQuit_) {}
 
-ActionHandler* ActionHandler::Instance(SDL_Event* event_, Player* playerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_) {
-    instance = new ActionHandler(event_, playerInstance_, mousePos_, shouldQuit_);
+ActionHandler* ActionHandler::Instance(SDL_Event* event_, PlayerHandler* playerHandlerInstance_, Vec2<int>* mousePos_, bool* shouldQuit_) {
+    instance = new ActionHandler(event_, playerHandlerInstance_, mousePos_, shouldQuit_);
     return instance;
 }
 
@@ -92,34 +92,34 @@ void ActionHandler::SetAction(Action action, Key key) {
             break;
         }
         case Action::ActionType::MOVE_UP: {
-            actionFunc = std::bind(&Player::Move, playerInstance, Direction::UP, playerInstance->GetRunningSpeed(), false);
+            actionFunc = std::bind(&PlayerHandler::MovePlayer, playerHandlerInstance, Direction::UP, false, true);
             isHoldable_ = true;
             break;
         }
         case Action::ActionType::MOVE_DOWN: {
-            actionFunc = std::bind(&Player::Move, playerInstance, Direction::DOWN, playerInstance->GetRunningSpeed(), false);
+            actionFunc = std::bind(&PlayerHandler::MovePlayer, playerHandlerInstance, Direction::DOWN, false, true);
             isHoldable_ = true;
             break;
         }
         case Action::ActionType::MOVE_LEFT: {
-            actionFunc = std::bind(&Player::Move, playerInstance, Direction::LEFT, playerInstance->GetRunningSpeed(), false);
+            actionFunc = std::bind(&PlayerHandler::MovePlayer, playerHandlerInstance, Direction::LEFT, false, true);
             isHoldable_ = true;
             break;
         }
         case Action::ActionType::MOVE_RIGHT: {
-            actionFunc = std::bind(&Player::Move, playerInstance, Direction::RIGHT, playerInstance->GetRunningSpeed(), false);
+            actionFunc = std::bind(&PlayerHandler::MovePlayer, playerHandlerInstance, Direction::RIGHT, false, true);
             isHoldable_ = true;
             break;
         }
         case Action::ActionType::ATTACK1: {
-            actionFunc = std::bind(&Player::ChargeAttack, playerInstance);
-            releaseFunc = std::bind(&Player::ReleaseAttack, playerInstance);
+            actionFunc = std::bind(&PlayerHandler::ChargeAttack, playerHandlerInstance);
+            releaseFunc = std::bind(&PlayerHandler::ReleaseAttack, playerHandlerInstance);
             isHoldable_ = true;
             break;
         }
         case Action::ActionType::ATTACK2: {
-            actionFunc = std::bind(&Player::ReleaseAttack, playerInstance);
-            releaseFunc = std::bind(&Player::ReleaseAttack, playerInstance);
+            actionFunc = std::bind(&PlayerHandler::ReleaseAttack, playerHandlerInstance);
+            releaseFunc = std::bind(&PlayerHandler::ReleaseAttack, playerHandlerInstance);
             isHoldable_ = true;
             break;
         }
