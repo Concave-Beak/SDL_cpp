@@ -13,7 +13,6 @@
 #include "../../include/assetHandling/UI/UI_Button.hh"
 #include "../../include/game/entities/Camera.hh"
 #include "../../include/game/entities/Creature/CreatureFactory.hh"
-#include "../../include/main/Action.hh"
 #include "../../include/main/Config.hh"
 #include "../../include/main/Level.hh"
 #include "../../lib/utils/debug_utils.hh"
@@ -36,14 +35,14 @@ void Engine::GameLoop() {
     new LevelItem(Vec2<int>{screenSpecs.x / 3 + 100, screenSpecs.y - 100}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);     // Placeholder
     new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
-    Creatures::CreatureFactory::Instance().CreateCreature(Creatures::CreatureID::HUMAN, {100, 100});  // placeholder
+    Creatures::CreatureFactory::Instance().CreateCreature(Creatures::CreatureID::HUMAN, {0, 100});  // placeholder
     while (!quit) {
         beginTick = SDL_GetTicks();
         ClearBackground(renderer, 100, 100, 100, 255);
         UpdateScreenSpecs();
-        // Entity::Handle(timeDelta, timeMultiplier, isPaused, Camera::Instance().GetCameraPos(), renderer);
         PlayerHandler::Instance().Handle(mousePos, Camera::Instance().GetCameraPos(), timeMultiplier, timeDelta, isPaused);
-        Creatures::CreatureHandler::Instance().Handle(playerHandler->GetPos(), Camera::Instance().GetCameraPos(), timeDelta, timeMultiplier, isPaused);
+        Creatures::CreatureHandler::Instance().Handle(Player::GetPos(), Camera::Instance().GetCameraPos(), timeDelta, timeMultiplier, isPaused);
+        Attacks::AttackHandler::InvokeHandler(Camera::Instance().GetCameraPos(), renderer, timeDelta, timeMultiplier, isPaused);
         actionHandler->Handle();
         Render(beginTick);
         UpdateTimeDelta();
@@ -90,8 +89,8 @@ void Engine::ShowDebugInfo() {
     debugFont.RenderTextSized(renderer, levelItemStr.str().c_str(), levelItemStr.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE, 0xff}, 3);
 
     std::stringstream playerInfo;
-    playerInfo << "XY: " << std::setprecision(4) << playerHandler->GetPos().x << " " << std::setprecision(4)
-               << playerHandler->GetPos().y;
+    playerInfo << "XY: " << std::setprecision(4) << Player::GetPos().x << " " << std::setprecision(4)
+               << Player::GetPos().y;
     debugFont.RenderTextSized(renderer, playerInfo.str().c_str(), playerInfo.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, SDL_Color{WHITE, 0xff}, 3);
 }
 
@@ -106,8 +105,8 @@ void Engine::Render(Uint32 beginTick) {
         ShowDebugInfo();
         HandleFPS(beginTick);
         UI::Button::Handle(event, renderer).Handle();
-        Camera::Instance().FollowPlayer(playerHandler->GetPos(), timeDelta, screenSpecs,
-                                        {playerHandler->GetModel().w, playerHandler->GetModel().h}, timeMultiplier, isPaused);
+        Camera::Instance().FollowPlayer(Player::GetPos(), timeDelta, screenSpecs,
+                                        {Player::GetModel().w, Player::GetModel().h}, timeMultiplier, isPaused);
         DrawMouse();
         SDL_RenderPresent(renderer);
     }
@@ -161,10 +160,18 @@ void Engine::Init() {
     PrintInfo(Info::CONFIG_READ_SUCESSFULLY, "");
 
     playerHandler = PlayerHandler::Init(renderer);
-    if (playerHandler != nullptr) {
-        PrintInfo(Info::PLAYER_INITIALIZED_SUCESSFULLY, "");
+    if (playerHandler == nullptr) {
+        exit(1);
     }
+    PrintInfo(Info::PLAYER_INITIALIZED_SUCESSFULLY, "");
+
     creatureHandler = Creatures::CreatureHandler::Init(renderer);
+    if (creatureHandler == nullptr) {
+        exit(1);
+    }
+    // PrintInfo(Info::PLAYER_INITIALIZED_SUCESSFULLY, "");
+
+    srand(time(NULL));
 }
 
 void Engine::Run() {

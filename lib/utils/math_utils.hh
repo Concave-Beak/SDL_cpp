@@ -241,10 +241,28 @@ struct Quad {
     }
 
     Quad(const Quad& other)
-        : AB(other.AB), BC(other.BC), CD(other.CD), DA(other.DA), a(other.a), b(other.b), c(other.c), d(other.d), isRectangleOrSquare(other.isRectangleOrSquare), angleNow(other.angleNow) {}
+        : AB(other.AB),
+          BC(other.BC),
+          CD(other.CD),
+          DA(other.DA),
+          a(other.a),
+          b(other.b),
+          c(other.c),
+          d(other.d),
+          isRectangleOrSquare(other.isRectangleOrSquare),
+          angleNow(other.angleNow) {}
 
     Quad(Quad&& other) noexcept
-        : AB(std::move(other.AB)), BC(std::move(other.BC)), CD(std::move(other.CD)), DA(std::move(other.DA)), a(std::move(other.a)), b(std::move(other.b)), c(std::move(other.c)), d(std::move(other.d)), isRectangleOrSquare(std::move(other.isRectangleOrSquare)), angleNow(std::move(other.angleNow)) {}
+        : AB(std::move(other.AB)),
+          BC(std::move(other.BC)),
+          CD(std::move(other.CD)),
+          DA(std::move(other.DA)),
+          a(std::move(other.a)),
+          b(std::move(other.b)),
+          c(std::move(other.c)),
+          d(std::move(other.d)),
+          isRectangleOrSquare(std::move(other.isRectangleOrSquare)),
+          angleNow(std::move(other.angleNow)) {}
 
     Quad& operator=(const Quad& other) {
         if (this == &other) {

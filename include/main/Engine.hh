@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "../assetHandling/Font.hh"
+#include "../game/entities/Attack/Attack.hh"
 #include "../game/entities/Creature/Creature.hh"
 #include "Action.hh"
 
@@ -23,6 +24,8 @@ class Engine {
 
     std::shared_ptr<PlayerHandler> playerHandler;
     std::shared_ptr<Creatures::CreatureHandler> creatureHandler;
+    std::shared_ptr<Attacks::AttackHandler> attackHandler;
+
     ActionHandler* actionHandler = ActionHandler::Instance(&event, &PlayerHandler::Instance(), &mousePos, &quit);
 
     SDL_Renderer* renderer = NULL;

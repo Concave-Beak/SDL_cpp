@@ -1,76 +1,96 @@
 #pragma once
 
+#include <SDL2/SDL_render.h>
+
 #include <array>
 #include <memory>
-#include <vector>
 
 #include "../../../../lib/utils/math_utils.hh"
 #include "../../items/Item.hh"
-#include "../Entity.hh"
+#include "../Creature/Creature.hh"
+#include "../EntityAttributes.hh"
 
 namespace Attacks {
-enum class AttackType {
-    ARROW_PROJECTILE = 0,
-    SWORD_SLASH = 1,
-    MUSKET_BALL = 2,
-};
 
-struct WeaponInfo {
-    WeaponInfo() = default;
-    WeaponInfo(AttackType atkType);
-    ~WeaponInfo() = default;
+class Attack {
+    friend class AttackHandler;
 
-    EntityAttributes *attackSource;
-    bool canHitOrigin = false;
-    Uint32 canHitOriginAfter = -1;  // Number of ticks after being spawned
-
-    Uint32 lifeEndTick = -1;  // Number of ticks after being spawned
-
-    int timesHit = 0;
-    int maxHits = 1;
-    bool canHitTheSameEntityTwice = false;
-    std::vector<std::weak_ptr<EntityAttributes>> entitiesHit = {};
-
-    bool isEffectedByGravity = false;
-};
-
-class Arrow {
-    WeaponInfo GetWeaponInfo();
+   public:
+    virtual ~Attack() = default;
 
    protected:
-    WeaponInfo weaponInfo;
+    Attack() = default;
+
+    AttackAttributes atkAttributes;
+};
+
+class AttackHandler {
+    typedef std::vector<std::shared_ptr<Attack>> AttackVector;
+
+   public:
+    virtual ~AttackHandler() = default;
+
+    static void PushToAttackVector(std::shared_ptr<Attack> atk);
+
+   public:
+    static void InvokeHandler(Vec2<int> cameraPos, SDL_Renderer *renderer, float timeDelta, float timeMultiplier, bool isPaused);
+
+   public:
+    AttackAttributes GetWeaponInfo(Attack &atk);
+
+   protected:
+    static void Delete(AttackVector::iterator attack);
+
+   protected:
+    static inline AttackVector attackVector;
+
+   private:
+    AttackHandler() = default;
+};
+
+//------------------------------------------------------------------------------
+
+class Arrow : public Attack {
+    friend class ArrowHandler;
+
+   protected:
     Items::ItemStats itemStats;
 
-    Quad<float> quad;
-    float angle = 0;
+    Vec2<float> positionNow;  // Just to make processing physics easier
+
+    Vec2<float> velocityNow;
     Vec2<float> maximumVelocity;
 
     bool isStuckToSurface = false;
-    bool isStuckToEntity = false;  // if is stuck and not on entity is stuck on floor
-    std::weak_ptr<EntityAttributes> stuckEntity;
-    Vec2<int> posStuck;  // if stuck on entity this is the pos related to the entity
+    bool isStuckToEntity = false;                   // if is stuck and not on entity is stuck on floor
+    mutable const CreatureAttributes *stuckEntity;  // Can change which creature it's stuck on but not the creature attributes itself
+    Vec2<int> posStuck;                             // if stuck on entity this is the pos related to the entity
 
    protected:
     Arrow() = default;
     ~Arrow() = default;
 
    protected:
-    // void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
+    void Init(Items::ItemStats itemStats_, CreatureAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
+};
 
-    void Init(Items::ItemStats itemStats_, EntityAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
-
-    // void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
-
-    // void HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
-
-    void HandleSurfaceCollision(const SDL_Rect &surfaceRect, const std::array<Vec2<int>, 4> &verticiesAttackRect);
-    void HandleEntityCollision(std::shared_ptr<EntityAttributes> entity, const std::array<Vec2<int>, 4> &modelVerticies);
+class ArrowHandler : public AttackHandler {
+   public:
+    static void Handler(Attack *atk, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, bool isPaused, SDL_Renderer *renderer);
 
    private:
-    void HandleQuadRotation();
-    void HandleStuck();
+    static void HandleVelocity(Arrow *arrow, float timeDelta, float timeMultiplier);
 
-    // void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override { (void)direction, (void)accelSpeed, (void)isPaused; };  // does nothing
+    static void HandleSurfaceCollision(Arrow *arrow, const SDL_Rect &surfaceRect);
+    static void HandleCreatureCollision(Arrow *arrow, Creatures::Creature *creatureStuck);
+    static void HandleCollisions(Arrow *arrow, float timeDelta, float timeMultiplier);
+    static void HandlePlayerCollision(Arrow *arrow, float timeDelta, float timeMultiplier);
+
+    static void UpdateModel(Arrow *arrow);
+
+    static void HandleStuck(Arrow *arrow);
+
+    static void Draw(Arrow *arrow, Vec2<int> cameraPos, SDL_Renderer *renderer);
 };
 
 //------------------------------------------------------------------------------
@@ -80,11 +100,8 @@ class Swing {  // I have plans to make most items have a swing attack, including
     ~Swing() = default;
 
    protected:
-    WeaponInfo weaponInfo;
+    AttackAttributes weaponInfo;
     Items::ItemStats itemStats;
-    float angle = 0;
-
-    Quad<float> quad;
 
    protected:
     // std::shared_ptr<Swing> Create(const Items::ItemStats itemStats_, std::weak_ptr<Entity> entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
@@ -92,20 +109,24 @@ class Swing {  // I have plans to make most items have a swing attack, including
     Swing() = default;
 
    protected:
-    void Init(const Items::ItemStats itemStats_, EntityAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
-
-    // void Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) override;
-
-    // void HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
-
-    // void HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) override;
+    void Init(const Items::ItemStats itemStats_, CreatureAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
 
    private:
     // void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override;
 
-    void HandleEntityCollision(std::weak_ptr<EntityAttributes> entity);
+    void HandleEntityCollision(std::weak_ptr<CreatureAttributes> entity);
 
     void HandleLifetime();
+};
+
+class SwingHandler : public AttackHandler {
+    // void Draw(const Attack &attack, Vec2<int> cameraPos) override;
+
+    // void HandleVelocity(Attack &attack, float timeDelta, float timeMultiplier, bool isPaused) override;
+    //
+    // void HandleCollisions(Attack &attack, float timeDelta, float timeMultiplier, bool isPaused) override;
+    //
+    // void UpdateModel(Attack &attack) override;
 };
 
 }  // namespace Attacks

@@ -13,9 +13,7 @@ ItemFactory::~ItemFactory() {}
 
 ItemFactory ItemFactory::instance = ItemFactory();
 
-ItemFactory& ItemFactory::Instance() {
-    return instance;
-}
+ItemFactory& ItemFactory::Instance() { return instance; }
 
 void ItemFactory::RegisterItem(ItemID id, std::function<std::shared_ptr<Item>()> constructor) {
     instance.itemCreators.emplace(id, constructor);
@@ -30,7 +28,7 @@ std::shared_ptr<Item> ItemFactory::CreateItem(ItemID id) {
 }
 
 void ItemFactory::RegisterAll() {
-    RegisterItem(SHORTSWORD, []() { return std::make_shared<ShortSword>(); });
-    RegisterItem(BOW_AND_ARROW, []() { return std::make_shared<BowAndArrow>(); });
+    RegisterItem(SHORTSWORD, []() -> std::shared_ptr<Item> { return std::make_shared<ShortSword>(); });
+    RegisterItem(BOW_AND_ARROW, []() -> std::shared_ptr<Item> { return std::make_shared<BowAndArrow>(); });
 }
 }  // namespace Items

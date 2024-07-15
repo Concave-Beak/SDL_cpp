@@ -4,16 +4,15 @@
 #include <unordered_map>
 
 #include "../../items/Item.hh"
-#include "Attack.hh"
 
 namespace Attacks {
 class AttackFactory {
-    typedef std::unordered_map<AttackType, std::function<void(Items::ItemStats, EntityAttributes*, float)>> attackFactoryMap;
+    typedef std::unordered_map<AttackType, std::function<void(Items::ItemStats, CreatureAttributes*, float)>> attackFactoryMap;
 
    public:
     static AttackFactory& Instance();
 
-    void CreateAttack(AttackType atkType, Items::ItemStats itemStats, EntityAttributes* entity, float angle);
+    void CreateAttack(AttackType atkType, Items::ItemStats itemStats, CreatureAttributes* entity, float angle);
 
    private:
     static AttackFactory instance;
@@ -25,6 +24,6 @@ class AttackFactory {
     ~AttackFactory() = default;
 
     void RegisterAll();
-    void RegisterAttack(AttackType atkType, std::function<void(Items::ItemStats, EntityAttributes*, float)> constructor);
+    void RegisterAttack(AttackType atkType, std::function<void(Items::ItemStats, CreatureAttributes*, float)> constructor);
 };
 }  // namespace Attacks

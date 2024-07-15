@@ -10,7 +10,7 @@
 #include "../../main/Level.hh"
 #include "../items/Inventory.hh"
 #include "../items/Item.hh"
-#include "./Entity.hh"
+#include "./EntityAttributes.hh"
 
 //------------------------------------------------------------------------------
 
@@ -19,6 +19,13 @@ class Player {
 
    public:
     ~Player() = default;
+
+    static Vec2<float> GetRunningSpeed();
+    static Vec2<float> GetWalkingSpeed();
+    static Vec2<float> GetPos();
+    static SDL_Rect GetModel();
+    static CreatureAttributes GetAttribute();
+    static const CreatureAttributes* GetAttributeReference();
 
    private:
     static std::shared_ptr<Player> Instance();
@@ -36,9 +43,7 @@ class Player {
     static std::shared_ptr<Player> instance;
 
    private:
-    CombatAttributes combatAttributes;
-    EntityAttributes entityAttributes;
-    CollisionAttributes collisionAttributes;
+    CreatureAttributes creatureAttributes;
 
     float angleFacing = 0;
 
@@ -64,17 +69,12 @@ class PlayerHandler {
 
     void MovePlayer(Direction direction, bool isPaused, bool isRunning);  // TODO: REMOVE ACCEL SPEEd
 
-    Vec2<float> GetRunningSpeed();
-    Vec2<float> GetWalkingSpeed();
-    Vec2<float> GetPos();
-    SDL_Rect GetModel();
-
    private:
     PlayerHandler() = default;
 
    private:
     static PlayerHandler handler;
-    std::shared_ptr<Player> playerInstance = Player::Instance();
+    std::shared_ptr<Player> playerInstance;
 
     SDL_Renderer* renderer = nullptr;
 

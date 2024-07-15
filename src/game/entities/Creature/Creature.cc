@@ -4,6 +4,7 @@
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_timer.h>
 
+#include <cstdlib>
 #include <memory>
 
 #include "../../../../include/game/entities/Creature/Neutral/Human.hh"
@@ -17,37 +18,27 @@ std::shared_ptr<Creature> Creature::Create() {
     return creature;
 }
 
-void Creature::ResetVisionCone(Creature* npc) {
-    float halfAngle = npc->visionConeAngle / 2.0f;
-    float angleA = float(atan2(0.0f, npc->visionConeRange)) + halfAngle;
-    float angleB = float(atan2(0.0f, npc->visionConeRange)) - halfAngle;
+Uint32 Creature::GetID() { return creatureAttributes.GetID(); }
 
-    Vec2<float> posNpc = npc->entityAttributes.positionNow + Vec2<float>{float(npc->entityAttributes.model.w), 0};
-    Vec2<float> pointA = {-(cos(angleA) * float(npc->visionConeRange)), sin(angleA) * float(npc->visionConeRange)};
-    Vec2<float> pointB = {-(cos(angleB) * float(npc->visionConeRange)), sin(angleB) * float(npc->visionConeRange)};
-    if (npc->entityAttributes.facing == Direction::LEFT) {
-        pointA = {cos(angleA) * float(npc->visionConeRange), sin(angleA) * float(npc->visionConeRange)};
-        pointB = {cos(angleB) * float(npc->visionConeRange), sin(angleB) * float(npc->visionConeRange)};
-        posNpc = npc->entityAttributes.positionNow;
+CreatureAttributes Creature::GetAttribute() { return creatureAttributes; }
+const CreatureAttributes* Creature::GetAttributeReference() { return &creatureAttributes; }
+
+void Creature::Damage(int damage) {
+    if (creatureAttributes.combatAttributes.heathNow > 0) {
+        creatureAttributes.combatAttributes.heathNow -= damage;
     }
 
-    npc->sightLine = {
-        .a = posNpc + pointA,
-        .b = posNpc + pointB,
-        .c = posNpc  // Head of npc
-    };
+    if (creatureAttributes.combatAttributes.heathNow <= 0) {
+        creatureAttributes.combatAttributes.isDead = true;
+    }
 }
 
 void Creature::GenerateModelRandomness(Vec2<int*> modelWH, Vec2<int> defaultValue, int variation) {
-    *modelWH.x = rand() % variation + defaultValue.x;
-    *modelWH.y = rand() % variation + defaultValue.y;
-    *modelWH.x *= rand() % 2;
-    *modelWH.y *= rand() % 2;
+    int randomVariationX = (rand() % (2 * variation + 1)) - variation;
+    *modelWH.x = defaultValue.x + randomVariationX;
+    int randomVariationY = (rand() % (2 * variation + 1)) - variation;
+    *modelWH.y = defaultValue.y + randomVariationY;
 }
-
-// void Creature::Delete(std::shared_ptr<Creature> creature) {
-//     creatureVector.erase(std::remove(creatureVector.begin(), creatureVector.end(), creature), creatureVector.end());
-// }
 
 //------------------------------------------------------------------------------
 
@@ -59,66 +50,79 @@ std::shared_ptr<CreatureHandler> CreatureHandler::Init(SDL_Renderer* renderer_) 
 CreatureHandler& CreatureHandler::Instance() { return handler; }
 CreatureHandler CreatureHandler::handler = CreatureHandler();
 
-void CreatureHandler::PushToCreatureEntity(std::shared_ptr<Creature> creature) { creatureVector.push_back(creature); }
+const std::vector<std::shared_ptr<Creature>>& CreatureHandler::GetCreatureVector() { return creatureVector; }
+
+void CreatureHandler::PushToCreatureVector(std::shared_ptr<Creature> creature) { creatureVector.push_back(creature); }
+
+void CreatureHandler::Delete(std::shared_ptr<Creature> creature) {
+    creatureVector.erase(std::remove(creatureVector.begin(), creatureVector.end(), creature), creatureVector.end());
+}
 
 void CreatureHandler::Handle(Vec2<float> playerPos, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, bool isPaused) {
-    for (CreatureVector::iterator it = creatureVector.begin(); it != creatureVector.end(); ++it) {
-        HandleVelocity((*it).get(), timeDelta, timeMultiplier, isPaused);
+    for (CreatureVector::iterator it = creatureVector.begin(); it != creatureVector.end();) {
+        if ((*it)->isMarkedForDeletion) {
+            Delete(*it);
+            continue;
+        }
+        HandleVelocity(*(*it).get(), timeDelta, timeMultiplier, isPaused);
         HandleCollisions(**it, timeDelta, timeMultiplier, isPaused);
+        ResetVisionCone(**it);
+        DrawSightLine(**it, cameraPos);
         Draw(**it, cameraPos);
+        ++it;
     }
 }
 
 bool CreatureHandler::GetCollidedInformation(const Creature& creature, Direction direction) {
     switch (direction) {
         case Direction::UP: {
-            return creature.collisionAttributes.collidedUp;
+            return creature.creatureAttributes.collisionAttributes.collidedUp;
         }
         case Direction::LEFT: {
-            return creature.collisionAttributes.collidedUp;
+            return creature.creatureAttributes.collisionAttributes.collidedUp;
         }
         case Direction::RIGHT: {
-            return creature.collisionAttributes.collidedUp;
+            return creature.creatureAttributes.collisionAttributes.collidedUp;
         }
         case Direction::DOWN: {
-            return creature.collisionAttributes.collidedUp;
+            return creature.creatureAttributes.collisionAttributes.collidedUp;
         }
     }
     return false;
 }
 
-void CreatureHandler::HandleVelocity(Creature* creature, float timeDelta, float timeMultiplier, bool isPaused) {
+void CreatureHandler::HandleVelocity(Creature& creature, float timeDelta, float timeMultiplier, bool isPaused) {
     if (isPaused) return;
 
-    if (creature->entityAttributes.velocityNow.y > MAX_Y_SPEED) {
-        creature->entityAttributes.velocityNow.y = MAX_Y_SPEED;
+    if (creature.creatureAttributes.velocityNow.y > MAX_Y_SPEED) {
+        creature.creatureAttributes.velocityNow.y = MAX_Y_SPEED;
     }
-    if (creature->entityAttributes.velocityNow.y < -MAX_Y_SPEED) {
-        creature->entityAttributes.velocityNow.y = -MAX_Y_SPEED;
-    }
-
-    if (creature->entityAttributes.velocityNow.x > MAX_X_SPEED) {
-        creature->entityAttributes.velocityNow.x = MAX_X_SPEED;
-    }
-    if (creature->entityAttributes.velocityNow.x < -MAX_X_SPEED) {
-        creature->entityAttributes.velocityNow.x = -MAX_X_SPEED;
+    if (creature.creatureAttributes.velocityNow.y < -MAX_Y_SPEED) {
+        creature.creatureAttributes.velocityNow.y = -MAX_Y_SPEED;
     }
 
-    if (!creature->collisionAttributes.collidedDown) {
-        creature->entityAttributes.velocityNow.y += timeDelta * GRAVITY * timeMultiplier;
-        creature->entityAttributes.positionNow.y += creature->entityAttributes.velocityNow.y * timeDelta * timeMultiplier;
+    if (creature.creatureAttributes.velocityNow.x > MAX_X_SPEED) {
+        creature.creatureAttributes.velocityNow.x = MAX_X_SPEED;
+    }
+    if (creature.creatureAttributes.velocityNow.x < -MAX_X_SPEED) {
+        creature.creatureAttributes.velocityNow.x = -MAX_X_SPEED;
     }
 
-    if (!creature->collisionAttributes.collidedDown) creature->collisionAttributes.surfaceAttrition = AIR_ATTRITION;
+    if (!creature.creatureAttributes.collisionAttributes.collidedDown) {
+        creature.creatureAttributes.velocityNow.y += timeDelta * GRAVITY * timeMultiplier;
+        creature.creatureAttributes.positionNow.y += creature.creatureAttributes.velocityNow.y * timeDelta * timeMultiplier;
+    }
 
-    creature->entityAttributes.velocityNow.x -= timeDelta * creature->collisionAttributes.surfaceAttrition * timeMultiplier * creature->entityAttributes.velocityNow.x;
-    creature->entityAttributes.positionNow.x += creature->entityAttributes.velocityNow.x * timeMultiplier * timeDelta;
+    if (!creature.creatureAttributes.collisionAttributes.collidedDown) creature.creatureAttributes.collisionAttributes.surfaceAttrition = AIR_ATTRITION;
+
+    creature.creatureAttributes.velocityNow.x -= timeDelta * creature.creatureAttributes.collisionAttributes.surfaceAttrition * timeMultiplier * creature.creatureAttributes.velocityNow.x;
+    creature.creatureAttributes.positionNow.x += creature.creatureAttributes.velocityNow.x * timeMultiplier * timeDelta;
 }
 
 void CreatureHandler::ResetCollisionState(Creature& creature) {
-    creature.collisionAttributes.collidedDown = false, creature.collisionAttributes.collidedUp = false,
-    creature.collisionAttributes.collidedLeft = false, creature.collisionAttributes.collidedRight = false;
-    creature.collisionAttributes.isAbovePlatform = false;
+    creature.creatureAttributes.collisionAttributes.collidedDown = false, creature.creatureAttributes.collisionAttributes.collidedUp = false,
+    creature.creatureAttributes.collisionAttributes.collidedLeft = false, creature.creatureAttributes.collisionAttributes.collidedRight = false;
+    creature.creatureAttributes.collisionAttributes.isAbovePlatform = false;
 }
 
 void CreatureHandler::HandleVerticalCollision(Creature& creature, const LevelItem& levelItem,
@@ -126,22 +130,22 @@ void CreatureHandler::HandleVerticalCollision(Creature& creature, const LevelIte
     float levelItemTop = float(levelItem.pos.y),
           levelItemBottom = float(levelItem.pos.y + levelItem.rect.h);
 
-    bool hitFeet = IsSideColliding(creature.entityAttributes.model, levelItem.rect, Direction::DOWN, creature.entityAttributes.velocityNow, timeDelta, timeMultiplier);
+    bool hitFeet = IsSideColliding(creature.creatureAttributes.model, levelItem.rect, Direction::DOWN, creature.creatureAttributes.velocityNow, timeDelta, timeMultiplier);
     if (hitFeet) {
-        creature.collisionAttributes.collidedDown = true;
-        creature.collisionAttributes.surfaceAttrition = levelItem.attritionCoefficient;
-        creature.entityAttributes.positionNow.y = levelItemTop - float(creature.entityAttributes.model.h);
-        creature.entityAttributes.velocityNow.y = 0;
-        if (levelItem.collisionType == PLATFORM) creature.collisionAttributes.isAbovePlatform = true;
+        creature.creatureAttributes.collisionAttributes.collidedDown = true;
+        creature.creatureAttributes.collisionAttributes.surfaceAttrition = levelItem.attritionCoefficient;
+        creature.creatureAttributes.positionNow.y = levelItemTop - float(creature.creatureAttributes.model.h);
+        creature.creatureAttributes.velocityNow.y = 0;
+        if (levelItem.collisionType == PLATFORM) creature.creatureAttributes.collisionAttributes.isAbovePlatform = true;
     }
 
     if (levelItem.collisionType == CollisionType::PLATFORM) return;
 
-    bool hitHead = IsSideColliding(creature.entityAttributes.model, levelItem.rect, Direction::UP, creature.entityAttributes.velocityNow, timeDelta, timeMultiplier);
+    bool hitHead = IsSideColliding(creature.creatureAttributes.model, levelItem.rect, Direction::UP, creature.creatureAttributes.velocityNow, timeDelta, timeMultiplier);
     if (hitHead) {
-        creature.collisionAttributes.collidedUp = true;
-        creature.entityAttributes.positionNow.y = levelItemBottom;
-        creature.entityAttributes.velocityNow.y = -creature.entityAttributes.velocityNow.y * SURFACE_BOUNCE;
+        creature.creatureAttributes.collisionAttributes.collidedUp = true;
+        creature.creatureAttributes.positionNow.y = levelItemBottom;
+        creature.creatureAttributes.velocityNow.y = -creature.creatureAttributes.velocityNow.y * SURFACE_BOUNCE;
     }
 }
 
@@ -152,18 +156,18 @@ void CreatureHandler::HandleHorizontalCollision(Creature& creature, const LevelI
     float levelItemLeft = float(levelItem.pos.x),
           levelItemRight = float(levelItem.pos.x + levelItem.rect.w);
 
-    bool hitRight = IsSideColliding(creature.entityAttributes.model, levelItem.rect, Direction::RIGHT, creature.entityAttributes.velocityNow, timeDelta, timeMultiplier);
+    bool hitRight = IsSideColliding(creature.creatureAttributes.model, levelItem.rect, Direction::RIGHT, creature.creatureAttributes.velocityNow, timeDelta, timeMultiplier);
     if (hitRight) {
-        creature.collisionAttributes.collidedRight = true;
-        creature.entityAttributes.velocityNow.x = -creature.entityAttributes.velocityNow.x * SURFACE_BOUNCE;
-        creature.entityAttributes.positionNow.x = levelItemLeft - float(creature.entityAttributes.model.w);
+        creature.creatureAttributes.collisionAttributes.collidedRight = true;
+        creature.creatureAttributes.velocityNow.x = -creature.creatureAttributes.velocityNow.x * SURFACE_BOUNCE;
+        creature.creatureAttributes.positionNow.x = levelItemLeft - float(creature.creatureAttributes.model.w);
     }
 
-    bool hitLeft = IsSideColliding(creature.entityAttributes.model, levelItem.rect, Direction::LEFT, creature.entityAttributes.velocityNow, timeDelta, timeMultiplier);
+    bool hitLeft = IsSideColliding(creature.creatureAttributes.model, levelItem.rect, Direction::LEFT, creature.creatureAttributes.velocityNow, timeDelta, timeMultiplier);
     if (hitLeft) {
-        creature.collisionAttributes.collidedLeft = true;
-        creature.entityAttributes.velocityNow.x = -creature.entityAttributes.velocityNow.x * SURFACE_BOUNCE;
-        creature.entityAttributes.positionNow.x = levelItemRight;
+        creature.creatureAttributes.collisionAttributes.collidedLeft = true;
+        creature.creatureAttributes.velocityNow.x = -creature.creatureAttributes.velocityNow.x * SURFACE_BOUNCE;
+        creature.creatureAttributes.positionNow.x = levelItemRight;
     }
 }
 
@@ -181,24 +185,48 @@ void CreatureHandler::HandleCollisions(Creature& creature, float timeDelta, floa
 }
 
 void CreatureHandler::Draw(const Creature& creature, Vec2<int> cameraPos) {
-    Vec2<float> positionNow = creature.entityAttributes.positionNow;
+    Vec2<float> positionNow = creature.creatureAttributes.positionNow;
     SDL_Rect playerModel = {
         (int)positionNow.x - cameraPos.x,
         (int)positionNow.y - cameraPos.y,
-        creature.entityAttributes.model.w,
-        creature.entityAttributes.model.h,
+        creature.creatureAttributes.model.w,
+        creature.creatureAttributes.model.h,
     };
     scc(SDL_SetRenderDrawColor(renderer, RED, 0xff)).Handle();
     scc(SDL_RenderFillRect(renderer, &playerModel)).Handle();
 }
-void CreatureHandler::DrawSightLine(Creature& creature, Vec2<int> cameraPos, SDL_Renderer* renderer) {}
+
+void CreatureHandler::DrawSightLine(Creature& creature, Vec2<int> cameraPos) {
+    creature.sightLine.Draw(renderer, cameraPos, {BLACK, 0x88});
+}
 
 void CreatureHandler::UpdateModel(Creature& creature) {
-    creature.entityAttributes.model = SDL_Rect{
-        .x = int(creature.entityAttributes.positionNow.x),
-        .y = int(creature.entityAttributes.positionNow.y),
-        .w = creature.entityAttributes.model.w,
-        .h = creature.entityAttributes.model.h,
+    creature.creatureAttributes.model = SDL_Rect{
+        .x = int(creature.creatureAttributes.positionNow.x),
+        .y = int(creature.creatureAttributes.positionNow.y),
+        .w = creature.creatureAttributes.model.w,
+        .h = creature.creatureAttributes.model.h,
+    };
+}
+
+void CreatureHandler::ResetVisionCone(Creature& npc) {
+    float halfAngle = npc.visionConeAngle / 2.0f;
+    float angleA = float(atan2(0.0f, npc.visionConeRange)) + halfAngle;
+    float angleB = float(atan2(0.0f, npc.visionConeRange)) - halfAngle;
+
+    Vec2<float> posNpc = npc.creatureAttributes.positionNow + Vec2<float>{float(npc.creatureAttributes.model.w), 0};
+    Vec2<float> pointA = {-(cos(angleA) * float(npc.visionConeRange)), sin(angleA) * float(npc.visionConeRange)};
+    Vec2<float> pointB = {-(cos(angleB) * float(npc.visionConeRange)), sin(angleB) * float(npc.visionConeRange)};
+    if (npc.creatureAttributes.facing == Direction::LEFT) {
+        pointA = {cos(angleA) * float(npc.visionConeRange), sin(angleA) * float(npc.visionConeRange)};
+        pointB = {cos(angleB) * float(npc.visionConeRange), sin(angleB) * float(npc.visionConeRange)};
+        posNpc = npc.creatureAttributes.positionNow;
+    }
+
+    npc.sightLine = {
+        .a = posNpc + pointA,
+        .b = posNpc + pointB,
+        .c = posNpc  // Head of npc
     };
 }
 

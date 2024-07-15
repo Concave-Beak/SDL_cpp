@@ -20,7 +20,7 @@ class ItemFactory {
    private:
     static ItemFactory instance;
 
-    itemFactoryMap itemCreators;
+    itemFactoryMap itemCreators = {};
 
    private:
     ItemFactory();

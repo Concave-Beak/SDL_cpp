@@ -5,7 +5,7 @@
 #include <string>
 
 #include "../../../lib/utils/math_utils.hh"
-#include "../entities/Entity.hh"
+#include "../entities/EntityAttributes.hh"
 
 namespace Items {
 
@@ -39,7 +39,7 @@ class Item {
     void Drop(Matrix2D<Item>* inventory);
 
     void ChargeAttack();
-    void ReleaseAttack(EntityAttributes* entityAttribute, CombatAttributes* combatAttribute, float angle);
+    void ReleaseAttack(CreatureAttributes* entityAttribute, CreatureAttributes::CombatAttributes* combatAttribute, float angle);
 
     ItemStats GetItemStats();
 
