@@ -5,12 +5,12 @@
 
 namespace Attacks {
 
-class ShortSwordSwing : public Swing {
+class ShortSwordSwing : public MeleeSwing {
    public:
-    inline static void Create(Items::ItemStats itemStats_, EntityAttributes* entityOrigin_, float angle_) {
+    inline static void Create(Items::ItemStats itemStats_, CreatureAttributes* entityOrigin_, float angle_) {
         std::shared_ptr<ShortSwordSwing> atk(new ShortSwordSwing());
         atk->Init(itemStats_, entityOrigin_, angle_, entityOrigin_->positionNow, {32, 64});
-        // Entity::PushToEntityVector(atk);
+        AttackHandler::PushToAttackVector(atk);
     }
 
     ~ShortSwordSwing() = default;

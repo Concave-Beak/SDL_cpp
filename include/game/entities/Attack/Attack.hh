@@ -2,7 +2,6 @@
 
 #include <SDL2/SDL_render.h>
 
-#include <array>
 #include <memory>
 
 #include "../../../../lib/utils/math_utils.hh"
@@ -59,7 +58,7 @@ class Arrow : public Attack {
     Vec2<float> positionNow;  // Just to make processing physics easier
 
     Vec2<float> velocityNow;
-    Vec2<float> maximumVelocity;
+    Vec2<float> maximumVelocity;  // TODO: damage should be related to velocityNow and maximumVelocity
 
     bool isStuckToSurface = false;
     bool isStuckToEntity = false;                   // if is stuck and not on entity is stuck on floor
@@ -76,57 +75,55 @@ class Arrow : public Attack {
 
 class ArrowHandler : public AttackHandler {
    public:
-    static void Handler(Attack *atk, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, bool isPaused, SDL_Renderer *renderer);
+    static void Handler(Attack *atk, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, SDL_Renderer *renderer);
 
    private:
     static void HandleVelocity(Arrow *arrow, float timeDelta, float timeMultiplier);
 
     static void HandleSurfaceCollision(Arrow *arrow, const SDL_Rect &surfaceRect);
+    static void HandleCollisions(Arrow *arrow);
     static void HandleCreatureCollision(Arrow *arrow, Creatures::Creature *creatureStuck);
-    static void HandleCollisions(Arrow *arrow, float timeDelta, float timeMultiplier);
-    static void HandlePlayerCollision(Arrow *arrow, float timeDelta, float timeMultiplier);
+    static void HandlePlayerCollision(Arrow *arrow);
 
     static void UpdateModel(Arrow *arrow);
 
     static void HandleStuck(Arrow *arrow);
 
-    static void Draw(Arrow *arrow, Vec2<int> cameraPos, SDL_Renderer *renderer);
+    static void Draw(const Arrow &arrow, Vec2<int> cameraPos, SDL_Renderer *renderer);
 };
 
 //------------------------------------------------------------------------------
 
-class Swing {  // I have plans to make most items have a swing attack, including ranged ones
-   public:
-    ~Swing() = default;
+class MeleeSwing : public Attack {  // I have plans to make most items have a swing attack, including ranged ones
+    friend class MeleeSwingHandler;
 
    protected:
-    AttackAttributes weaponInfo;
+    ~MeleeSwing() = default;
+    MeleeSwing() = default;
+
+   protected:
     Items::ItemStats itemStats;
 
-   protected:
-    // std::shared_ptr<Swing> Create(const Items::ItemStats itemStats_, std::weak_ptr<Entity> entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
-
-    Swing() = default;
+    mutable const CreatureAttributes *creatureOrigin = nullptr;
 
    protected:
     void Init(const Items::ItemStats itemStats_, CreatureAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
-
-   private:
-    // void Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) override;
-
-    void HandleEntityCollision(std::weak_ptr<CreatureAttributes> entity);
-
-    void HandleLifetime();
 };
 
-class SwingHandler : public AttackHandler {
-    // void Draw(const Attack &attack, Vec2<int> cameraPos) override;
+class MeleeSwingHandler : public AttackHandler {
+   public:
+    static void Handler(Attack *atk, Vec2<int> cameraPos, SDL_Renderer *renderer);
 
-    // void HandleVelocity(Attack &attack, float timeDelta, float timeMultiplier, bool isPaused) override;
-    //
-    // void HandleCollisions(Attack &attack, float timeDelta, float timeMultiplier, bool isPaused) override;
-    //
-    // void UpdateModel(Attack &attack) override;
+   private:
+    static void HandleCollisions(MeleeSwing *swing);
+    static void HandleCreatureCollision(MeleeSwing *swing, Creatures::Creature *creature);
+    static void HandlePlayerCollision(MeleeSwing *swing, Creatures::Creature *creature);
+
+    static void UpdateModel(MeleeSwing *swing);
+
+    static void Draw(const MeleeSwing *attack, Vec2<int> cameraPos, SDL_Renderer *renderer);
+
+    static void HandleLifetime(MeleeSwing *swing);
 };
 
 }  // namespace Attacks

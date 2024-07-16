@@ -2,8 +2,9 @@
 
 #include <SDL2/SDL_timer.h>
 
-#include <cstdlib>
 #include <functional>
+#include <memory>
+#include <vector>
 
 #include "../../../../include/game/entities/Creature/Creature.hh"
 #include "../../../../include/game/entities/Player.hh"
@@ -14,6 +15,8 @@ namespace Attacks {
 void AttackHandler::PushToAttackVector(std::shared_ptr<Attack> atk) { attackVector.push_back(atk); }
 
 void AttackHandler::InvokeHandler(Vec2<int> cameraPos, SDL_Renderer *renderer, float timeDelta, float timeMultiplier, bool isPaused) {
+    if (isPaused) return;
+
     for (AttackVector::iterator it = attackVector.begin(); it != attackVector.end();) {
         if ((*it)->atkAttributes.isMarkedForDeletion) {
             Delete(it);
@@ -24,10 +27,11 @@ void AttackHandler::InvokeHandler(Vec2<int> cameraPos, SDL_Renderer *renderer, f
                 break;
             }
             case AttackType::ARROW_PROJECTILE: {
-                ArrowHandler::Handler(it->get(), cameraPos, timeDelta, timeMultiplier, isPaused, renderer);
+                ArrowHandler::Handler(it->get(), cameraPos, timeDelta, timeMultiplier, renderer);
                 break;
             }
             case AttackType::SWORD_SLASH: {
+                MeleeSwingHandler::Handler(it->get(), cameraPos, renderer);
                 break;
             }
             case AttackType::MUSKET_BALL: {
@@ -67,17 +71,15 @@ void Arrow::Init(Items::ItemStats itemStats_, CreatureAttributes *entityAttribut
     atkAttributes.canHitSource = true;
     atkAttributes.canHitSourceAfter = SDL_GetTicks() + 200;
 }
-void ArrowHandler::Handler(Attack *atk, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, bool isPaused, SDL_Renderer *renderer) {
-    if (isPaused) return;
-
+void ArrowHandler::Handler(Attack *atk, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, SDL_Renderer *renderer) {
     Arrow *arrow = dynamic_cast<Arrow *>(atk);
     if (!arrow) return;
 
     HandleVelocity(arrow, timeDelta, timeMultiplier);
-    HandleCollisions(arrow, timeDelta, timeMultiplier);
+    HandleCollisions(arrow);
     HandleStuck(arrow);
     UpdateModel(arrow);
-    Draw(arrow, cameraPos, renderer);
+    Draw(*arrow, cameraPos, renderer);
 }
 
 void ArrowHandler::UpdateModel(Arrow *arrow) {
@@ -89,8 +91,8 @@ void ArrowHandler::UpdateModel(Arrow *arrow) {
     arrow->atkAttributes.model.RotateCenter(angleDif);
 }
 
-void ArrowHandler::Draw(Arrow *arrow, Vec2<int> cameraPos, SDL_Renderer *renderer) {
-    arrow->atkAttributes.model.Draw(renderer, cameraPos, {BLACK, 0xff});
+void ArrowHandler::Draw(const Arrow &arrow, Vec2<int> cameraPos, SDL_Renderer *renderer) {
+    arrow.atkAttributes.model.Draw(renderer, cameraPos, {BLACK, 0xff});
 }
 
 void ArrowHandler::HandleVelocity(Arrow *arrow, float timeDelta, float timeMultiplier) {
@@ -121,14 +123,12 @@ void ArrowHandler::HandleVelocity(Arrow *arrow, float timeDelta, float timeMulti
     arrow->atkAttributes.model.SetPos(arrow->positionNow, 0);
 }
 
-void ArrowHandler::HandleCollisions(Arrow *arrow, float timeDelta, float timeMultiplier) {
+void ArrowHandler::HandleCollisions(Arrow *arrow) {
     if (arrow->isStuckToSurface || arrow->isStuckToEntity) {
         return;
     }
 
-    (void)timeDelta, (void)timeMultiplier;
-
-    HandlePlayerCollision(arrow, timeDelta, timeMultiplier);
+    HandlePlayerCollision(arrow);
 
     for (std::shared_ptr<Creatures::Creature> creature : Creatures::CreatureHandler::Instance().GetCreatureVector()) {
         std::function<bool()> shouldSkip = [arrow, creature]() -> bool {
@@ -184,7 +184,7 @@ void ArrowHandler::HandleSurfaceCollision(Arrow *arrow, const SDL_Rect &surfaceR
     }
 }
 
-void ArrowHandler::HandlePlayerCollision(Arrow *arrow, float timeDelta, float timeMultiplier) {
+void ArrowHandler::HandlePlayerCollision(Arrow *arrow) {
     if (arrow->atkAttributes.canHitSource && Player::GetAttribute().GetID() == arrow->atkAttributes.attackSourceID && arrow->atkAttributes.canHitSourceAfter < SDL_GetTicks()) {
         if (IsQuadColliding(arrow->atkAttributes.model, Quad<float>(Player::GetAttribute().model))) {
             arrow->isStuckToEntity = true;
@@ -196,98 +196,94 @@ void ArrowHandler::HandlePlayerCollision(Arrow *arrow, float timeDelta, float ti
 
 //------------------------------------------------------------------------------
 
-// void Swing::Init(Items::ItemStats itemStats_, CreatureAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions) {
-//     weaponInfo = AttackType::SWORD_SLASH;
-//     itemStats = Items::ItemStats(itemStats_);
-//     quad = Quad<float>(positionNow_, dimentions);
-//     weaponInfo.attackSourceID = entityOrigin_;
-//     weaponInfo.lifeEndTick = SDL_GetTicks() + 200;
-//
-//     Vec2<float> rectCenter = Vec2<float>{
-//         // weaponInfo.attackSource->GetModel().x + weaponInfo.attackSource->GetModel().w / 2.0f,
-//         // weaponInfo.attackSource->GetModel().y + weaponInfo.attackSource->GetModel().h / 2.0f,
-//     };
-//     // float radius = sqrt(pow(weaponInfo.attackSource->GetModel().w * 0.6f, 2) + pow(weaponInfo.attackSource->GetModel().h * 0.6f, 2));
-//     Vec2<float> spawnOffset = Vec2<float>{
-//         // radius * cos(angle_),
-//         // radius * sin(angle_),
-//     };
-//
-//     Vec2<float> spawnPos = rectCenter + spawnOffset;
-//
-//     quad.SetPos(spawnPos, 4);
-//     quad.RotateCenter(angle_);
-//     angle = angle_;
-// }
+void MeleeSwing::Init(Items::ItemStats itemStats_, CreatureAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions) {
+    atkAttributes.attackType = AttackType::SWORD_SLASH;
+    itemStats = Items::ItemStats(itemStats_);
+    atkAttributes.model = Quad<float>(positionNow_, dimentions);
+    atkAttributes.attackSourceID = entityOrigin_->GetID();
+    atkAttributes.lifeEndTick = SDL_GetTicks() + 200;
 
-// void Swing::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
-//     quad.Draw(renderer, cameraPos, {BLACK, 0xff});
-// }
+    atkAttributes.canHitSource = false;
+    atkAttributes.canHitSourceAfter = -1;
+    creatureOrigin = entityOrigin_;
 
-// void Swing::HandleVelocity(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
-//     if (isPaused) return;
-//     if (isMarkedForDeletion) return;
-//     (void)timeDelta, (void)timeMultiplier;
-//
-//     Vec2<float> rectCenter = Vec2<float>{
-//         weaponInfo.attackSource->GetModel().x + weaponInfo.attackSource->GetModel().w / 2.0f,
-//         weaponInfo.attackSource->GetModel().y + weaponInfo.attackSource->GetModel().h / 2.0f};
-//
-//     float radius = sqrt(pow(weaponInfo.attackSource->GetModel().w * 0.6f, 2) + pow(weaponInfo.attackSource->GetModel().h * 0.6f, 2));
-//
-//     Vec2<float> spawnOffset = Vec2<float>{
-//         radius * cos(angle),
-//         radius * sin(angle)};
-//
-//     Vec2<float> spawnPos = rectCenter + spawnOffset;
-//     quad.SetPos(spawnPos, 4);
-//
-//     HandleLifetime();
-// }
+    Vec2<float> rectCenter = Vec2<float>{
+        entityOrigin_->model.x + entityOrigin_->model.w / 2.0f,
+        entityOrigin_->model.y + entityOrigin_->model.h / 2.0f,
+    };
 
-// void Swing::HandleCollisions(const float &timeDelta, const float &timeMultiplier, const bool &isPaused) {
-//     if (isPaused) return;
-//     if (isMarkedForDeletion) return;
-//     (void)timeDelta, (void)timeMultiplier;
-//
-//     for (std::weak_ptr<Entity> entity : Entity::GetEntities()) {
-//         std::function<bool()> ShouldSkip = [entity, this]() -> bool {
-//             // check to see if entity in entityVector is this and if can hit it's attacker
-//             if (entity.lock().get() == this->GetEntity() || (!weaponInfo.canHitOrigin && weaponInfo.attackSource == entity.lock().get())) return true;
-//
-//             // check to see if can hit the same entity twice, if not it checks if the entity being hit is the same
-//             if (weaponInfo.canHitTheSameEntityTwice) return false;
-//             for (std::vector<std::weak_ptr<Entity>>::iterator it = weaponInfo.entitiesHit.begin(); it != weaponInfo.entitiesHit.end(); ++it) {
-//                 if ((*it).lock() == entity.lock()) {
-//                     return true;
-//                 }
-//             }
-//             return false;
-//         };
-//         if (ShouldSkip()) continue;
-//
-//         HandleEntityCollision(entity.lock());
-//     }
-// }
+    float radius = sqrt(pow(entityOrigin_->model.w * 0.6f, 2) + pow(entityOrigin_->model.h * 0.6f, 2));
+    Vec2<float> spawnOffset = Vec2<float>{
+        radius * cos(angle_),
+        radius * sin(angle_),
+    };
 
-// void Swing::HandleEntityCollision(std::weak_ptr<Entity> entity) {
-//     if (weaponInfo.maxHits <= weaponInfo.timesHit) {
-//         isMarkedForDeletion = true;
-//         return;
-//     }
-//     if (IsQuadColliding(quad, Quad<float>(entity.lock()->GetModel()))) {
-//         weaponInfo.timesHit++;
-//         entity.lock()->Damage(itemStats.damage);
-//
-//         if (!weaponInfo.canHitTheSameEntityTwice && entity.lock() != nullptr) weaponInfo.entitiesHit.push_back(entity);
-//     }
-// }
+    Vec2<float> spawnPos = rectCenter + spawnOffset;
 
-// void Swing::HandleLifetime() {
-//     if (SDL_GetTicks() > weaponInfo.lifeEndTick) isMarkedForDeletion = true;
-// }
+    atkAttributes.model.SetPos(spawnPos, 4);
+    atkAttributes.model.RotateCenter(angle_);
+    atkAttributes.angle = angle_;
+}
 
-// void Swing::Move(const Direction &direction, const Vec2<float> &accelSpeed, const bool &isPaused) {
-//     (void)direction, (void)accelSpeed, (void)isPaused;
-// }
+void MeleeSwingHandler::Handler(Attack *atk, Vec2<int> cameraPos, SDL_Renderer *renderer) {
+    MeleeSwing *swing = dynamic_cast<MeleeSwing *>(atk);
+    if (!swing) return;
+
+    HandleCollisions(swing);
+    UpdateModel(swing);
+    Draw(swing, cameraPos, renderer);
+    HandleLifetime(swing);
+}
+
+void MeleeSwingHandler::Draw(const MeleeSwing *swing, Vec2<int> cameraPos, SDL_Renderer *renderer) {
+    swing->atkAttributes.model.Draw(renderer, cameraPos, {BLACK, 0xff});
+}
+
+void MeleeSwingHandler::UpdateModel(MeleeSwing *swing) {
+    if (swing->atkAttributes.isMarkedForDeletion) return;
+
+    Vec2<float> rectCenter = Vec2<float>{
+        swing->creatureOrigin->model.x + swing->creatureOrigin->model.w / 2.0f,
+        swing->creatureOrigin->model.y + swing->creatureOrigin->model.h / 2.0f,
+    };
+
+    float radius = sqrt(pow(swing->creatureOrigin->model.w * 0.6f, 2) + pow(swing->creatureOrigin->model.h * 0.6f, 2));
+    Vec2<float> spawnOffset = Vec2<float>{
+        radius * cos(swing->atkAttributes.angle),
+        radius * sin(swing->atkAttributes.angle),
+    };
+
+    Vec2<float> spawnPos = rectCenter + spawnOffset;
+    swing->atkAttributes.model.SetPos(spawnPos, 4);
+}
+
+void MeleeSwingHandler::HandleCollisions(MeleeSwing *swing) {
+    for (std::shared_ptr<Creatures::Creature> creature : Creatures::CreatureHandler::Instance().GetCreatureVector()) {
+        std::function<bool()> shouldSkip = [swing, creature]() -> bool {
+            if (!swing->atkAttributes.canHitSource && swing->atkAttributes.attackSourceID == creature->GetID() && swing->atkAttributes.canHitSourceAfter < SDL_GetTicks()) return true;
+
+            return false;
+        };
+        shouldSkip();
+
+        HandleCreatureCollision(swing, creature.get());
+    }
+}
+
+void MeleeSwingHandler::HandleCreatureCollision(MeleeSwing *swing, Creatures::Creature *creature) {
+    if (swing->atkAttributes.maxHits <= swing->atkAttributes.timesHit) {
+        swing->atkAttributes.isMarkedForDeletion = true;
+        return;
+    }
+    if (IsQuadColliding(swing->atkAttributes.model, Quad<float>(creature->GetAttribute().model))) {
+        swing->atkAttributes.timesHit++;
+        creature->Damage(swing->itemStats.damage);
+
+        // if (!weaponInfo.canHitTheSameEntityTwice && entity.lock() != nullptr) weaponInfo.entitiesHit.push_back();  // TODO: add invulnerabilty frames to entities
+    }
+}
+
+void MeleeSwingHandler::HandleLifetime(MeleeSwing *swing) {
+    if (swing->atkAttributes.lifeEndTick < SDL_GetTicks()) swing->atkAttributes.isMarkedForDeletion = true;
+}
 }  // namespace Attacks

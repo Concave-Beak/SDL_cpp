@@ -1,6 +1,6 @@
 #include "../../../../include/game/entities/Attack/AttackFactory.hh"
 
-// #include "../../../../include/game/entities/Attack/Weapons/Melee.hh"
+#include "../../../../include/game/entities/Attack/Weapons/Melee.hh"
 #include "../../../../include/game/entities/Attack/Weapons/Ranged.hh"
 
 namespace Attacks {
@@ -22,9 +22,9 @@ void AttackFactory::RegisterAll() {
     instance.RegisterAttack(AttackType::ARROW_PROJECTILE, [](Items::ItemStats itemStats_, CreatureAttributes* creature_, float angle_) {
         WoodenArrow::Create(itemStats_, creature_, angle_);
     });
-    // instance.RegisterAttack(AttackType::SWORD_SLASH, [](Items::ItemStats itemStats_, EntityAttributes* entity_, float angle_) {
-    //     ShortSwordSwing::Create(itemStats_, entity_, angle_);
-    // });
+    instance.RegisterAttack(AttackType::SWORD_SLASH, [](Items::ItemStats itemStats_, CreatureAttributes* creature_, float angle_) {
+        ShortSwordSwing::Create(itemStats_, creature_, angle_);
+    });
 }
 
 void AttackFactory::RegisterAttack(AttackType atkType, std::function<void(Items::ItemStats, CreatureAttributes*, float)> constructor) {

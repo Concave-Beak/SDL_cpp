@@ -2,8 +2,6 @@
 
 #include <SDL2/SDL_timer.h>
 
-#include <iostream>
-
 #include "../../../include/game/entities/Attack/AttackFactory.hh"
 // #include "../../../include/game/entities/ItemEntity.hh"
 
@@ -35,7 +33,7 @@ void Item::ChargeAttack() {
 void Item::ReleaseAttack(CreatureAttributes* entityAttribute, CreatureAttributes::CombatAttributes* combatAttribute, float angle) {
     if (combatAttribute->itemUseCooldown > SDL_GetTicks()) return;
 
-    Attacks::AttackFactory::Instance().CreateAttack(AttackType::ARROW_PROJECTILE, itemStats, entityAttribute, angle);
+    Attacks::AttackFactory::Instance().CreateAttack(AttackType::SWORD_SLASH, itemStats, entityAttribute, angle);
     combatAttribute->itemUseCooldown = SDL_GetTicks() + itemStats.attackCooldownInTicks;
     itemStats.chargeNow = 0;
 }

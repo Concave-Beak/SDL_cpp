@@ -5,7 +5,9 @@
 #include <SDL2/SDL_timer.h>
 
 #include <cstdlib>
+#include <iostream>
 #include <memory>
+#include <ostream>
 
 #include "../../../../include/game/entities/Creature/Neutral/Human.hh"
 #include "../../../../lib/utils/sdl_utils.hh"
