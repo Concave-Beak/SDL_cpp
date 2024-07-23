@@ -61,19 +61,19 @@ class Arrow : public Attack {
     Vec2<float> maximumVelocity;  // TODO: damage should be related to velocityNow and maximumVelocity
 
     bool isStuckToSurface = false;
-    bool isStuckToEntity = false;                   // if is stuck and not on entity is stuck on floor
-    mutable const CreatureAttributes *stuckEntity;  // Can change which creature it's stuck on but not the creature attributes itself
-    Vec2<int> posStuck;                             // if stuck on entity this is the pos related to the entity
+    bool isStuckToEntity = false;                 // if is stuck and not on entity is stuck on floor
+    mutable const EntityAttributes *stuckEntity;  // Can change which creature it's stuck on but not the creature attributes itself
+    Vec2<int> posStuck;                           // if stuck on entity this is the pos related to the entity
 
    protected:
     Arrow() = default;
     ~Arrow() = default;
 
    protected:
-    void Init(Items::ItemStats itemStats_, CreatureAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity);
+    void Init(Items::ItemStats itemStats_, EntityAttributes *entityAttributes, float angle_, Vec2<int> positionNow_, int dimentions, Vec2<int> velocity);
 };
 
-class ArrowHandler : public AttackHandler {
+class ArrowHandler {
    public:
     static void Handler(Attack *atk, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, SDL_Renderer *renderer);
 
@@ -104,13 +104,16 @@ class MeleeSwing : public Attack {  // I have plans to make most items have a sw
    protected:
     Items::ItemStats itemStats;
 
-    mutable const CreatureAttributes *creatureOrigin = nullptr;
+    int minDimention = 0;
+    int maxDimention = 0;
+
+    mutable const EntityAttributes *creatureOrigin = nullptr;  // this is used on UpdateModel
 
    protected:
-    void Init(const Items::ItemStats itemStats_, CreatureAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions);
+    void Init(Items::ItemStats itemStats_, EntityAttributes *entityOrigin_, float angle_, Vec2<int> positionNow_, int minDimention, int maxDimention);
 };
 
-class MeleeSwingHandler : public AttackHandler {
+class MeleeSwingHandler {
    public:
     static void Handler(Attack *atk, Vec2<int> cameraPos, SDL_Renderer *renderer);
 

@@ -1,15 +1,18 @@
 #pragma once
 
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_stdinc.h>
 
+#include <cstdint>
 #include <cstdlib>
 
 #include "../../../lib/utils/engine_utils.hh"
 #include "../../../lib/utils/math_utils.hh"
 
-struct CreatureAttributes {
-    CreatureAttributes();
-    ~CreatureAttributes() = default;
+struct EntityAttributes {
+    EntityAttributes();
+    ~EntityAttributes() = default;
 
     Vec2<float> walkingSpeed = {0, 0};
     Vec2<float> runningSpeed = {0, 0};
@@ -50,6 +53,22 @@ struct CreatureAttributes {
     inline static Uint32 maxUsedID = 0;
 };
 
+enum class CreatureType {
+    THIEF = 0,
+};
+
+struct CreatureAttributes {
+    CreatureType type;
+
+    uint32_t isAggressiveToFlag;  // bitmaks for the CreatureType
+    bool isAggressiveToPlayer;
+
+    bool isAggroed = false;
+    const mutable EntityAttributes* isAggroedTo;
+
+    bool isMarkedForDeletion = false;
+};
+
 enum class AttackType {
     NOT_SET = 0,
 
@@ -79,12 +98,12 @@ struct AttackAttributes {
 
     bool isMarkedForDeletion = false;
 
-    Quad<float> model;
+    SDL_Rect model;
     float angle;
 
    private:
     Uint64 id;
-    static inline Uint64 maxUsedID = 0;
+    inline static Uint64 maxUsedID = 0;
 };
 
 //------------------------------------------------------------------------------

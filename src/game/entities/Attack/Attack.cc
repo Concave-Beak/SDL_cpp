@@ -1,7 +1,9 @@
 #include "../../../../include/game/entities/Attack/Attack.hh"
 
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_timer.h>
 
+#include <csignal>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -52,12 +54,12 @@ void AttackHandler::Delete(AttackVector::iterator it) {
 
 //------------------------------------------------------------------------------
 
-void Arrow::Init(Items::ItemStats itemStats_, CreatureAttributes *entityAttributes, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions, Vec2<float> velocity) {
+void Arrow::Init(Items::ItemStats itemStats_, EntityAttributes *entityAttributes, float angle_, Vec2<int> positionNow_, int dimentions, Vec2<int> velocity) {
     itemStats = itemStats_;
     atkAttributes.attackType = AttackType::ARROW_PROJECTILE;
     positionNow = positionNow_;
     atkAttributes.isEffectedByGravity = true;
-    atkAttributes.model = Quad<float>(positionNow_, dimentions);
+    atkAttributes.model = {positionNow_.x, positionNow_.y, dimentions, dimentions};
     atkAttributes.angle = angle_;
     maximumVelocity = velocity;
     velocityNow = {
@@ -66,11 +68,11 @@ void Arrow::Init(Items::ItemStats itemStats_, CreatureAttributes *entityAttribut
     };
 
     atkAttributes.attackSourceID = entityAttributes->GetID();
-    atkAttributes.model.RotateCenter(angle_);
 
     atkAttributes.canHitSource = true;
     atkAttributes.canHitSourceAfter = SDL_GetTicks() + 200;
 }
+
 void ArrowHandler::Handler(Attack *atk, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, SDL_Renderer *renderer) {
     Arrow *arrow = dynamic_cast<Arrow *>(atk);
     if (!arrow) return;
@@ -86,13 +88,18 @@ void ArrowHandler::UpdateModel(Arrow *arrow) {
     if (!arrow->isStuckToEntity && !arrow->isStuckToSurface) {
         arrow->atkAttributes.angle = atan2(arrow->velocityNow.y, arrow->velocityNow.x);
     }
-
-    float angleDif = arrow->atkAttributes.angle - arrow->atkAttributes.model.GetAngle();
-    arrow->atkAttributes.model.RotateCenter(angleDif);
 }
 
 void ArrowHandler::Draw(const Arrow &arrow, Vec2<int> cameraPos, SDL_Renderer *renderer) {
-    arrow.atkAttributes.model.Draw(renderer, cameraPos, {BLACK, 0xff});
+    Vec2<int> posNow = {arrow.atkAttributes.model.x, arrow.atkAttributes.model.y};
+    SDL_Rect arrowModel = {
+        posNow.x - cameraPos.x,
+        posNow.y - cameraPos.y,
+        arrow.atkAttributes.model.w,
+        arrow.atkAttributes.model.h,
+    };
+    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff)).Handle();
+    scc(SDL_RenderFillRect(renderer, &arrowModel)).Handle();
 }
 
 void ArrowHandler::HandleVelocity(Arrow *arrow, float timeDelta, float timeMultiplier) {
@@ -120,7 +127,8 @@ void ArrowHandler::HandleVelocity(Arrow *arrow, float timeDelta, float timeMulti
     arrow->positionNow.y += velocityPtr->y * timeDelta * timeMultiplier;
     arrow->positionNow.x += velocityPtr->x * timeMultiplier * timeDelta;
 
-    arrow->atkAttributes.model.SetPos(arrow->positionNow, 0);
+    arrow->atkAttributes.model.x = arrow->positionNow.x;
+    arrow->atkAttributes.model.y = arrow->positionNow.y;
 }
 
 void ArrowHandler::HandleCollisions(Arrow *arrow) {
@@ -130,15 +138,14 @@ void ArrowHandler::HandleCollisions(Arrow *arrow) {
 
     HandlePlayerCollision(arrow);
 
-    for (std::shared_ptr<Creatures::Creature> creature : Creatures::CreatureHandler::Instance().GetCreatureVector()) {
+    for (std::shared_ptr<Creatures::Creature> creature : Creatures::CreatureHandler::GetCreatureVector()) {
         std::function<bool()> shouldSkip = [arrow, creature]() -> bool {
             if (!arrow->atkAttributes.canHitSource && arrow->atkAttributes.attackSourceID == creature->GetID()) return true;
 
-            if (arrow->atkAttributes.canHitSourceAfter < SDL_GetTicks()) return true;
+            if (arrow->atkAttributes.canHitSourceAfter > SDL_GetTicks()) return true;
 
             return false;
         };
-
         if (shouldSkip()) continue;
 
         HandleCreatureCollision(arrow, creature.get());
@@ -149,57 +156,59 @@ void ArrowHandler::HandleCollisions(Arrow *arrow) {
     }
 }
 
-void ArrowHandler::HandleStuck(Arrow *attack) {
-    if (attack->isStuckToEntity && attack->stuckEntity == nullptr) {
-        attack->isStuckToEntity = false;
+void ArrowHandler::HandleStuck(Arrow *arrow) {
+    if (arrow->isStuckToEntity && arrow->stuckEntity == nullptr) {
+        arrow->isStuckToEntity = false;
         return;
     }
-    if (attack->isStuckToEntity) {
-        attack->atkAttributes.model.SetPos(attack->posStuck + attack->stuckEntity->positionNow, 0);
+    if (arrow->isStuckToEntity) {
+        arrow->atkAttributes.model.x = arrow->posStuck.x + arrow->stuckEntity->positionNow.x;
+        arrow->atkAttributes.model.y = arrow->posStuck.y + arrow->stuckEntity->positionNow.y;
         return;
     }
-    if (attack->isStuckToSurface) {
-        attack->atkAttributes.model.SetPos(attack->posStuck, 0);
+    if (arrow->isStuckToSurface) {
+        arrow->atkAttributes.model.x = arrow->posStuck.x;
+        arrow->atkAttributes.model.y = arrow->posStuck.y;
         return;
     }
 }
 
-void ArrowHandler::HandleCreatureCollision(Arrow *arrow, Creatures::Creature *creatureStuck) {
-    if (IsQuadColliding(arrow->atkAttributes.model, Quad<float>(creatureStuck->GetAttribute().model))) {
+void ArrowHandler::HandleCreatureCollision(Arrow *arrow, Creatures::Creature *creature) {
+    if (IsRectangleCollidingWithRect(arrow->atkAttributes.model, (creature->GetAttributeCopy().model))) {
         arrow->velocityNow = {0, 0};
         arrow->isStuckToEntity = true;
-        arrow->stuckEntity = creatureStuck->GetAttributeReference();
-        arrow->posStuck = arrow->positionNow - creatureStuck->GetAttribute().positionNow;
-        creatureStuck->Damage(arrow->itemStats.damage);
-        return;
+        arrow->stuckEntity = creature->GetAttributeConstReference();
+        arrow->posStuck = arrow->positionNow - creature->GetAttributeCopy().positionNow;
+        creature->Damage(arrow->itemStats.damage);
     }
 }
 
 void ArrowHandler::HandleSurfaceCollision(Arrow *arrow, const SDL_Rect &surfaceRect) {
-    if (IsQuadColliding(arrow->atkAttributes.model, Quad<float>(surfaceRect))) {
+    if (IsRectangleCollidingWithRect(arrow->atkAttributes.model, surfaceRect)) {
         arrow->isStuckToSurface = true;
         arrow->posStuck = arrow->positionNow;
         arrow->velocityNow = {0, 0};
-        return;
     }
 }
 
 void ArrowHandler::HandlePlayerCollision(Arrow *arrow) {
-    if (arrow->atkAttributes.canHitSource && Player::GetAttribute().GetID() == arrow->atkAttributes.attackSourceID && arrow->atkAttributes.canHitSourceAfter < SDL_GetTicks()) {
-        if (IsQuadColliding(arrow->atkAttributes.model, Quad<float>(Player::GetAttribute().model))) {
-            arrow->isStuckToEntity = true;
-            arrow->stuckEntity = Player::GetAttributeReference();
-            arrow->posStuck = arrow->positionNow - Player::GetAttribute().positionNow;
-        }
+    // Check to see if can hit source and player is source and if can hit now
+    if (!arrow->atkAttributes.canHitSource && Player::GetAttribute().GetID() == arrow->atkAttributes.attackSourceID) return;
+    if (arrow->atkAttributes.canHitSourceAfter > SDL_GetTicks()) return;
+
+    if (IsRectangleCollidingWithRect(arrow->atkAttributes.model, Player::GetAttribute().model)) {
+        arrow->isStuckToEntity = true;
+        arrow->stuckEntity = Player::GetAttributeReference();
+        arrow->posStuck = arrow->positionNow - Player::GetAttribute().positionNow;
     }
 }
 
 //------------------------------------------------------------------------------
 
-void MeleeSwing::Init(Items::ItemStats itemStats_, CreatureAttributes *entityOrigin_, float angle_, Vec2<float> positionNow_, Vec2<float> dimentions) {
+void MeleeSwing::Init(Items::ItemStats itemStats_, EntityAttributes *entityOrigin_, float angle_, Vec2<int> positionNow_, int minDimention_, int maxDimention_) {
     atkAttributes.attackType = AttackType::SWORD_SLASH;
     itemStats = Items::ItemStats(itemStats_);
-    atkAttributes.model = Quad<float>(positionNow_, dimentions);
+    atkAttributes.model = {positionNow_.x, positionNow_.y, minDimention, minDimention};
     atkAttributes.attackSourceID = entityOrigin_->GetID();
     atkAttributes.lifeEndTick = SDL_GetTicks() + 200;
 
@@ -220,8 +229,10 @@ void MeleeSwing::Init(Items::ItemStats itemStats_, CreatureAttributes *entityOri
 
     Vec2<float> spawnPos = rectCenter + spawnOffset;
 
-    atkAttributes.model.SetPos(spawnPos, 4);
-    atkAttributes.model.RotateCenter(angle_);
+    atkAttributes.model.x = spawnPos.x;
+    atkAttributes.model.y = spawnPos.y;
+    minDimention = minDimention_;
+    maxDimention = maxDimention_;
     atkAttributes.angle = angle_;
 }
 
@@ -236,7 +247,15 @@ void MeleeSwingHandler::Handler(Attack *atk, Vec2<int> cameraPos, SDL_Renderer *
 }
 
 void MeleeSwingHandler::Draw(const MeleeSwing *swing, Vec2<int> cameraPos, SDL_Renderer *renderer) {
-    swing->atkAttributes.model.Draw(renderer, cameraPos, {BLACK, 0xff});
+    Vec2<int> posNow = {swing->atkAttributes.model.x, swing->atkAttributes.model.y};
+    SDL_Rect swingModel = {
+        posNow.x - cameraPos.x,
+        posNow.y - cameraPos.y,
+        swing->atkAttributes.model.w,
+        swing->atkAttributes.model.h,
+    };
+    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff)).Handle();
+    scc(SDL_RenderFillRect(renderer, &swingModel)).Handle();
 }
 
 void MeleeSwingHandler::UpdateModel(MeleeSwing *swing) {
@@ -248,17 +267,28 @@ void MeleeSwingHandler::UpdateModel(MeleeSwing *swing) {
     };
 
     float radius = sqrt(pow(swing->creatureOrigin->model.w * 0.6f, 2) + pow(swing->creatureOrigin->model.h * 0.6f, 2));
-    Vec2<float> spawnOffset = Vec2<float>{
+    Vec2<float> offset = Vec2<float>{
         radius * cos(swing->atkAttributes.angle),
         radius * sin(swing->atkAttributes.angle),
     };
 
-    Vec2<float> spawnPos = rectCenter + spawnOffset;
-    swing->atkAttributes.model.SetPos(spawnPos, 4);
+    Vec2<float> newPos = rectCenter + offset;
+
+    // TODO
+    swing->atkAttributes.model.x = newPos.x;
+    swing->atkAttributes.model.y = newPos.y;
+    swing->atkAttributes.model.w = swing->minDimention;
+    swing->atkAttributes.model.h = swing->minDimention;
+    if (float cosOfAngle = cos(swing->atkAttributes.angle) > swing->minDimention) {
+        swing->atkAttributes.model.w = cos(cosOfAngle) * swing->maxDimention;
+    }
+    if (float cosOfAngle = sin(swing->atkAttributes.angle) > swing->minDimention) {
+        swing->atkAttributes.model.w = sin(cosOfAngle) * swing->maxDimention;
+    }
 }
 
 void MeleeSwingHandler::HandleCollisions(MeleeSwing *swing) {
-    for (std::shared_ptr<Creatures::Creature> creature : Creatures::CreatureHandler::Instance().GetCreatureVector()) {
+    for (std::shared_ptr<Creatures::Creature> creature : Creatures::CreatureHandler::GetCreatureVector()) {
         std::function<bool()> shouldSkip = [swing, creature]() -> bool {
             if (!swing->atkAttributes.canHitSource && swing->atkAttributes.attackSourceID == creature->GetID() && swing->atkAttributes.canHitSourceAfter < SDL_GetTicks()) return true;
 
@@ -275,7 +305,7 @@ void MeleeSwingHandler::HandleCreatureCollision(MeleeSwing *swing, Creatures::Cr
         swing->atkAttributes.isMarkedForDeletion = true;
         return;
     }
-    if (IsQuadColliding(swing->atkAttributes.model, Quad<float>(creature->GetAttribute().model))) {
+    if (IsRectangleCollidingWithRect(swing->atkAttributes.model, creature->GetAttributeCopy().model)) {
         swing->atkAttributes.timesHit++;
         creature->Damage(swing->itemStats.damage);
 

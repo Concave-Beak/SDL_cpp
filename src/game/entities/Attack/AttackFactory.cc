@@ -11,7 +11,7 @@ AttackFactory::AttackFactory() {
 AttackFactory AttackFactory::instance = AttackFactory();
 AttackFactory& AttackFactory::Instance() { return instance; }
 
-void AttackFactory::CreateAttack(AttackType atkType, Items::ItemStats itemStats, CreatureAttributes* entity, float angle) {
+void AttackFactory::CreateAttack(AttackType atkType, Items::ItemStats itemStats, EntityAttributes* entity, float angle) {
     attackFactoryMap::iterator it = attackCreators.find(atkType);
     if (it != attackCreators.end()) {
         it->second(itemStats, entity, angle);
@@ -19,15 +19,15 @@ void AttackFactory::CreateAttack(AttackType atkType, Items::ItemStats itemStats,
 }
 
 void AttackFactory::RegisterAll() {
-    instance.RegisterAttack(AttackType::ARROW_PROJECTILE, [](Items::ItemStats itemStats_, CreatureAttributes* creature_, float angle_) {
+    instance.RegisterAttack(AttackType::ARROW_PROJECTILE, [](Items::ItemStats itemStats_, EntityAttributes* creature_, float angle_) {
         WoodenArrow::Create(itemStats_, creature_, angle_);
     });
-    instance.RegisterAttack(AttackType::SWORD_SLASH, [](Items::ItemStats itemStats_, CreatureAttributes* creature_, float angle_) {
+    instance.RegisterAttack(AttackType::SWORD_SLASH, [](Items::ItemStats itemStats_, EntityAttributes* creature_, float angle_) {
         ShortSwordSwing::Create(itemStats_, creature_, angle_);
     });
 }
 
-void AttackFactory::RegisterAttack(AttackType atkType, std::function<void(Items::ItemStats, CreatureAttributes*, float)> constructor) {
+void AttackFactory::RegisterAttack(AttackType atkType, std::function<void(Items::ItemStats, EntityAttributes*, float)> constructor) {
     attackCreators.emplace(atkType, constructor);
 }
 }  // namespace Attacks

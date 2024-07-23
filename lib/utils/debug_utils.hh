@@ -142,8 +142,9 @@ enum class Info {
 
     CONFIG_READ_SUCESSFULLY = 0x300,
 
-    PLAYER_INITIALIZED_SUCESSFULLY = 0x400,
+    CREATURE_INITIALIZED_UNPROPERLY = 0x400,
 };
+
 inline void PrintInfo(Info info_, std::string msg) {
     switch (info_) {
         case Info::SDL_INITIALIZED_SUCESSFULY:
@@ -167,9 +168,8 @@ inline void PrintInfo(Info info_, std::string msg) {
         case Info::CONFIG_READ_SUCESSFULLY:
             std::cout << "INFO: Config read sucessfully\n";
             break;
-        case Info::PLAYER_INITIALIZED_SUCESSFULLY: {
-            std::cout << "INFO: Player initialized sucessfully\n";
-            break;
+        case Info::CREATURE_INITIALIZED_UNPROPERLY: {
+            std::cout << "INFO: Creature initialized unproperly, deleting ID: " << msg << '\n';
         }
     }
 }

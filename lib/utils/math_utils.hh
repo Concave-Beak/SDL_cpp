@@ -23,11 +23,11 @@
 #pragma once
 
 #include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_shape.h>
 #include <sys/types.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <ostream>
@@ -53,7 +53,7 @@ struct is_integer_or_float_pointer<T*>
 
 template <class T>
 struct Vec2 {
-    static_assert(std::is_integral_v<T> | std::is_floating_point_v<T> | std::is_pointer_v<T> | is_integer_or_float_pointer<T>::value,
+    static_assert(std::is_integral<T>::value | std::is_floating_point<T>::value | std::is_pointer<T>::value | is_integer_or_float_pointer<T>::value,
                   "ERROR: Could not create Gemotry: not integer or float");
     T x;
     T y;
@@ -66,7 +66,7 @@ struct Vec2 {
         y += other.y;
         return *this;
     }
-    bool operator==(const Vec2& other) {
+    bool operator==(const Vec2& other) const {
         return (x == other.x, y == other.y);
     }
 
@@ -110,13 +110,13 @@ struct Vec2 {
 
 template <class T>
 struct Triangle {
-    static_assert(std::is_integral_v<T> | std::is_floating_point_v<T> | std::is_pointer_v<T> | is_integer_or_float_pointer<T>::value,
+    static_assert(std::is_integral<T>::value | std::is_floating_point<T>::value | std::is_pointer<T>::value | is_integer_or_float_pointer<T>::value,
                   "ERROR: Could not create Gemotry: not integer or float");
     Vec2<T> a;
     Vec2<T> b;
     Vec2<T> c;
 
-    void Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color);
+    void Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) const;
 };
 
 template <class T>
@@ -141,7 +141,18 @@ inline bool IsPointInTriangle(const Vec2<T>& p, const Triangle<T>& triangle) {
 }
 
 template <class T>
-inline void Triangle<T>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) {
+inline bool IsRectCollidinWithTriangle(const SDL_Rect& rect, const Triangle<T>& triangle) {
+    Vec2<T> point1, point2, point3, point4;
+    point1 = Vec2<T>{rect.x, rect.y};
+    point2 = Vec2<T>{rect.x + rect.w, rect.y};
+    point3 = Vec2<T>{rect.x, rect.y + rect.h};
+    point4 = Vec2<T>{rect.x + rect.w, rect.y + rect.h};
+    return IsPointInTriangle(point1, triangle) || IsPointInTriangle(point2, triangle) ||
+           IsPointInTriangle(point3, triangle) || IsPointInTriangle(point4, triangle);
+}
+
+template <class T>
+inline void Triangle<T>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) const {
     SDL_Vertex vertices[3];
 
     vertices[0].position.x = a.x - cameraPos.x;
@@ -223,308 +234,17 @@ inline bool IsPointInRectangle(const Vec2<T>& point, const SDL_Rect& rect) {
            point.y <= rect.y + rect.h;
 }
 
-/* Quad struct | Differently from the SDL_Rect it has no fixed angle or form
- *
- * This may change while rotating, but should be created like this:
- * a = Top Left vertice;
- * b = Top Right vertice;
- * c = Bottom Right vertice;
- * d = Bottom Left vertice;
- *
- * AB-BC-CD-DA are the size sides of the rectangle
- */
-template <class T>
-struct Quad {
-    friend std::ostream& operator<<(std::ostream& os, const Quad<T>& quad) {
-        os << "a: " << quad.a << ", b: " << quad.b << " , c: " << quad.c << " , d: " << quad.d;
-        return os;
+inline bool IsRectangleCollidingWithRect(const SDL_Rect rect1, const SDL_Rect& rect2) {
+    // Check if one rectangle is to the left of the other
+    if (rect1.x + rect1.w <= rect2.x || rect2.x + rect2.w <= rect1.x) {
+        return false;
     }
 
-    Quad(const Quad& other)
-        : AB(other.AB),
-          BC(other.BC),
-          CD(other.CD),
-          DA(other.DA),
-          a(other.a),
-          b(other.b),
-          c(other.c),
-          d(other.d),
-          isRectangleOrSquare(other.isRectangleOrSquare),
-          angleNow(other.angleNow) {}
-
-    Quad(Quad&& other) noexcept
-        : AB(std::move(other.AB)),
-          BC(std::move(other.BC)),
-          CD(std::move(other.CD)),
-          DA(std::move(other.DA)),
-          a(std::move(other.a)),
-          b(std::move(other.b)),
-          c(std::move(other.c)),
-          d(std::move(other.d)),
-          isRectangleOrSquare(std::move(other.isRectangleOrSquare)),
-          angleNow(std::move(other.angleNow)) {}
-
-    Quad& operator=(const Quad& other) {
-        if (this == &other) {
-            return *this;  // handle self assignment
-        }
-        AB = other.AB;
-        BC = other.BC;
-        CD = other.CD;
-        DA = other.DA;
-        a = other.a;
-        b = other.b;
-        c = other.c;
-        d = other.d;
-        // NOTE: isRectangleOrSquare is a const member, cannot be assigned
-        angleNow = other.angleNow;
-        return *this;
+    // Check if one rectangle is above the other
+    if (rect1.y + rect1.h <= rect2.y || rect2.y + rect2.h <= rect1.y) {
+        return false;
     }
 
-    Quad& operator=(Quad&& other) noexcept {
-        if (this == &other) {
-            return *this;
-        }
-        AB = std::move(other.AB);
-        BC = std::move(other.BC);
-        CD = std::move(other.CD);
-        DA = std::move(other.DA);
-        a = std::move(other.a);
-        b = std::move(other.b);
-        c = std::move(other.c);
-        d = std::move(other.d);
-        angleNow = std::move(other.angleNow);
-        return *this;
-    }
-
-    Quad() : AB(0), BC(0), CD(0), DA(0), a({0, 0}), b({0, 0}), c({0, 0}), d({0, 0}), isRectangleOrSquare(false) {};
-
-    Quad(std::array<Vec2<T>, 4> vertices_) : isRectangleOrSquare(false) {
-        a = vertices_[0];
-        b = vertices_[1];
-        c = vertices_[2];
-        d = vertices_[3];
-        CalculateSideSize();
-    }
-
-    Quad(Vec2<T> topLeftPos, Vec2<T> dimentions) : isRectangleOrSquare(true) {
-        a = Vec2<T>{topLeftPos};
-        b = Vec2<T>{topLeftPos.x + dimentions.x, topLeftPos.y};
-        c = Vec2<T>{topLeftPos + dimentions};
-        d = Vec2<T>{topLeftPos.x, topLeftPos.y + dimentions.y};
-
-        // easy calculations because it is a rectangle
-        AB = dimentions.x, CD = dimentions.x;
-        BC = dimentions.y, DA = dimentions.y;
-    };
-
-    Quad(SDL_Rect rect) : a(rect.x, rect.y), b(rect.x + rect.w, rect.y), c(rect.x + rect.w, rect.y + rect.h), d(rect.w, rect.y + rect.h), isRectangleOrSquare(true) {
-        CalculateSideSize();
-    }
-
-    float AB, BC, CD, DA;
-    Vec2<T> a, b, c, d;
-    const bool isRectangleOrSquare;
-
-   private:
-    float angleNow = 0;
-
-   public:
-    inline float GetAngle();
-
-    void CalculateSideSize();
-
-    void RotateVerticie(float angleInRadians, size_t verticieToRotate);
-    void RotateCenter(float angleInRadians);
-
-    void Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) const;
-
-    void Move(Vec2<T> newPos);
-    void SetPos(Vec2<T> newPos, size_t verticie);
-
-   private:
-    void RotateAroundPoint(float angleInRadians, const Vec2<T>& point);
-    void RotateVertex(Vec2<T>& vertex, const Vec2<T>& point, T cosTheta, T sinTheta);
-};
-
-template <class T>
-inline float Quad<T>::GetAngle() { return angleNow; }
-
-template <class T>
-inline void Quad<T>::CalculateSideSize() {
-    AB = std::sqrt(std::pow(b.x - a.x, 2) + std::pow(b.y - a.y, 2));
-    BC = std::sqrt(std::pow(c.x - b.x, 2) + std::pow(c.y - b.y, 2));
-    CD = std::sqrt(std::pow(d.x - c.x, 2) + std::pow(d.y - c.y, 2));
-    DA = std::sqrt(std::pow(a.x - d.x, 2) + std::pow(a.y - d.y, 2));
-}
-
-template <class T>
-inline void Quad<T>::RotateVerticie(float angleInRadians, size_t verticieToRotate) {
-    if (verticieToRotate > 3) return;
-
-    Vec2<T>* pivot;
-    switch (verticieToRotate) {
-        case 0:
-            pivot = &a;
-            break;
-        case 1:
-            pivot = &b;
-            break;
-        case 2:
-            pivot = &c;
-            break;
-        case 3:
-            pivot = &d;
-            break;
-    }
-
-    RotateAroundPoint(angleInRadians, *pivot);
-    angleNow += angleInRadians;
-    CalculateSideSize();
-}
-
-template <class T>
-inline void Quad<T>::RotateCenter(float angleInRadians) {
-    Vec2<T> center = Vec2<T>{
-        (a.x + b.x + c.x + d.x) / 4,
-        (a.y + b.y + c.y + d.y) / 4};
-
-    RotateAroundPoint(angleInRadians, center);
-    angleNow += angleInRadians;
-    CalculateSideSize();
-}
-template <class T>
-void Quad<T>::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, SDL_Color color) const {
-    SDL_Vertex vertices[4];
-    vertices[0].position = {static_cast<float>(a.x - cameraPos.x), static_cast<float>(a.y - cameraPos.y)};
-    vertices[1].position = {static_cast<float>(b.x - cameraPos.x), static_cast<float>(b.y - cameraPos.y)};
-    vertices[2].position = {static_cast<float>(c.x - cameraPos.x), static_cast<float>(c.y - cameraPos.y)};
-    vertices[3].position = {static_cast<float>(d.x - cameraPos.x), static_cast<float>(d.y - cameraPos.y)};
-
-    for (int i = 0; i < 4; ++i) {
-        vertices[i].color = color;
-    }
-
-    int indices[] = {0, 1, 2, 2, 3, 0};
-    SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
-}
-
-template <class T>
-inline void Quad<T>::RotateAroundPoint(float angleInRadians, const Vec2<T>& point) {
-    T cosTheta = std::cos(angleInRadians);
-    T sinTheta = std::sin(angleInRadians);
-
-    RotateVertex(a, point, cosTheta, sinTheta);
-    RotateVertex(b, point, cosTheta, sinTheta);
-    RotateVertex(c, point, cosTheta, sinTheta);
-    RotateVertex(d, point, cosTheta, sinTheta);
-}
-
-template <class T>
-inline void Quad<T>::RotateVertex(Vec2<T>& vertex, const Vec2<T>& point, T cosTheta, T sinTheta) {
-    Vec2<T> translated = vertex - point;
-
-    T xNew = translated.x * cosTheta - translated.y * sinTheta;
-    T yNew = translated.x * sinTheta + translated.y * cosTheta;
-
-    vertex.x = xNew + point.x;
-    vertex.y = yNew + point.y;
-}
-
-template <class T>
-void Quad<T>::Move(Vec2<T> addPos) {
-    a += addPos;
-    b += addPos;
-    c += addPos;
-    d += addPos;
-}
-
-template <class T>
-void Quad<T>::SetPos(Vec2<T> newPos, size_t verticie) {
-    Vec2<T>* targetVertex;
-
-    switch (verticie) {
-        case 0:
-            targetVertex = &a;
-            break;
-        case 1:
-            targetVertex = &b;
-            break;
-        case 2:
-            targetVertex = &c;
-            break;
-        case 3:
-            targetVertex = &d;
-            break;
-        case 4: {  // New case for setting position based on center
-            Vec2<T> center = (a + b + c + d) / 4;
-            Vec2<T> offset = newPos - center;
-            a += offset;
-            b += offset;
-            c += offset;
-            d += offset;
-            return;
-        }
-        default:
-            return;  // Invalid vertex index
-    }
-
-    Vec2<T> offset = newPos - *targetVertex;
-
-    a += offset;
-    b += offset;
-    c += offset;
-    d += offset;
-}
-
-template <class T>
-std::array<Vec2<T>, 2> GetPerpendicularAxes(const Quad<T>& q) {
-    std::array<Vec2<T>, 4> edges = {q.b - q.a, q.c - q.b, q.d - q.c, q.a - q.d};
-    std::array<Vec2<T>, 2> axes = {Vec2<T>{-edges[0].y, edges[0].x}, Vec2<T>{-edges[1].y, edges[1].x}};  // Perpendicular axes
-    return axes;
-}
-
-template <typename T>
-std::pair<T, T> ProjectVertices(const Quad<T>& q, const Vec2<T>& axis) {
-    std::vector<T> projections;
-    for (const Vec2<T>& v : {q.a, q.b, q.c, q.d}) {
-        projections.push_back(v.dot(axis));
-    }
-    return std::make_pair(*std::min_element(projections.begin(), projections.end()),
-                          *std::max_element(projections.begin(), projections.end()));
-}
-
-template <typename T>
-bool ProjectionOverlap(const Quad<T>& q1, const Quad<T>& q2, const Vec2<T>& axis) {
-    std::pair<T, T> proj1 = ProjectVertices(q1, axis);
-    std::pair<T, T> proj2 = ProjectVertices(q2, axis);
-
-    T min1 = proj1.first;
-    T max1 = proj1.second;
-    T min2 = proj2.first;
-    T max2 = proj2.second;
-
-    return max1 >= min2 && max2 >= min1;
-}
-
-template <typename T>
-bool IsQuadColliding(const Quad<T>& quad1, const Quad<T>& quad2) {
-    std::array<Vec2<T>, 2> axes1 = GetPerpendicularAxes(quad1);
-    std::array<Vec2<T>, 2> axes2 = GetPerpendicularAxes(quad2);
-
-    // Check overlap on all axes of quad1
-    for (const Vec2<T>& axis : axes1) {
-        if (!ProjectionOverlap(quad1, quad2, axis)) {
-            return false;
-        }
-    }
-
-    // Check overlap on all axes of quad2
-    for (const Vec2<T>& axis : axes2) {
-        if (!ProjectionOverlap(quad1, quad2, axis)) {
-            return false;
-        }
-    }
-
+    // If neither of the above, the rectangles are colliding
     return true;
 }

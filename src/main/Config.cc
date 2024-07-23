@@ -69,7 +69,7 @@ Config& Config::Instance() { return instance; };
 std::string Config::GetLogPath() { return logPath; }
 
 const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
-    std::string path = GetAbsolutePath("~/.config/Soulbound/config.toml");
+    std::string path = GetAbsolutePath("~/.config/SoulBound/config.toml");
 
     toml::parse_result result;
 

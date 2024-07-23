@@ -4,9 +4,9 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 
-CreatureAttributes::CreatureAttributes() { id = ++maxUsedID; }
+EntityAttributes::EntityAttributes() { id = ++maxUsedID; }
 
-Uint32 CreatureAttributes::GetID() { return id; }
+Uint32 EntityAttributes::GetID() { return id; }
 
 AttackAttributes::AttackAttributes() { id = ++maxUsedID; }
 

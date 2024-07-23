@@ -35,13 +35,13 @@ void Engine::GameLoop() {
     new LevelItem(Vec2<int>{screenSpecs.x / 3 + 100, screenSpecs.y - 100}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);     // Placeholder
     new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
-    Creatures::CreatureFactory::Instance().CreateCreature(Creatures::CreatureID::HUMAN, {0, 100});  // placeholder
+    Creatures::CreatureFactory::Instance().CreateCreature(CreatureType::THIEF, {-1000, 0});
     while (!quit) {
         beginTick = SDL_GetTicks();
         ClearBackground(renderer, 100, 100, 100, 255);
         UpdateScreenSpecs();
         PlayerHandler::Instance().Handle(mousePos, Camera::Instance().GetCameraPos(), timeMultiplier, timeDelta, isPaused);
-        Creatures::CreatureHandler::Instance().Handle(Player::GetPos(), Camera::Instance().GetCameraPos(), timeDelta, timeMultiplier, isPaused);
+        Creatures::CreatureHandler::InvokeHandler(Camera::Instance().GetCameraPos(), renderer, timeDelta, timeMultiplier, isPaused);
         Attacks::AttackHandler::InvokeHandler(Camera::Instance().GetCameraPos(), renderer, timeDelta, timeMultiplier, isPaused);
         actionHandler->Handle();
         Render(beginTick);
@@ -159,17 +159,10 @@ void Engine::Init() {
     }
     PrintInfo(Info::CONFIG_READ_SUCESSFULLY, "");
 
-    playerHandler = PlayerHandler::Init(renderer);
+    playerHandler = PlayerHandler::Init(renderer);  // remove Init
     if (playerHandler == nullptr) {
         exit(1);
     }
-    PrintInfo(Info::PLAYER_INITIALIZED_SUCESSFULLY, "");
-
-    creatureHandler = Creatures::CreatureHandler::Init(renderer);
-    if (creatureHandler == nullptr) {
-        exit(1);
-    }
-    // PrintInfo(Info::PLAYER_INITIALIZED_SUCESSFULLY, "");
 
     srand(time(NULL));
 }

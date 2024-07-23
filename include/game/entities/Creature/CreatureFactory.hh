@@ -7,12 +7,12 @@
 
 namespace Creatures {
 class CreatureFactory {
-    typedef std::unordered_map<CreatureID, std::function<void(Vec2<float> spawnPos)>> creatureFactoryMap;
+    typedef std::unordered_map<CreatureType, std::function<void(Vec2<float> spawnPos)>> creatureFactoryMap;
 
    public:
     static CreatureFactory& Instance();
 
-    void CreateCreature(CreatureID id, Vec2<float> spawnPos);
+    void CreateCreature(CreatureType, Vec2<float> spawnPos);
 
    private:
     static CreatureFactory instance;
@@ -26,7 +26,7 @@ class CreatureFactory {
    private:
     void RegisterAll();
 
-    void RegisterCreature(CreatureID id, std::function<void(Vec2<float>)> constructor);
+    void RegisterCreature(CreatureType type, std::function<void(Vec2<float>)> constructor);
 };
 
 }  // namespace Creatures

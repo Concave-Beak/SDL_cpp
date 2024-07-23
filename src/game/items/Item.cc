@@ -30,10 +30,10 @@ void Item::ChargeAttack() {
     }
 }
 
-void Item::ReleaseAttack(CreatureAttributes* entityAttribute, CreatureAttributes::CombatAttributes* combatAttribute, float angle) {
+void Item::ReleaseAttack(EntityAttributes* entityAttribute, EntityAttributes::CombatAttributes* combatAttribute, float angle) {
     if (combatAttribute->itemUseCooldown > SDL_GetTicks()) return;
 
-    Attacks::AttackFactory::Instance().CreateAttack(AttackType::SWORD_SLASH, itemStats, entityAttribute, angle);
+    Attacks::AttackFactory::Instance().CreateAttack(AttackType::ARROW_PROJECTILE, itemStats, entityAttribute, angle);
     combatAttribute->itemUseCooldown = SDL_GetTicks() + itemStats.attackCooldownInTicks;
     itemStats.chargeNow = 0;
 }

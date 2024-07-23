@@ -24,8 +24,8 @@ class Player {
     static Vec2<float> GetWalkingSpeed();
     static Vec2<float> GetPos();
     static SDL_Rect GetModel();
-    static CreatureAttributes GetAttribute();
-    static const CreatureAttributes* GetAttributeReference();
+    static EntityAttributes GetAttribute();
+    static const EntityAttributes* GetAttributeReference();
 
    private:
     static std::shared_ptr<Player> Instance();
@@ -43,7 +43,7 @@ class Player {
     static std::shared_ptr<Player> instance;
 
    private:
-    CreatureAttributes creatureAttributes;
+    EntityAttributes entityAttributes;
 
     float angleFacing = 0;
 

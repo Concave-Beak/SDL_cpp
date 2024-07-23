@@ -1,7 +1,7 @@
 #include "../../../../include/game/entities/Creature/CreatureFactory.hh"
 
 #include "../../../../include/game/entities/Creature/Creature.hh"
-#include "../../../../include/game/entities/Creature/Neutral/Human.hh"
+#include "../../../../include/game/entities/Creature/Enemies/Thief.hh"
 
 namespace Creatures {
 
@@ -13,15 +13,15 @@ CreatureFactory CreatureFactory::instance = CreatureFactory();
 CreatureFactory& CreatureFactory::Instance() { return instance; }
 
 void CreatureFactory::RegisterAll() {
-    instance.RegisterCreature(CreatureID::HUMAN, [](Vec2<float> spawnPos) {
-        Human::Create(spawnPos);
+    instance.RegisterCreature(CreatureType::THIEF, [](Vec2<float> spawnPos) {
+        Thief::Create(spawnPos);
     });
 }
-void CreatureFactory::RegisterCreature(CreatureID id, std::function<void(Vec2<float>)> constructor) {
+void CreatureFactory::RegisterCreature(CreatureType id, std::function<void(Vec2<float>)> constructor) {
     instance.creatureCreators.emplace(id, constructor);
 }
 
-void CreatureFactory::CreateCreature(CreatureID id, Vec2<float> spawnPos) {
+void CreatureFactory::CreateCreature(CreatureType id, Vec2<float> spawnPos) {
     creatureFactoryMap::iterator it = creatureCreators.find(id);
     if (it != creatureCreators.end()) {
         it->second(spawnPos);
