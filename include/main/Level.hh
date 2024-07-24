@@ -26,7 +26,7 @@ struct LevelItem {
     Vec2<int> pos;
     CollisionType collisionType;
     SDL_Color color;
-    SDL_Rect wireframe;
+    SDL_Rect rect;
 
     TextureID textureID;   // this will be used to find the texture later on
     SDL_Texture *texture;  // there should also be a footstep sound depending on the surface

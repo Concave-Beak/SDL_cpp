@@ -9,6 +9,7 @@
 #include <string>
 
 #include "../../lib/stbi/stb_image.h"
+#include "debug_utils.hh"
 #include "math_utils.hh"
 
 #define BLACK 0x00, 0x00, 0x00
@@ -22,19 +23,25 @@
     ((color) >> (8 * 0)) & 0xFF, ((color) >> (8 * 1)) & 0xFF, ((color) >> (8 * 2)) & 0xFF, \
         ((color) >> (8 * 3)) & 0xFF
 
-inline void scc(int code) {
+inline Error scc(int code) {
     if (code != 0) {
-        fprintf(stderr, "SDL ERROR: %s\n", SDL_GetError());
-        exit(1);
+        return Error(Error::ErrorCode::SDL_FUNCTION_ERROR,
+                     "SDL ERROR: " + std::string(SDL_GetError()),
+                     Error::Severity::LOW);
     }
+    return Error();
 }
 
-inline void *scp(void *ptr) {
+inline Result<void *> scp(void *ptr) {
     if (ptr == NULL) {
-        fprintf(stderr, "SDL ERROR: %s\n", SDL_GetError());
-        exit(1);
+        return Result<void *>{
+            .error = Error(Error::ErrorCode::SDL_FUNCTION_ERROR,
+                           "SDL ERROR: %s" + std::string(SDL_GetError()),
+                           Error::Severity::LOW),
+            .result = nullptr,
+        };
     }
-    return ptr;
+    return Result<void *>{.error = Error(), .result = ptr};
 }
 
 inline SDL_Surface *SurfaceFromFile(std::string file_path) {
@@ -60,14 +67,14 @@ inline SDL_Surface *SurfaceFromFile(std::string file_path) {
     const int depth = 32;
     const int pitch = 4 * width;
 
-    return (SDL_Surface *)scp(
-        SDL_CreateRGBSurfaceFrom((void *)pixels, width, height, depth, pitch, rmask, gmask, bmask, amask));
+    Result<void *> surface = scp(SDL_CreateRGBSurfaceFrom((void *)pixels, width, height, depth, pitch, rmask, gmask, bmask, amask)).Handle();
+    return (SDL_Surface *)surface.result;
 }
 
 inline void SetTextureColor(SDL_Texture *texture, SDL_Color color) {
-    scc(SDL_SetTextureColorMod(texture, color.r, color.g, color.b));
+    scc(SDL_SetTextureColorMod(texture, color.r, color.g, color.b)).Handle();
 
-    scc(SDL_SetTextureAlphaMod(texture, color.a));
+    scc(SDL_SetTextureAlphaMod(texture, color.a)).Handle();
 }
 
 // Draws that classic pink and black default texture in source games
@@ -90,4 +97,23 @@ inline void DrawTextureNotFound(SDL_Rect textureGrid, const Vec2<int> resolution
             SDL_RenderFillRect(renderer, &rect);
         }
     }
+}
+
+inline SDL_Rect operator+(const SDL_Rect &a, const SDL_Rect &b) {
+    SDL_Rect result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.w = a.w + b.w;
+    result.h = a.h + b.h;
+    return result;
+}
+
+// Subtraction of two SDL_Rect
+inline SDL_Rect operator-(const SDL_Rect &a, const SDL_Rect &b) {
+    SDL_Rect result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.w = a.w - b.w;
+    result.h = a.h - b.h;
+    return result;
 }

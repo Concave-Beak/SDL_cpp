@@ -5,13 +5,17 @@
 #include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_video.h>
 
+#include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 
-#include "../..//include/game/entities/Attack.hh"
-#include "../..//include/game/entities/NPC.hh"
 #include "../../include/assetHandling/UI/UI_Button.hh"
+#include "../../include/game/entities/Camera.hh"
+#include "../../include/game/entities/Creature/CreatureFactory.hh"
+#include "../../include/main/Config.hh"
 #include "../../include/main/Level.hh"
+#include "../../lib/utils/debug_utils.hh"
 #include "../../lib/utils/sdl_utils.hh"
 
 //------------------------------------------------------------------------------
@@ -25,22 +29,18 @@ void ClearBackground(SDL_Renderer *renderer, uint8_t r, uint8_t g, uint8_t b, ui
 
 void Engine::GameLoop() {
     Uint32 beginTick = 0;
-    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 130}, {100, 30}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                 // Placeholder
-    new LevelItem(Vec2<int>{screenSpecs.x / 2, screenSpecs.y - 430}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, STONE);         // Placeholder
-    new LevelItem(Vec2<int>{screenSpecs.x / 4, screenSpecs.y - 185}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);           // Placeholder
-    new LevelItem(Vec2<int>{screenSpecs.x / 3 + 100, screenSpecs.y - 100}, {100, 100}, FULL_COLLISION, SDL_Color{0, 0xff, 0, 0xff}, MUD);     // Placeholder
+    new LevelItem(Vec2<int>{0, screenSpecs.y - 90}, {screenSpecs.x, 15}, PLATFORM, SDL_Color{0, 0xff, 0, 0xff}, WOOD);                        // Placeholder
     new LevelItem(Vec2<int>{-screenSpecs.x, screenSpecs.y - 5}, {screenSpecs.x * 3, 40}, FULL_COLLISION, SDL_Color{0, 0, 0xff, 0xff}, DIRT);  // Placeholder
 
-    NPC npc(Entity::GENERIC_HUMANOID_ENEMY, {1200, 900});
+    Creatures::CreatureFactory::Instance().CreateCreature(CreatureType::THIEF, {-1000, 0});
     while (!quit) {
         beginTick = SDL_GetTicks();
         ClearBackground(renderer, 100, 100, 100, 255);
         UpdateScreenSpecs();
-        Entity::Handle(timeDelta, timeMultiplier, isPaused, cameraInstance->GetCameraPos(), renderer);
-        Player::Handle(mousePos);
+        PlayerHandler::Instance().Handle(mousePos, Camera::Instance().GetCameraPos(), timeMultiplier, timeDelta, isPaused);
+        Creatures::CreatureHandler::InvokeHandler(Camera::Instance().GetCameraPos(), renderer, timeDelta, timeMultiplier, isPaused);
+        Attacks::AttackHandler::InvokeHandler(Camera::Instance().GetCameraPos(), renderer, timeDelta, timeMultiplier, isPaused);
         actionHandler->Handle();
-        NPC::Handle(renderer, playerInstance->GetPos(), cameraInstance->GetCameraPos(), playerInstance->GetHitbox());  // Placeholder
-        Attack::CheckAndDestroyExpiredAttacks();
         Render(beginTick);
         UpdateTimeDelta();
         ResetTimeMultiplier();
@@ -65,12 +65,12 @@ void Engine::HandleFPS(Uint32 loopBegin) {
     Uint32 loopEnd = SDL_GetTicks();
     float timeDifference = timeStepInMS - float(loopEnd - loopBegin);
 
-    if (configInstance->ShowFPSState() == true) {
+    if (Config::Instance().ShowFPSState() == true) {
         std::stringstream fpsStr;  // fps is in secods, timeDifference is in ms.
         fpsStr << "FPS: " << std::setprecision(4)
                << fpsMAX - (timeDifference / 1000.0f);  // that's why it's divided by 1000
 
-        RenderTextSized(renderer, &debugFont, fpsStr.str().c_str(), fpsStr.str().size(), Vec2<int>{0, 0}, SDL_Color{GREEN, 0xff}, 3);
+        debugFont.RenderTextSized(renderer, fpsStr.str().c_str(), fpsStr.str().size(), Vec2<int>{0, 0}, SDL_Color{GREEN, 0xff}, 3);
     }
 
     if (timeDifference >= 0) {
@@ -83,27 +83,27 @@ void Engine::ShowDebugInfo() {
     std::stringstream levelItemStr;
     levelItemStr << "LI: " << Level::collisions.size() + Level::textures.size()
                  << "C/T: " << Level::collisions.size() << "/" << Level::textures.size();
-    RenderTextSized(renderer, &debugFont, levelItemStr.str().c_str(), levelItemStr.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE, 0xff}, 3);
+    debugFont.RenderTextSized(renderer, levelItemStr.str().c_str(), levelItemStr.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(levelItemStr.str().size()) * 2), 0}, SDL_Color{WHITE, 0xff}, 3);
 
     std::stringstream playerInfo;
-    playerInfo << "XY: " << std::setprecision(4) << playerInstance->GetPos().x << " " << std::setprecision(4)
-               << playerInstance->GetPos().y;
-    RenderTextSized(renderer, &debugFont, playerInfo.str().c_str(), playerInfo.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, SDL_Color{WHITE, 0xff}, 3);
+    playerInfo << "XY: " << std::setprecision(4) << Player::GetPos().x << " " << std::setprecision(4)
+               << Player::GetPos().y;
+    debugFont.RenderTextSized(renderer, playerInfo.str().c_str(), playerInfo.str().size(), Vec2<int>{screenSpecs.x - int(GetTextRectangleWidth(playerInfo.str().size()) * 2), 100}, SDL_Color{WHITE, 0xff}, 3);
 }
 
 size_t Engine::GetTextRectangleWidth(size_t strSize) { return strSize * 15; }  // TODO
 
 void Engine::Render(Uint32 beginTick) {
-    Vec2<int> cameraPos = cameraInstance->GetCameraPos();
+    Error err;
+    Vec2<int> cameraPos = Camera::Instance().GetCameraPos();
 
     {
         Level::Draw(cameraPos, renderer);
         ShowDebugInfo();
-        // HandleEvents();
         HandleFPS(beginTick);
-        UI::Button::Handle(event, renderer);
-        cameraInstance->FollowPlayer(playerInstance->GetPos(), timeDelta, screenSpecs,
-                                     playerInstance->GetHitbox(), timeMultiplier, isPaused);
+        UI::Button::Handle(event, renderer).Handle();
+        Camera::Instance().FollowPlayer(Player::GetPos(), timeDelta, screenSpecs,
+                                        {Player::GetModel().w, Player::GetModel().h}, timeMultiplier, isPaused);
         DrawMouse();
         SDL_RenderPresent(renderer);
     }
@@ -116,48 +116,59 @@ void Engine::DrawMouse() {
         20,
         20,
     };
-    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff));
-    scc(SDL_RenderFillRect(renderer, &attackModel));
+    scc(SDL_SetRenderDrawColor(renderer, BLACK, 0xff)).Handle();
+    scc(SDL_RenderFillRect(renderer, &attackModel)).Handle();
 }
 
-const Error Engine::Init() {
+void Engine::Init() {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
+        exit(1);
     }
-    std::cout << "INFO: SDL_Init initialized succesfully\n";
+    PrintInfo(Info::SDL_INITIALIZED_SUCESSFULY, "");
 
-    window = SDL_CreateWindow("SoulBound", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_CENTERED, screenSpecs.x, screenSpecs.y, SDL_WINDOW_BORDERLESS);
+    window = SDL_CreateWindow("SoulBound",
+                              SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_CENTERED,
+                              screenSpecs.x, screenSpecs.y,
+                              SDL_WINDOW_BORDERLESS);
     if (window == NULL) {
-        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
+        exit(1);
     }
-    std::cout << "INFO: Window initialized succesfully\n";
+    SDL_SetWindowGrab(window, SDL_TRUE);
+    scc(SDL_SetRelativeMouseMode(SDL_TRUE)).Handle();
+    PrintInfo(Info::SDL_WINDOW_INITIALIZED, "");
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
-        Crash(Error(ErrorCode::SDL_FUNCTION_ERROR, "Couldn't init SDL", Severity::HIGH));
+        exit(1);
     }
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    std::cout << "INFO: Renderer initialized succesfully\n";
+    scc(SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND)).Handle();
+    PrintInfo(Info::SDL_RENDERER_INITIALIZED, "");
 
-    debugFont = FontLoadFromFile(renderer, "./assets/fonts/charmap-oldschool_white.png");
-    std::cout << "INFO: Loaded Debug Font\n";
+    debugFont = Font(renderer, "./assets/fonts/charmap-oldschool_white.png");
+    if (debugFont.IsEmpty()) {
+        exit(1);
+    }
+    PrintInfo(Info::FONT_LOADED, "debug font");
 
-    {
-        configInstance->ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y}, actionHandler);
-        std::cout << "INFO: Config read succesfully\n";
+    Error err = Config::Instance().ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y}, actionHandler);
+    if (!err.IsEmpty()) {
+        err.Handle();
+    }
+    PrintInfo(Info::CONFIG_READ_SUCESSFULLY, "");
+
+    playerHandler = PlayerHandler::Init(renderer);  // remove Init
+    if (playerHandler == nullptr) {
+        exit(1);
     }
 
-    SDL_SetWindowGrab(window, SDL_TRUE);
-    SDL_SetRelativeMouseMode(SDL_TRUE);
-
-    return Error{};
+    srand(time(NULL));
 }
 
 void Engine::Run() {
-    std::cout << "Starting the game loop...\n";
+    PrintInfo(Info::STARTING_GAME_LOOP, "");
     GameLoop();
 
-    std::cout << "Game closed\n";
+    PrintInfo(Info::GAME_CLOSED, "");
     SDL_DestroyWindow(window);
     SDL_Quit();
     return;

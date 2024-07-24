@@ -38,26 +38,26 @@ LevelItem::~LevelItem() {  // TODO
 
 LevelItem::LevelItem() {};
 LevelItem::LevelItem(Vec2<int> ppos, Vec2<int> size, CollisionType pcolType, SDL_Color pcolor, TextureID ptextID) : pos(ppos), collisionType(pcolType), color(pcolor), textureID(ptextID) {
-    this->wireframe = {ppos.x, ppos.y, size.x, size.y};
+    rect = {ppos.x, ppos.y, size.x, size.y};
     switch (ptextID) {
         case VOID: {  // this is where the textures should be applied
-            this->attritionCoefficient = 0;
+            attritionCoefficient = 0;
             break;
         }
         case DIRT: {
-            this->attritionCoefficient = 2;
+            attritionCoefficient = 2;
             break;
         }
         case MUD: {
-            this->attritionCoefficient = 3.5;
+            attritionCoefficient = 3.5;
             break;
         }
         case WOOD: {
-            this->attritionCoefficient = 2;
+            attritionCoefficient = 2;
             break;
         }
         case STONE: {
-            this->attritionCoefficient = 2;
+            attritionCoefficient = 2;
             break;
         }
     }
@@ -79,13 +79,13 @@ void Level::Draw(const Vec2<int> &cameraPos, SDL_Renderer *renderer) {
     for (LevelItem levelItem : Level::collisions) {
         SDL_Color color = levelItem.color;
         SDL_Rect levelItemWireframe = {
-            levelItem.wireframe.x - (int)cameraPos.x,
-            levelItem.wireframe.y - (int)cameraPos.y,
-            levelItem.wireframe.w,
-            levelItem.wireframe.h,
+            levelItem.rect.x - (int)cameraPos.x,
+            levelItem.rect.y - (int)cameraPos.y,
+            levelItem.rect.w,
+            levelItem.rect.h,
         };
-        scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a));
-        scc(SDL_RenderFillRect(renderer, &levelItemWireframe));
+        scc(SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a)).Handle();
+        scc(SDL_RenderFillRect(renderer, &levelItemWireframe)).Handle();
     }
 }
 

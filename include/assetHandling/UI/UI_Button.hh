@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "../../../lib/utils/error_handling.hh"
+#include "../../../lib/utils/debug_utils.hh"
 #include "../../../lib/utils/math_utils.hh"
 
 namespace UI {
@@ -31,14 +31,14 @@ class Button {
     ~Button();
 
     void SetOutlineColor(const SDL_Color& color);
-    Error SetTexture(SDL_Renderer* renderer, TextureField textureField, const std::string& path);
-    Error SetTexture(SDL_Texture* texture, TextureField textureField);
+    const Error SetTexture(SDL_Renderer* renderer, TextureField textureField, const std::string& path);
+    const Error SetTexture(SDL_Texture* texture, TextureField textureField);
     void SetFlags(ButtonFlags flags);
 
-    static Error Handle(SDL_Event event, SDL_Renderer* renderer);
+    static const Error Handle(SDL_Event event, SDL_Renderer* renderer);
 
     void ToggleIsShown();
-    void SetFunction(std::function<Error()> clickEvent);
+    void SetFunction(std::function<const Error()> clickEvent);
 
    private:
     ButtonFlags flags = NOT_SET;
@@ -52,13 +52,13 @@ class Button {
     bool isClicked = false;
     bool isHovered = false;
 
-    std::function<Error()> clickEvent = nullptr;
+    std::function<const Error()> clickEvent = nullptr;
 
     static std::vector<Button*> buttonVector;
 
    private:
-    static Error DrawButtons(SDL_Renderer* renderer);
-    static void HandleClicks(Vec2<int> mousePos);
+    static const Error DrawButtons(SDL_Renderer* renderer);
+    static const Error HandleClicks(Vec2<int> mousePos);
     static void HandleHover(Vec2<int> mousePos, SDL_Renderer* renderer);
 
     inline static Vec2<int> lastMousepos = {};

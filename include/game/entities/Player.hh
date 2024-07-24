@@ -3,58 +3,97 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_stdinc.h>
 
+#include <cwchar>
+#include <memory>
+
 #include "../../../lib/utils/math_utils.hh"
+#include "../../main/Level.hh"
+#include "../items/Inventory.hh"
 #include "../items/Item.hh"
-#include "./Entity.hh"
+#include "./EntityAttributes.hh"
 
 //------------------------------------------------------------------------------
 
-class Player : public Entity {
+class Player {
+    friend class PlayerHandler;
+
    public:
-    static Player* GetPlayerInstace();
+    ~Player() = default;
 
-    // Vec2<float> GetPos();
+    static Vec2<float> GetRunningSpeed();
+    static Vec2<float> GetWalkingSpeed();
+    static Vec2<float> GetPos();
+    static SDL_Rect GetModel();
+    static EntityAttributes GetAttribute();
+    static const EntityAttributes* GetAttributeReference();
 
-    // Vec2<float> GetVelocityNow();
-    Vec2<float> GetRunningSpeed();
-    Vec2<float> GetWalkingSpeed();
-
-    Vec2<int> GetHitbox();
+   private:
+    static std::shared_ptr<Player> Instance();
 
     enum WeaponHand {
         LEFT_HAND = 0,
         RIGHT_HAND
     };
-    void SwitchWeapon(WeaponHand weaponHand);
-    void Attack();
-
-    static void Handle(const Vec2<int>& mousePos);
+    void SwitchWeapon(WeaponHand weaponHand);  // TODO
 
    private:
-    static Player* playerInstance;
+    static std::shared_ptr<Player> Create();
 
-    Vec2<int> mousePos = {0, 0};
+    Player() = default;
+    static std::shared_ptr<Player> instance;
+
+   private:
+    EntityAttributes entityAttributes;
+
     float angleFacing = 0;
 
-    Vec2<float> runningSpeed = {20, 125};
-    Vec2<float> walkingSpeed = {10, 75};
-
-    Vec2<Uint8> inventorySize;
-    Matrix2D<Item> inventory = Matrix2D<Item>{
-        {
-            Item(Item::SHORTSWORD),
-            Item(Item::BOW_AND_ARROW),
-        },
-    };
-    Item currentItemHolding = inventory[0][0];
+    Items::Inventory inventory = Items::Inventory(5, 5);
+    std::shared_ptr<Items::Item> currentItemHolding;
 
    private:
-    void Draw(const Vec2<int>& cameraPos, SDL_Renderer* renderer) override;
+    void InitInventory();
+};
 
-    void DrawLineOfSight(const Vec2<int>& mousePos, const Vec2<int>& cameraPos, SDL_Renderer* renderer);
+class PlayerHandler {
+   public:
+    ~PlayerHandler() = default;
 
-    void SetFacingAngle(const Vec2<int>& mousePos, const Vec2<int>& cameraPos);
-    Vec2<int> GetSightLineEnd(const Vec2<int>& cameraPos, float lineLength);
+   public:
+    static std::shared_ptr<PlayerHandler> Init(SDL_Renderer* renderer);
+    static PlayerHandler& Instance();
+
+    void Handle(Vec2<int> mousePos_, Vec2<int> cameraPos, float timeDelta, float timeMultiplier, bool isPaused);
+
+    void ChargeAttack();
+    void ReleaseAttack();
+
+    void MovePlayer(Direction direction, bool isPaused, bool isRunning);  // TODO: REMOVE ACCEL SPEEd
+
+   private:
+    PlayerHandler() = default;
+
+   private:
+    static PlayerHandler handler;
+    std::shared_ptr<Player> playerInstance;
+
+    SDL_Renderer* renderer = nullptr;
+
+   private:
+    void HandleVelocity(float timeDelta, float timeMultiplier, bool isPaused);
+
+    void HandleVerticalCollision(SDL_Rect entityRect, const LevelItem& levelItem,
+                                 float timeDelta, float timeMultiplier);
+    void HandleHorizontalCollision(SDL_Rect entityRect, const LevelItem& levelItem,
+                                   float timeDelta, float timeMultiplier);
+    void HandleCollisions(float timeDelta, float timeMultiplier, bool isPaused);
+
+    void Draw(Vec2<int> cameraPos);
+    void DrawSightLine(Vec2<int> cameraPos, SDL_Renderer* renderer);
+
+    void ResetCollisionState();
+    void UpdateModel();
+
+    bool GetCollidedInformation(Direction direction);
 };
 
 //------------------------------------------------------------------------------

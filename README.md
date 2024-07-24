@@ -16,6 +16,9 @@ Feel free to give me any feedback!
 
 - Linux
 - SDL2
+- g++
+- CMake
+- Make
 
 ### Build
 
@@ -35,5 +38,5 @@ make
 
 - Player and texture assets
 - Create enemies and AI
-- Standardize Error handling
 - Better fps handling
+  - FPS is being displayed incorrectly.

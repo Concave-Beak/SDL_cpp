@@ -5,11 +5,9 @@
 #include <functional>
 #include <unordered_map>
 
-#include "../../lib/utils/error_handling.hh"
 #include "../assetHandling/Font.hh"
-#include "../game/entities/Camera.hh"
-#include "../game/entities/Player.hh"
-#include "./Config.hh"
+#include "../game/entities/Attack/Attack.hh"
+#include "../game/entities/Creature/Creature.hh"
 #include "Action.hh"
 
 //------------------------------------------------------------------------------
@@ -18,16 +16,17 @@ class Engine {
    public:
     static Engine* GetEngineInstance();
 
-    const Error Init();
+    void Init();
     void Run();
 
    private:
     static Engine* instance;
 
-    Player* playerInstance = Player::GetPlayerInstace();
-    Config* configInstance = Config::GetConfig();
-    Camera* cameraInstance = Camera::GetCameraInstance();
-    ActionHandler* actionHandler = ActionHandler::GetActionHandler(&event, playerInstance, &mousePos, &quit);
+    std::shared_ptr<PlayerHandler> playerHandler;
+    std::shared_ptr<Creatures::CreatureHandler> creatureHandler;
+    std::shared_ptr<Attacks::AttackHandler> attackHandler;
+
+    ActionHandler* actionHandler = ActionHandler::Instance(&event, &PlayerHandler::Instance(), &mousePos, &quit);
 
     SDL_Renderer* renderer = NULL;
     SDL_Window* window = NULL;
@@ -47,7 +46,7 @@ class Engine {
     bool quit = false;
     bool isPaused = false;
 
-    Font debugFont;
+    Font debugFont = Font();
 
     static std::unordered_map<SDL_Keycode, std::function<void>> keymaps;
 

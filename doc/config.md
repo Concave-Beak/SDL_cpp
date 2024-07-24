@@ -40,7 +40,6 @@ voice_volume = 70         # Voiceover Volume: specify volume level (0-100)
 
 [Debug]
 debug_enabled = true              # Needs to be true for the options below, this option itself does nothing, only enables or disables the below
-log_file_path = ".logs/debug.log" # Log File Path: specify the path for the debug log file not relative to the game's path
 show_fps = true
 show_debug_info = true
 no_video = true # Only for backend debugging purposes
@@ -98,19 +97,16 @@ the "window_mode" option. String. Opts: "fs-windowed", "fs-desktop", "fs-windowe
 ---
 ### Debug
 
-The options here are related to debugging, it's not complete, and **log_file_path** is not used.
+The options here are related to debugging, it's not complete.
 
 ```toml
 [Debug]
 debug_enabled = true              # Needs to be true for the options below, this option itself does nothing, only enables or disables the below
-log_file_path = ".logs/debug.log" # Log File Path: specify the path for the debug log file not relative to the game's path
 show_fps = true
 show_debug_info = true
 ```
 
 `debug_enabled` enables the debug options, if set to false none of the other debug options will be available. Boolean
-
-`log_file_path` sets the path for log files. String. **NOT USED**
 
 `show_fps` enable fps to be displayed
 
