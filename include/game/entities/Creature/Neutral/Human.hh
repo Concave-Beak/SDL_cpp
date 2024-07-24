@@ -19,16 +19,21 @@ class HumanItemLogic : public ItemLogicComponent {
     void HandleItemLogic(std::shared_ptr<Creature> creature) override;
 };
 
-class HumanMovementPattern : public MovementPatternComponent {
+class HumanMovement : public MovementPatternComponent {
    public:
-    void HandleMovement(std::shared_ptr<Creature> creature, uint32_t directionFlag) override;
+    void HandleMovement(std::shared_ptr<Creature> creature) override;
+};
+
+class HumanAggression : public AggressionComponent {
+   public:
+    void HandleAggresion(std::shared_ptr<Creature> creature) override;
 };
 
 class HumanAI : public AIComponent {
    public:
     void HandleAI(std::shared_ptr<Creatures::Creature> creature) override;
 
-    HumanAI(std::unique_ptr<BehavorialComponent> behavioralComponent_, std::unique_ptr<ItemLogicComponent> itemLogicComponent_, std::unique_ptr<MovementPatternComponent> movementComponent_);
+    HumanAI(std::unique_ptr<BehavorialComponent> behavioralComponent_, std::unique_ptr<ItemLogicComponent> itemLogicComponent_, std::unique_ptr<MovementPatternComponent> movementComponent_, std::unique_ptr<AggressionComponent>);
 };
 
 }  // namespace Components
@@ -36,7 +41,8 @@ class HumanAI : public AIComponent {
 class Human : public Creature {
     friend class Components::HumanBehavior;
     friend class Components::HumanItemLogic;
-    friend class Components::HumanMovementPattern;
+    friend class Components::HumanMovement;
+    friend class Components::HumanAggression;
     friend class Components::HumanAI;
 
    public:

@@ -14,14 +14,18 @@ struct EntityAttributes {
     EntityAttributes();
     ~EntityAttributes() = default;
 
+    bool isRunning = false;
+    bool isSneaking = false;
     Vec2<float> walkingSpeed = {0, 0};
     Vec2<float> runningSpeed = {0, 0};
+    Vec2<float> sneakingSpeed = {0, 0};
 
     Vec2<float> velocityNow = {0, 0};
 
     Vec2<float> positionNow = {0, 0};
     Vec2<int> spawnPos = {0, 0};
 
+    // Will be used to draw the model
     Direction facing = Direction::RIGHT;
 
     SDL_Rect model = {0, 0, 1000, 1000};  // it's huge just so it's noticeable if not set
@@ -62,11 +66,12 @@ struct CreatureAttributes {
 
     uint32_t isAggressiveToFlag;  // bitmaks for the CreatureType
     bool isAggressiveToPlayer;
-
     bool isAggroed = false;
     const mutable EntityAttributes* isAggroedTo;
 
-    bool isMarkedForDeletion = false;
+    bool isWandering = false;
+    int maxWanderDistance;  // relative to spawnPos
+    Vec2<int> goingToPos = {0, 0};
 };
 
 enum class AttackType {

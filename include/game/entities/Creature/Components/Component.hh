@@ -41,7 +41,14 @@ class MovementPatternComponent {
    public:
     virtual ~MovementPatternComponent() = default;
 
-    virtual void HandleMovement(std::shared_ptr<Creature> creature, uint32_t directionFlag) = 0;
+    virtual void HandleMovement(std::shared_ptr<Creature> creature) = 0;
+};
+
+class AggressionComponent {
+   public:
+    virtual ~AggressionComponent() = default;
+
+    virtual void HandleAggresion(std::shared_ptr<Creature> creature) = 0;
 };
 
 // AIComponent | Calls all of the components accordingly
@@ -51,11 +58,12 @@ class AIComponent {
     virtual ~AIComponent() = default;
 
    protected:
-    AIComponent(std::unique_ptr<BehavorialComponent> behavioralComponent_, std::unique_ptr<ItemLogicComponent> itemLogicComponent_, std::unique_ptr<MovementPatternComponent> movementComponent_);
+    AIComponent(std::unique_ptr<BehavorialComponent> behavioralComponent_, std::unique_ptr<ItemLogicComponent> itemLogicComponent_, std::unique_ptr<MovementPatternComponent> movementComponent_, std::unique_ptr<AggressionComponent>);
 
     std::unique_ptr<BehavorialComponent> behavioralComponent;
     std::unique_ptr<ItemLogicComponent> itemLogicComponent;
     std::unique_ptr<MovementPatternComponent> movementComponent;
+    std::unique_ptr<AggressionComponent> aggressionComponent;
 };
 
 // To be improved: the classes below it will remain as a defaulted component.

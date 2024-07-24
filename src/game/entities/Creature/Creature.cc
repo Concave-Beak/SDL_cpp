@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <memory>
 #include <ostream>
+#include <string>
 
 #include "../../../../lib/utils/sdl_utils.hh"
 
@@ -73,7 +74,7 @@ void CreatureHandler::InvokeHandler(Vec2<int> cameraPos, SDL_Renderer* renderer,
 
 void CreatureHandler::CheckDeletion() {
     for (CreatureVector::iterator it = creatureVector.begin(); it != creatureVector.end();) {
-        if ((*it)->creatureAttributes.isMarkedForDeletion) {
+        if ((*it)->isMarkedForDeletion) {
             Delete(*it);
             continue;
         }

@@ -50,6 +50,8 @@ class Creature {
     std::unique_ptr<Components::DrawingComponent> drawingComponent = nullptr;
     std::unique_ptr<Components::PhysicsComponent> physicsComponent = nullptr;
     std::unique_ptr<Components::CollisionComponent> collisionComponent = nullptr;
+
+    bool isMarkedForDeletion = false;
 };
 
 class CreatureHandler {

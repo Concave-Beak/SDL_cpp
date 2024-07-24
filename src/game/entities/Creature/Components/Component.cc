@@ -13,10 +13,16 @@ namespace Creatures::Components {
 
 AIComponent::AIComponent(std::unique_ptr<BehavorialComponent> behavioralComponent_,
                          std::unique_ptr<ItemLogicComponent> itemLogicComponent_,
-                         std::unique_ptr<MovementPatternComponent> movementComponent_)
+                         std::unique_ptr<MovementPatternComponent> movementComponent_,
+                         std::unique_ptr<AggressionComponent> aggressionComponent_)
     : behavioralComponent(std::move(behavioralComponent_)),
       itemLogicComponent(std::move(itemLogicComponent_)),
-      movementComponent(std::move(movementComponent_)) {}
+      movementComponent(std::move(movementComponent_)),
+      aggressionComponent(std::move(aggressionComponent_)) {
+    if (!behavioralComponent_ || !itemLogicComponent_ || !movementComponent_ || !aggressionComponent_) {
+        PrintInfo(Info::CREATURE_INITIALIZED_UNPROPERLY, "");
+    }
+}
 
 void DrawingComponent::Draw(SDL_Renderer* renderer, Vec2<float> cameraPos, std::shared_ptr<Creatures::Creature> creature) {
     SDL_Rect modelToDraw = creature->entityAttributes.model;
@@ -59,6 +65,8 @@ void CollisionComponent::HandleCollision(std::shared_ptr<Creatures::Creature> cr
     for (LevelItem levelItem : Level::collisions) {
         creature->UpdateModel();
         HandleVerticalCollision(creature, creature->entityAttributes.model, levelItem, timeDelta, timeMultiplier);
+        creature->UpdateModel();
+        HandleHorizontalCollision(creature, creature->entityAttributes.model, levelItem, timeDelta, timeMultiplier);
     }
 }
 
@@ -85,6 +93,25 @@ void CollisionComponent::HandleVerticalCollision(std::shared_ptr<Creatures::Crea
     }
 }
 
-void CollisionComponent::HandleHorizontalCollision(std::shared_ptr<Creatures::Creature> creature, SDL_Rect entityRect, const LevelItem& levelItem, float timeDelta, float timeMultiplier) {}
+void CollisionComponent::HandleHorizontalCollision(std::shared_ptr<Creatures::Creature> creature, SDL_Rect entityRect, const LevelItem& levelItem, float timeDelta, float timeMultiplier) {
+    if (levelItem.collisionType == PLATFORM) return;
+
+    float levelItemLeft = float(levelItem.pos.x),
+          levelItemRight = float(levelItem.pos.x + levelItem.rect.w);
+
+    bool hitRight = IsSideColliding(creature->entityAttributes.model, levelItem.rect, Direction::RIGHT, creature->entityAttributes.velocityNow, timeDelta, timeMultiplier);
+    if (hitRight) {
+        creature->entityAttributes.collisionAttributes.collidedRight = true;
+        creature->entityAttributes.velocityNow.x = -creature->entityAttributes.velocityNow.x * SURFACE_BOUNCE;
+        creature->entityAttributes.positionNow.x = levelItemLeft - float(creature->entityAttributes.model.w);
+    }
+
+    bool hitLeft = IsSideColliding(creature->entityAttributes.model, levelItem.rect, Direction::LEFT, creature->entityAttributes.velocityNow, timeDelta, timeMultiplier);
+    if (hitLeft) {
+        creature->entityAttributes.collisionAttributes.collidedLeft = true;
+        creature->entityAttributes.velocityNow.x = -creature->entityAttributes.velocityNow.x * SURFACE_BOUNCE;
+        creature->entityAttributes.positionNow.x = levelItemRight;
+    }
+}
 
 }  // namespace Creatures::Components

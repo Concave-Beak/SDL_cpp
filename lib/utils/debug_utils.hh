@@ -169,7 +169,7 @@ inline void PrintInfo(Info info_, std::string msg) {
             std::cout << "INFO: Config read sucessfully\n";
             break;
         case Info::CREATURE_INITIALIZED_UNPROPERLY: {
-            std::cout << "INFO: Creature initialized unproperly, deleting ID: " << msg << '\n';
+            std::cout << "INFO: Creature initialized unproperly\n";
         }
     }
 }

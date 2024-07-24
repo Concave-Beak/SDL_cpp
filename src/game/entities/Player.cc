@@ -26,7 +26,7 @@ std::shared_ptr<Player> Player::Instance() {
     instance->InitInventory();
     instance->entityAttributes.model = {0, 0, 64, 64};
     instance->entityAttributes.walkingSpeed = {10, 75};  // TODO make a init player function
-    instance->entityAttributes.runningSpeed = {20, 125};
+    instance->entityAttributes.runningSpeed = {20, 150};
     return instance;
 }
 

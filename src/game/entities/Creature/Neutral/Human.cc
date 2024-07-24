@@ -20,60 +20,82 @@ namespace Creatures::Components {
 
 void HumanBehavior::HandleBehavior(std::shared_ptr<Creatures::Creature> creature) {
     Creatures::Human* human = dynamic_cast<Creatures::Human*>(creature.get());
-
-    human->creatureAttributes.isAggroed = false;
-    if (IsRectCollidinWithTriangle(Player::GetModel(), human->sightLine) && human->creatureAttributes.isAggressiveToPlayer) {
-        human->creatureAttributes.isAggroed = true;
-        human->creatureAttributes.isAggroedTo = Player::GetAttributeReference();
-    }
+    if (!human) return;
+    if (human->creatureAttributes.isAggroed) return;
 }
 
 void HumanItemLogic::HandleItemLogic(std::shared_ptr<Creature> creature) {}
 
-void HumanMovementPattern::HandleMovement(std::shared_ptr<Creature> creature, uint32_t directionFlag) {
+void HumanMovement::HandleMovement(std::shared_ptr<Creature> creature) {
     Creatures::Human* human = dynamic_cast<Creatures::Human*>(creature.get());
+    if (!human) return;
+    if (!human->creatureAttributes.isAggroed && !human->creatureAttributes.isWandering) return;
 
-    Vec2<float> accelSpeed = human->entityAttributes.walkingSpeed;
-    // if (isRunning) accelSpeed = playerInstance->creatureAttributes.runningSpeed;
+    uint8_t directionFlag;
+    if (human->entityAttributes.positionNow.x > human->creatureAttributes.goingToPos.x) {
+        directionFlag = static_cast<uint8_t>(Direction::LEFT);
+    }
+    if (human->entityAttributes.positionNow.x < human->creatureAttributes.goingToPos.x) {
+        directionFlag = static_cast<uint8_t>(Direction::RIGHT);
+    }
 
-    if (directionFlag & static_cast<uint8_t>(Direction::LEFT) && !human->entityAttributes.collisionAttributes.collidedRight) {
-        human->entityAttributes.velocityNow.x -= accelSpeed.x;
-        human->entityAttributes.facing = Direction::LEFT;
-    }
-    if (directionFlag & static_cast<uint8_t>(Direction::RIGHT) && !human->entityAttributes.collisionAttributes.collidedRight) {
-        human->entityAttributes.velocityNow.x += accelSpeed.x;
-        human->entityAttributes.facing = Direction::RIGHT;
-    }
-    if (directionFlag & static_cast<uint8_t>(Direction::UP) && !human->entityAttributes.collisionAttributes.collidedRight) {
-        if (!human->entityAttributes.collisionAttributes.collidedDown) return;
-        human->entityAttributes.velocityNow.y -= accelSpeed.y;
-        human->entityAttributes.collisionAttributes.collidedDown = false;
-    }
-    if (directionFlag & static_cast<uint8_t>(Direction::DOWN)) {
-        if (!human->entityAttributes.collisionAttributes.isAbovePlatform) return;
-        human->entityAttributes.positionNow.y += 6;  // TODO: change how this works
-        human->entityAttributes.collisionAttributes.collidedDown = false;
-        human->entityAttributes.collisionAttributes.isAbovePlatform = false;
-    }
+    auto moveToDirection = [human](uint8_t directionFlag) {
+        Vec2<float> accelSpeed = human->entityAttributes.walkingSpeed;
+        if (human->entityAttributes.isRunning) accelSpeed = human->entityAttributes.runningSpeed;
+        if (human->entityAttributes.isSneaking) accelSpeed = human->entityAttributes.sneakingSpeed;
+
+        if (directionFlag & static_cast<uint8_t>(Direction::LEFT) && !human->entityAttributes.collisionAttributes.collidedRight) {
+            human->entityAttributes.velocityNow.x -= accelSpeed.x;
+            human->entityAttributes.facing = Direction::LEFT;
+        }
+        if (directionFlag & static_cast<uint8_t>(Direction::RIGHT) && !human->entityAttributes.collisionAttributes.collidedRight) {
+            human->entityAttributes.velocityNow.x += accelSpeed.x;
+            human->entityAttributes.facing = Direction::RIGHT;
+        }
+        if (directionFlag & static_cast<uint8_t>(Direction::UP) && !human->entityAttributes.collisionAttributes.collidedRight) {
+            if (!human->entityAttributes.collisionAttributes.collidedDown) return;
+            human->entityAttributes.velocityNow.y -= accelSpeed.y;
+            human->entityAttributes.collisionAttributes.collidedDown = false;
+        }
+        if (directionFlag & static_cast<uint8_t>(Direction::DOWN)) {
+            if (!human->entityAttributes.collisionAttributes.isAbovePlatform) return;
+            human->entityAttributes.positionNow.y += 6;  // TODO: change how this works
+            human->entityAttributes.collisionAttributes.collidedDown = false;
+            human->entityAttributes.collisionAttributes.isAbovePlatform = false;
+        }
+    };
+    moveToDirection(directionFlag);
 }
 
-HumanAI::HumanAI(std::unique_ptr<BehavorialComponent> behavioralComponent_, std::unique_ptr<ItemLogicComponent> itemLogicComponent_, std::unique_ptr<MovementPatternComponent> movementComponent_)
-    : AIComponent(std::move(behavioralComponent_), std::move(itemLogicComponent_), std::move(movementComponent_)) {}
+void HumanAggression::HandleAggresion(std::shared_ptr<Creature> creature) {
+    Creatures::Human* human = dynamic_cast<Creatures::Human*>(creature.get());
+
+    if (human->creatureAttributes.isAggressiveToPlayer) {
+        if (IsRectCollidinWithTriangle(Player::GetModel(), human->sightLine)) {
+            human->creatureAttributes.isAggroed = true;
+            human->creatureAttributes.isAggroedTo = Player::GetAttributeReference();
+            human->creatureAttributes.goingToPos = Player::GetPos();
+        }
+    }
+}
 
 void HumanAI::HandleAI(std::shared_ptr<Creatures::Creature> creature) {
     Human* human = dynamic_cast<Creatures::Human*>(creature.get());
     if (!human) return;
+    if (human->entityAttributes.combatAttributes.isDead) return;
 
-    if (behavioralComponent) {
-        behavioralComponent->HandleBehavior(creature);
-    } else {
-        PrintInfo(Info::CREATURE_INITIALIZED_UNPROPERLY, std::to_string(creature->GetID()));
-        creature->creatureAttributes.isMarkedForDeletion = true;
-    }
-
-    if (human->creatureAttributes.isAggroed) {
-        movementComponent->HandleMovement(creature, static_cast<uint8_t>(Direction::UP));
-    }
+    aggressionComponent->HandleAggresion(creature);
+    behavioralComponent->HandleBehavior(creature);
+    movementComponent->HandleMovement(creature);
 }
+
+HumanAI::HumanAI(std::unique_ptr<BehavorialComponent> behavioralComponent_,
+                 std::unique_ptr<ItemLogicComponent> itemLogicComponent_,
+                 std::unique_ptr<MovementPatternComponent> movementComponent_,
+                 std::unique_ptr<AggressionComponent> aggressionComponent_)
+    : AIComponent(std::move(behavioralComponent_),
+                  std::move(itemLogicComponent_),
+                  std::move(movementComponent_),
+                  std::move(aggressionComponent_)) {}
 
 }  // namespace Creatures::Components
