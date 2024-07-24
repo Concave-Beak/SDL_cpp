@@ -1,42 +1,41 @@
 #include "../../../include/game/items/Item.hh"
 
-#include "../../../include/game/entities/Attack.hh"
-#include "../../../include/game/entities/ItemEntity.hh"
+#include <SDL2/SDL_timer.h>
 
-Item::Item(ItemID itemID_) : ID(itemID_) {
-    switch (itemID_) {
-        case BOW_AND_ARROW: {
-            itemTtype = SHORT_BOW;
-            name = "Bow and arrow";
-            damage = 10;
-            armorPenetration = 1.0f;
-            durability = 20;
-            range = 50;
+#include "../../../include/game/entities/Attack/AttackFactory.hh"
+// #include "../../../include/game/entities/ItemEntity.hh"
 
-            break;
-        }
-        case SHORTSWORD: {
-            itemTtype = ONE_HANDED_SWORD;
-            name = "Short sword";
-            damage = 10;
-            armorPenetration = 1.0f;
-            durability = 20;
-            range = 50;
-            break;
-        }
-    }
-}
-Item::~Item() {}
+namespace Items {
 
-// TODO
+Item::Item(ItemStats stats) : itemStats(stats) {}
+
+ItemStats::ItemStats() : weight(0), damage(0), armorPenetration(0), isUsable(false), useCooldown(0), attackCooldownInTicks(0), chargeRate(0), chargeNow(0), durability(0) {}
+
+ItemStats::ItemStats(float weight_, float damage_, float armorPenetration_, Uint32 cooldownInTicks_, int durability_, float chargeRate_) : weight(weight_), damage(damage_), armorPenetration(armorPenetration_), attackCooldownInTicks(cooldownInTicks_), durability(durability_), chargeRate(chargeRate_) {}
+
+//------------------------------------------------------------------------------
+
+ItemStats Item::GetItemStats() { return itemStats; }
+
+// to be done
 void Item::Drop(Matrix2D<Item>* inventory) {
     (void)inventory;
-    ItemEntity(*this);
+    // ItemEntity(*this);
 }
 
-void Item::Attack(Entity* entityOrigin, const Vec2<float>& spawnPos, float angle) {
-    Attack::AttackType atkType = Attack::SWORD_SLASH;
-    if (this->itemTtype == ItemType::SHORT_BOW) atkType = Attack::ARROW;
-
-    new class Attack(entityOrigin, this->damage, spawnPos, atkType, angle, 1000);
+void Item::ChargeAttack() {
+    itemStats.chargeNow += itemStats.chargeRate;
+    if (itemStats.chargeNow > 100) {
+        itemStats.chargeNow = 100;
+    }
 }
+
+void Item::ReleaseAttack(EntityAttributes* entityAttribute, EntityAttributes::CombatAttributes* combatAttribute, float angle) {
+    if (combatAttribute->itemUseCooldown > SDL_GetTicks()) return;
+
+    Attacks::AttackFactory::Instance().CreateAttack(AttackType::ARROW_PROJECTILE, itemStats, entityAttribute, angle);
+    combatAttribute->itemUseCooldown = SDL_GetTicks() + itemStats.attackCooldownInTicks;
+    itemStats.chargeNow = 0;
+}
+
+}  // namespace Items

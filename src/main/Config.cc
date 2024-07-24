@@ -14,36 +14,36 @@
 //------------------------------------------------------------------------------
 
 std::unordered_map<std::string, Key> Config::str2Keybinding = {
-    {"A", {SDL_SCANCODE_A, 0}},
-    {"B", {SDL_SCANCODE_B, 0}},
-    {"C", {SDL_SCANCODE_C, 0}},
-    {"D", {SDL_SCANCODE_D, 0}},
-    {"E", {SDL_SCANCODE_E, 0}},
-    {"F", {SDL_SCANCODE_F, 0}},
-    {"G", {SDL_SCANCODE_G, 0}},
-    {"H", {SDL_SCANCODE_H, 0}},
-    {"I", {SDL_SCANCODE_I, 0}},
-    {"J", {SDL_SCANCODE_J, 0}},
-    {"K", {SDL_SCANCODE_K, 0}},
-    {"L", {SDL_SCANCODE_L, 0}},
-    {"M", {SDL_SCANCODE_M, 0}},
-    {"N", {SDL_SCANCODE_N, 0}},
-    {"O", {SDL_SCANCODE_O, 0}},
-    {"P", {SDL_SCANCODE_P, 0}},
-    {"Q", {SDL_SCANCODE_Q, 0}},
-    {"R", {SDL_SCANCODE_R, 0}},
-    {"S", {SDL_SCANCODE_S, 0}},
-    {"T", {SDL_SCANCODE_T, 0}},
-    {"U", {SDL_SCANCODE_U, 0}},
-    {"V", {SDL_SCANCODE_V, 0}},
-    {"W", {SDL_SCANCODE_W, 0}},
-    {"X", {SDL_SCANCODE_X, 0}},
-    {"Y", {SDL_SCANCODE_Y, 0}},
-    {"Z", {SDL_SCANCODE_Z, 0}},
-    {"ESC", {SDL_SCANCODE_ESCAPE}},
+    {"A", {SDLK_a, 0}},
+    {"B", {SDLK_b, 0}},
+    {"C", {SDLK_c, 0}},
+    {"D", {SDLK_d, 0}},
+    {"E", {SDLK_e, 0}},
+    {"F", {SDLK_f, 0}},
+    {"G", {SDLK_g, 0}},
+    {"H", {SDLK_h, 0}},
+    {"I", {SDLK_i, 0}},
+    {"J", {SDLK_j, 0}},
+    {"K", {SDLK_k, 0}},
+    {"L", {SDLK_l, 0}},
+    {"M", {SDLK_m, 0}},
+    {"N", {SDLK_n, 0}},
+    {"O", {SDLK_o, 0}},
+    {"P", {SDLK_p, 0}},
+    {"Q", {SDLK_q, 0}},
+    {"R", {SDLK_r, 0}},
+    {"S", {SDLK_s, 0}},
+    {"T", {SDLK_t, 0}},
+    {"U", {SDLK_u, 0}},
+    {"V", {SDLK_v, 0}},
+    {"W", {SDLK_w, 0}},
+    {"X", {SDLK_x, 0}},
+    {"Y", {SDLK_y, 0}},
+    {"Z", {SDLK_z, 0}},
+    {"ESC", {SDLK_ESCAPE}},
 
-    {"MOUSE1", {SDL_SCANCODE_UNKNOWN, SDL_BUTTON_LEFT}},
-    {"MOUSE2", {SDL_SCANCODE_UNKNOWN, SDL_BUTTON_RIGHT}},
+    {"MOUSE1", {SDLK_UNKNOWN, SDL_BUTTON_LEFT}},
+    {"MOUSE2", {SDLK_UNKNOWN, SDL_BUTTON_RIGHT}},
 };
 
 std::unordered_map<std::string, Action::ActionType> Config::actionTypeMap = {
@@ -63,31 +63,33 @@ std::unordered_map<std::string, Action::ActionType> Config::actionTypeMap = {
 
 bool Config::ShowFPSState() { return showFPS; }
 
-Config* Config::config = new Config{};
-Config* Config::GetConfig() { return config; };
+Config Config::instance = Config();
+Config& Config::Instance() { return instance; };
+
+std::string Config::GetLogPath() { return logPath; }
 
 const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
-    std::string path = GetAbsolutePath("~/.config/Soulbound/config.toml");
+    std::string path = GetAbsolutePath("~/.config/SoulBound/config.toml");
 
     toml::parse_result result;
 
     result = toml::parse_file(path);
     if (!result) {
-        return Error(COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", MEDIUM);
+        return Error(Error::ErrorCode::COULDNT_PARSE_CONFIG_FILE, path + " opting for default configuration\n", Error::Severity::MEDIUM);
     }
     toml::table table = std::move(result.table());
 
     Error err = ReadDebug(table["Debug"]);
-    if (!err.IsNull()) {
+    if (!err.IsEmpty()) {
         return err;
     }
 
     err = ReadGraphics(table["Graphics"]);
-    if (!err.IsNull()) {
+    if (!err.IsEmpty()) {
         return err;
     }
     err = ReadKeybindings(table["Keybindings"], actionHandler);
-    if (!err.IsNull()) {
+    if (!err.IsEmpty()) {
         return err;
     }
 
@@ -95,15 +97,16 @@ const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
 }
 
 const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vec2<int*> screenResolution_, ActionHandler* actionHandler) {
-    ReadFullConfig(actionHandler);
-    (void)renderer;
+    Error err = ReadFullConfig(actionHandler);
+    if (!err.IsEmpty()) return err;
+    (void)renderer;  // TODO
 
     *screenResolution_.x = screenResolution.x;
     *screenResolution_.y = screenResolution.y;
     SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
 
     if (window == NULL || renderer == NULL) {
-        return Error(BAD_PARAMS, "Window or renderer are null", LOW);
+        return Error(Error::ErrorCode::BAD_PARAMS, "Window or renderer are null", Error::Severity::LOW);
     }
 
     if (fullscreen) {
@@ -116,8 +119,8 @@ const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vec2
 
         SDL_DisplayMode mode;
         if (SDL_GetDesktopDisplayMode(0, &mode) != 0) {
-            return Error(SDL_FUNCTION_ERROR, "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
-                         MEDIUM);
+            return Error(Error::ErrorCode::SDL_FUNCTION_ERROR, "Couldn't get DisplayMode, couldn't go fullscreen windowed\n",
+                         Error::Severity::MEDIUM);
         } else {
             SDL_SetWindowSize(window, mode.w, mode.h);
             SDL_SetWindowPosition(window, 0, 0);
