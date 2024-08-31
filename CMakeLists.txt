@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(SoulBound)
+project(SDL_cpp)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)

@@ -69,7 +69,7 @@ Config& Config::Instance() { return instance; };
 std::string Config::GetLogPath() { return logPath; }
 
 const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
-    std::string path = GetAbsolutePath("~/.config/SoulBound/config.toml");
+    std::string path = GetAbsolutePath("~/.config/SDLcpp/config.toml");
 
     toml::parse_result result;
 
@@ -97,6 +97,7 @@ const Error Config::ReadFullConfig(ActionHandler* actionHandler) {
 }
 
 const Error Config::ApplyConfig(SDL_Window* window, SDL_Renderer* renderer, Vec2<int*> screenResolution_, ActionHandler* actionHandler) {
+    std::cout << "oi" << std::endl;
     Error err = ReadFullConfig(actionHandler);
     if (!err.IsEmpty()) return err;
     (void)renderer;  // TODO

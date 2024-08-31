@@ -126,7 +126,7 @@ void Engine::Init() {
     }
     PrintInfo(Info::SDL_INITIALIZED_SUCESSFULY, "");
 
-    window = SDL_CreateWindow("SoulBound",
+    window = SDL_CreateWindow("SDL cpp",
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_CENTERED,
                               screenSpecs.x, screenSpecs.y,
                               SDL_WINDOW_BORDERLESS);
@@ -151,9 +151,8 @@ void Engine::Init() {
     PrintInfo(Info::FONT_LOADED, "debug font");
 
     Error err = Config::Instance().ApplyConfig(window, renderer, Vec2<int *>{&screenSpecs.x, &screenSpecs.y}, actionHandler);
-    if (!err.IsEmpty()) {
-        err.Handle();
-    }
+    err.Handle();
+
     PrintInfo(Info::CONFIG_READ_SUCESSFULLY, "");
 
     playerHandler = PlayerHandler::Init(renderer);  // remove Init

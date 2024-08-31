@@ -1,14 +1,5 @@
 # My SDL Game engine
-Game engine, written in C++ with SDL
-
-## About
-
-This is my first somewhat big project, it allows for
-[configuration](./doc/config.md) and for now, it is a simple 2D
-platformer/shooter. It features enemies, projectiles and a physics engine all
-written in pure C++.
-
-Feel free to give me any feedback!
+Game engine, written in C++ with SDL.
 
 ## Building
 
@@ -23,20 +14,15 @@ Feel free to give me any feedback!
 ### Build
 
 ```sh
-git clone https://github.com/RyanQueirozS/SDL_cpp.git
-cd SDL_cpp
+$ git clone https://github.com/RyanQueirozS/SDL_cpp.git
+$ cd SDL_cpp
+$ cmake .
+$ make
+ 
+# You need to have a config file, to do so:
+$ mkdir $HOME/.config/SDLcpp 
+$ cp ./doc/exampleconfig.toml $HOME/.config/SDLcpp/config.toml
 
-# If you want to play the development version:
-# git checkout develop 
-
-cmake .
-make
-./bin/SoulBound # project name might change
+# To run the game
+./bin/SDL_cpp
 ```
-
-## TODO
-
-- Player and texture assets
-- Create enemies and AI
-- Better fps handling
-  - FPS is being displayed incorrectly.
