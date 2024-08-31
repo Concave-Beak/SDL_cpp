@@ -1,5 +1,5 @@
 # My SDL Game engine
-Game engine, written in C++ with SDL. Full support for [config files!](./doc/config)
+Game engine, written in C++ with SDL. Full support for [config files!](./doc/config.md)
 
 ![Game Preview](./doc/GamePreview.png)
 
