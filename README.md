@@ -1,5 +1,7 @@
 # My SDL Game engine
-Game engine, written in C++ with SDL.
+Game engine, written in C++ with SDL. Full support for [config files!](./doc/config)
+
+![Game Preview](./doc/GamePreview.png)
 
 ## Building
 
@@ -24,5 +26,5 @@ $ mkdir $HOME/.config/SDLcpp
 $ cp ./doc/exampleconfig.toml $HOME/.config/SDLcpp/config.toml
 
 # To run the game
-./bin/SDL_cpp
+$ ./bin/SDL_cpp
 ```
